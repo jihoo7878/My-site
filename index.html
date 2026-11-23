@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -137,11 +136,24 @@ th{color:var(--muted);font-weight:600}
 /* 주간 시간표 */
 .schedule-toolbar{
   display:flex;justify-content:space-between;align-items:center;
-  gap:10px;flex-wrap:wrap;margin-bottom:12px;
+  gap:10px;flex-wrap:wrap;margin-bottom:10px;
 }
 .week-nav,.schedule-actions{display:flex;align-items:center;gap:7px}
 .week-label{font-size:12px;font-weight:700;min-width:145px;text-align:center}
-.schedule-help{font-size:10px;color:var(--muted);margin:0 0 12px}
+.schedule-help{font-size:10px;color:var(--muted);margin:0 0 10px}
+
+.schedule-settings{
+  display:flex;align-items:center;gap:7px;
+  flex-wrap:wrap;margin-bottom:10px;
+}
+.schedule-settings label{
+  color:var(--muted);font-size:10px;
+}
+.schedule-settings select{
+  background:#101622;color:var(--text);
+  border:1px solid var(--line);border-radius:8px;
+  padding:6px 8px;font-size:11px;
+}
 
 .schedule-scroll{
   width:100%;overflow:auto;border:1px solid var(--line);
@@ -157,7 +169,7 @@ th{color:var(--muted);font-weight:600}
 }
 
 .schedule-corner,.schedule-day-head{
-  height:43px;background:#1b2231;
+  height:38px;background:#1b2231;
   border-bottom:1px solid var(--line);
   border-right:1px solid var(--line);
 }
@@ -174,34 +186,31 @@ th{color:var(--muted);font-weight:600}
   background:#151c29;border-right:1px solid var(--line);
 }
 .time-label{
-  height:22px;position:relative;text-align:center;
-  font-size:8px;color:var(--muted);line-height:1;
+  height:36px;position:relative;text-align:center;
+  font-size:9px;color:var(--muted);line-height:1;
 }
 .time-label span{
   position:relative;top:-4px;background:#151c29;padding:0 2px;
 }
 
 .day-column{
-  height:792px;
   position:relative;
   border-right:1px solid var(--line);
   background-image:repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent 21px,
-    #293246 21px,
-    #293246 22px
+    transparent 35px,
+    #293246 35px,
+    #293246 36px
   );
   touch-action:pan-y;
 }
 .day-column.today{background-color:#8ba8ff08}
 
-/* 선택한 빈 시간 칸 */
+/* 선택한 시간 칸 */
 .slot-selection{
   position:absolute;
-  left:1px;
-  right:1px;
-  height:22px;
+  left:1px;right:1px;
   border:3px solid #f4f6ff;
   border-radius:4px;
   background:#ffffff12;
@@ -212,7 +221,7 @@ th{color:var(--muted);font-weight:600}
 
 .schedule-block{
   position:absolute;left:2px;right:2px;
-  min-height:18px;border-radius:6px;
+  min-height:5px;border-radius:6px;
   padding:3px 4px;overflow:hidden;z-index:2;
   color:#eaf0ff;background:#354b7c;
   border:1px solid #7189c855;
@@ -229,11 +238,11 @@ th{color:var(--muted);font-weight:600}
 .block-repeat{font-size:8px;opacity:.75;margin-top:1px}
 .resize-handle{
   position:absolute;left:0;right:0;bottom:0;
-  height:7px;cursor:ns-resize;touch-action:none;
+  height:8px;cursor:ns-resize;touch-action:none;
 }
 .schedule-selected{
   display:flex;align-items:center;gap:7px;
-  flex-wrap:wrap;margin-top:12px;min-height:30px;
+  flex-wrap:wrap;margin-top:10px;min-height:28px;
 }
 .schedule-selected-info{font-size:11px;color:var(--muted);margin-right:auto}
 .schedule-empty-hint{font-size:11px;color:var(--muted)}
@@ -262,7 +271,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
   .timer-display{font-size:38px}
   .week-label{min-width:120px;font-size:11px}
   .week-grid{min-width:650px}
-  .schedule-help{line-height:1.6}
+  .schedule-help{line-height:1.5}
   .schedule-toolbar{align-items:flex-start}
 }
 </style>
@@ -350,9 +359,17 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
     </div>
 
+    <div class="schedule-settings">
+      <label for="viewStart">표시 시작</label>
+      <select id="viewStart"></select>
+
+      <label for="viewEnd">표시 종료</label>
+      <select id="viewEnd"></select>
+    </div>
+
     <p class="schedule-help">
-      06:00~24:00 · 30분 단위 · 빈 칸을 선택한 뒤 일정 추가 또는 붙여넣기를 이용하세요.
-      일정을 드래그해 이동하고 아래쪽 끝을 드래그해 길이를 조절할 수 있습니다.
+      1시간 단위 시간표 · 시작과 종료 시간은 자유롭게 설정할 수 있습니다.
+      일정은 실제 소요 시간에 비례해 표시됩니다.
     </p>
 
     <div class="schedule-scroll" id="scheduleScroll">
@@ -458,11 +475,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <div class="form-row">
       <div style="flex:1">
         <label class="muted">시작 시간</label>
-        <select class="field" id="scheduleStart"></select>
+        <input class="field" id="scheduleStart" type="time" step="300">
       </div>
       <div style="flex:1">
         <label class="muted">종료 시간</label>
-        <select class="field" id="scheduleEnd"></select>
+        <input class="field" id="scheduleEnd" type="time" step="300">
       </div>
     </div>
 
@@ -512,10 +529,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <script>
 const SUBJECTS=['국어','수학','영어','통합사회','통합과학'];
 const KEY='study-flow-v1';
-const START_MIN=360;
-const END_MIN=1440;
-const SLOT=30;
-const SLOT_HEIGHT=22;
+
+const DEFAULT_VIEW_START=360;
+const DEFAULT_VIEW_END=1440;
+
+const HOUR=60;
+const HOUR_HEIGHT=36;
+
 const DAY_NAMES=['일','월','화','수','목','금','토'];
 const $=id=>document.getElementById(id);
 
@@ -539,24 +559,36 @@ const mondayOf=date=>{
 };
 
 const uid=()=>crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2);
-const timeText=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+
+const timeText=m=>{
+  const h=Math.floor(m/60);
+  const r=m%60;
+  return `${String(h).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+};
 
 const timeToMinutes=t=>{
+  if(typeof t==='number')return t;
   const [h,m]=String(t||'06:00').split(':').map(Number);
   return h*60+m;
 };
+
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 
 function defaultData(){
   return {
     goal:40,
     events:[],
     scheduleBlocks:[],
+    scheduleView:{
+      start:DEFAULT_VIEW_START,
+      end:DEFAULT_VIEW_END
+    },
     tasks:SUBJECTS.map(s=>({id:uid(),subject:s,title:'',done:false})),
     logs:[]
   };
 }
 
-/* 기존 데이터 호환 */
+/* 기존 데이터 호환 및 시간표 설정 */
 function normalizeData(raw){
   const base=defaultData();
   const d=raw&&typeof raw==='object'?raw:{};
@@ -567,8 +599,27 @@ function normalizeData(raw){
     goal:Number(d.goal)||40,
     events:Array.isArray(d.events)?d.events:[],
     tasks:Array.isArray(d.tasks)?d.tasks:base.tasks,
-    logs:Array.isArray(d.logs)?d.logs:[]
+    logs:Array.isArray(d.logs)?d.logs:[],
+    scheduleView:{
+      start:Number(d.scheduleView?.start??DEFAULT_VIEW_START),
+      end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
+    }
   };
+
+  result.scheduleView.start=clamp(
+    result.scheduleView.start,0,1380
+  );
+
+  result.scheduleView.end=clamp(
+    result.scheduleView.end,60,1440
+  );
+
+  if(result.scheduleView.end<=result.scheduleView.start){
+    result.scheduleView={
+      start:DEFAULT_VIEW_START,
+      end:DEFAULT_VIEW_END
+    };
+  }
 
   if(Array.isArray(d.scheduleBlocks)){
     result.scheduleBlocks=d.scheduleBlocks;
@@ -576,7 +627,7 @@ function normalizeData(raw){
     result.scheduleBlocks=result.events.map(e=>{
       const date=e.date||todayISO();
       let start=timeToMinutes(e.time||'16:00');
-      start=Math.max(START_MIN,Math.min(1410,Math.round(start/30)*30));
+      start=clamp(start,0,1435);
 
       return {
         id:e.id||uid(),
@@ -584,7 +635,7 @@ function normalizeData(raw){
         date,
         day:new Date(date+'T12:00:00').getDay(),
         start,
-        end:Math.min(END_MIN,start+60),
+        end:Math.min(1440,start+60),
         repeat:false,
         type:'study'
       };
@@ -592,10 +643,13 @@ function normalizeData(raw){
   }
 
   result.scheduleBlocks=result.scheduleBlocks
-    .filter(b=>b&&Number.isFinite(Number(b.start))&&Number.isFinite(Number(b.end)))
+    .filter(b=>
+      b&&Number.isFinite(Number(b.start))&&
+      Number.isFinite(Number(b.end))
+    )
     .map(b=>{
-      const start=Math.max(START_MIN,Math.min(1410,Math.round(Number(b.start)/30)*30));
-      const end=Math.max(start+30,Math.min(END_MIN,Math.round(Number(b.end)/30)*30));
+      const start=clamp(Number(b.start),0,1435);
+      const end=clamp(Number(b.end),start+5,1440);
 
       return {
         ...b,
@@ -634,8 +688,7 @@ function save(){
 }
 
 function minsToText(s){
-  const h=Math.floor(s/60),r=s%60;
-  return `${h}h ${String(r).padStart(2,'0')}m`;
+  return `${Math.floor(s/60)}h ${String(s%60).padStart(2,'0')}m`;
 }
 
 function secToText(s){
@@ -666,6 +719,46 @@ function escapeHTML(s){
   }[c]));
 }
 
+/* 시간표 표시 범위 설정 */
+function buildViewOptions(){
+  let options='';
+
+  for(let m=0;m<=1440;m+=30){
+    options+=`<option value="${m}">${m===1440?'24:00':timeText(m)}</option>`;
+  }
+
+  $('viewStart').innerHTML=options;
+  $('viewEnd').innerHTML=options;
+
+  $('viewStart').value=String(data.scheduleView.start);
+  $('viewEnd').value=String(data.scheduleView.end);
+}
+
+buildViewOptions();
+
+function updateViewRange(){
+  const start=Number($('viewStart').value);
+  const end=Number($('viewEnd').value);
+
+  if(end<=start){
+    toast('종료 시간은 시작 시간보다 늦어야 합니다.');
+    $('viewStart').value=String(data.scheduleView.start);
+    $('viewEnd').value=String(data.scheduleView.end);
+    return;
+  }
+
+  data.scheduleView={start,end};
+
+  selectedSlot=null;
+  selectedBlockId=null;
+  pasteTarget=null;
+
+  save();
+}
+
+$('viewStart').addEventListener('change',updateViewRange);
+$('viewEnd').addEventListener('change',updateViewRange);
+
 /* 시간표 */
 function getWeekDates(){
   return Array.from({length:7},(_,i)=>dateOffset(viewedWeek,i));
@@ -673,30 +766,36 @@ function getWeekDates(){
 
 function blocksForDate(date){
   const day=new Date(date+'T12:00:00').getDay();
+
   return data.scheduleBlocks.filter(b=>
     b.repeat?Number(b.day)===day:b.date===date
   );
 }
 
-function buildTimeOptions(){
-  let starts='',ends='';
+function getBlockVisibleRange(block){
+  const start=data.scheduleView.start;
+  const end=data.scheduleView.end;
 
-  for(let m=START_MIN;m<=END_MIN;m+=30){
-    const option=`<option value="${m}">${timeText(m)}</option>`;
-    ends+=option;
-    if(m<END_MIN)starts+=option;
-  }
+  const visibleStart=Math.max(block.start,start);
+  const visibleEnd=Math.min(block.end,end);
 
-  $('scheduleStart').innerHTML=starts;
-  $('scheduleEnd').innerHTML=ends;
+  if(visibleEnd<=visibleStart)return null;
+
+  return {
+    top:(visibleStart-start)/HOUR*HOUR_HEIGHT,
+    height:(visibleEnd-visibleStart)/HOUR*HOUR_HEIGHT
+  };
 }
-buildTimeOptions();
 
 /* 주간 시간표 그리기 */
 function renderSchedule(){
   const grid=$('scheduleGrid');
   const dates=getWeekDates();
   const today=todayISO();
+
+  const viewStart=data.scheduleView.start;
+  const viewEnd=data.scheduleView.end;
+  const totalHeight=(viewEnd-viewStart)/HOUR*HOUR_HEIGHT;
 
   const scroll=$('scheduleScroll');
   const previousLeft=scroll.scrollLeft;
@@ -724,13 +823,16 @@ function renderSchedule(){
     grid.appendChild(head);
   });
 
+  /* 시간 표시 열 */
   const timeCol=document.createElement('div');
   timeCol.className='time-column';
+  timeCol.style.height=totalHeight+'px';
 
-  for(let i=0;i<36;i++){
+  for(let m=viewStart;m<viewEnd;m+=HOUR){
     const label=document.createElement('div');
     label.className='time-label';
-    label.innerHTML=`<span>${timeText(START_MIN+i*30)}</span>`;
+    label.style.height=HOUR_HEIGHT+'px';
+    label.innerHTML=`<span>${timeText(m)}</span>`;
     timeCol.appendChild(label);
   }
 
@@ -740,18 +842,19 @@ function renderSchedule(){
     const col=document.createElement('div');
     col.className='day-column'+(date===today?' today':'');
     col.dataset.date=date;
+    col.style.height=totalHeight+'px';
 
-    /* 빈 칸 클릭: 해당 시간대 선택 */
+    /* 빈 시간 칸 클릭 */
     col.addEventListener('click',e=>{
       if(e.target.closest('.schedule-block'))return;
 
       const rect=col.getBoundingClientRect();
-      const slot=Math.max(
-        0,
-        Math.min(35,Math.floor((e.clientY-rect.top)/SLOT_HEIGHT))
-      );
+      const y=clamp(e.clientY-rect.top,0,totalHeight);
 
-      const start=START_MIN+slot*SLOT;
+      const row=Math.floor(y/HOUR_HEIGHT);
+      const start=viewStart+row*HOUR;
+
+      if(start>=viewEnd)return;
 
       selectedBlockId=null;
       selectedSlot={date,start};
@@ -760,25 +863,40 @@ function renderSchedule(){
       renderSchedule();
     });
 
-    /* 선택한 30분 칸 표시 */
+    /* 선택한 1시간 칸 표시 */
     if(selectedSlot&&selectedSlot.date===date){
       const selection=document.createElement('div');
       selection.className='slot-selection';
-      selection.style.top=
-        ((selectedSlot.start-START_MIN)/SLOT*SLOT_HEIGHT)+'px';
 
-      col.appendChild(selection);
+      const selectionHeight=Math.min(
+        HOUR_HEIGHT,
+        (viewEnd-selectedSlot.start)/HOUR*HOUR_HEIGHT
+      );
+
+      selection.style.top=
+        ((selectedSlot.start-viewStart)/HOUR*HOUR_HEIGHT)+'px';
+
+      selection.style.height=Math.max(0,selectionHeight)+'px';
+
+      if(selectedSlot.start>=viewStart&&selectedSlot.start<viewEnd){
+        col.appendChild(selection);
+      }
     }
 
+    /* 일정 블록 */
     blocksForDate(date).forEach(block=>{
+      const visible=getBlockVisibleRange(block);
+      if(!visible)return;
+
       const el=document.createElement('div');
 
       el.className=`schedule-block ${block.type||'study'}`+
         (selectedBlockId===block.id?' selected':'');
 
       el.dataset.id=block.id;
-      el.style.top=((block.start-START_MIN)/SLOT*SLOT_HEIGHT)+'px';
-      el.style.height=((block.end-block.start)/SLOT*SLOT_HEIGHT)+'px';
+
+      el.style.top=visible.top+'px';
+      el.style.height=visible.height+'px';
 
       el.innerHTML=`
         <div class="block-title">${escapeHTML(block.title)}</div>
@@ -837,13 +955,13 @@ function renderSelection(){
       area.innerHTML=`
         <span class="schedule-selected-info">
           선택 위치: ${escapeHTML(selectedSlot.date)} ·
-          ${timeText(selectedSlot.start)}~${timeText(selectedSlot.start+30)}
+          ${timeText(selectedSlot.start)}~${timeText(selectedSlot.start+60)}
         </span>
       `;
     }else{
       area.innerHTML=`
         <span class="schedule-empty-hint">
-          빈 시간 칸을 선택하거나 일정을 클릭하세요.
+          빈 시간대를 선택하거나 일정을 클릭하세요.
         </span>
       `;
     }
@@ -906,7 +1024,7 @@ function pasteScheduleBlock(){
   const source=clipboardBlock;
 
   if(!pasteTarget&&!selectedSlot){
-    toast('먼저 붙여넣을 시간 칸을 선택해 주세요.');
+    toast('먼저 붙여넣을 시간대를 선택해 주세요.');
     return;
   }
 
@@ -915,7 +1033,7 @@ function pasteScheduleBlock(){
   const duration=source.end-source.start;
   const end=start+duration;
 
-  if(start<START_MIN||end>END_MIN){
+  if(start<0||end>1440){
     toast('붙여넣을 수 있는 시간 범위를 벗어났어요.');
     return;
   }
@@ -967,28 +1085,32 @@ function beginBlockGesture(e,block,mode,element){
 
     if(Math.abs(dy)>4)moved=true;
 
-    const delta=Math.round(dy/SLOT_HEIGHT)*SLOT;
-
     if(mode==='resize'){
-      currentEnd=Math.max(
-        initialStart+SLOT,
-        Math.min(END_MIN,initialEnd+delta)
-      );
+      /* 길이 조절은 5분 단위 */
+      const delta=Math.round(
+        (dy/HOUR_HEIGHT*HOUR)/5
+      )*5;
 
-      currentEnd=Math.round(currentEnd/SLOT)*SLOT;
+      currentEnd=clamp(
+        initialEnd+delta,
+        initialStart+5,
+        1440
+      );
 
       element.style.height=
-        ((currentEnd-initialStart)/SLOT*SLOT_HEIGHT)+'px';
+        ((currentEnd-currentStart)/HOUR*HOUR_HEIGHT)+'px';
 
     }else{
+      /* 이동은 1시간 단위 */
+      const delta=Math.round(dy/HOUR_HEIGHT)*HOUR;
       const duration=initialEnd-initialStart;
 
-      currentStart=Math.max(
-        START_MIN,
-        Math.min(END_MIN-duration,initialStart+delta)
+      currentStart=clamp(
+        initialStart+delta,
+        0,
+        1440-duration
       );
 
-      currentStart=Math.round(currentStart/SLOT)*SLOT;
       currentEnd=currentStart+duration;
 
       const columns=[...document.querySelectorAll('.day-column')];
@@ -1000,16 +1122,30 @@ function beginBlockGesture(e,block,mode,element){
 
       if(target){
         currentDate=target.dataset.date;
+
         if(element.parentElement!==target){
           target.appendChild(element);
         }
       }
 
+      const visibleStart=Math.max(
+        currentStart,data.scheduleView.start
+      );
+
       element.style.top=
-        ((currentStart-START_MIN)/SLOT*SLOT_HEIGHT)+'px';
+        ((visibleStart-data.scheduleView.start)/HOUR*HOUR_HEIGHT)+'px';
+
+      const visibleEnd=Math.min(
+        currentEnd,data.scheduleView.end
+      );
+
+      element.style.height=Math.max(
+        5,(visibleEnd-visibleStart)/HOUR*HOUR_HEIGHT
+      )+'px';
     }
 
     const time=element.querySelector('.block-time');
+
     if(time){
       time.textContent=
         `${timeText(currentStart)}–${timeText(currentEnd)}`;
@@ -1054,6 +1190,7 @@ function beginBlockGesture(e,block,mode,element){
     }else{
       selectedBlockId=block.id;
       selectedSlot=null;
+      pasteTarget={date:initialDate,start:block.start};
       renderSelection();
     }
   }
@@ -1077,11 +1214,11 @@ function openScheduleModal(id=null,defaults={}){
   $('scheduleTitle').value=block?.title||'';
   $('scheduleDay').value=String(day);
 
-  $('scheduleStart').value=String(
+  $('scheduleStart').value=timeText(
     block?.start??defaults.start??960
   );
 
-  $('scheduleEnd').value=String(
+  $('scheduleEnd').value=timeText(
     block?.end??defaults.end??1020
   );
 
@@ -1115,13 +1252,16 @@ $('cancelSchedule').onclick=closeScheduleModal;
 
 $('saveSchedule').onclick=()=>{
   const title=$('scheduleTitle').value.trim();
-  const start=Number($('scheduleStart').value);
-  const end=Number($('scheduleEnd').value);
+  const start=timeToMinutes($('scheduleStart').value);
+  const end=timeToMinutes($('scheduleEnd').value);
   const repeat=$('scheduleRepeat').value==='true';
   const day=Number($('scheduleDay').value);
   const date=$('scheduleDate').value;
 
   if(!title)return toast('일정 이름을 입력해 주세요.');
+  if(!Number.isFinite(start)||!Number.isFinite(end)){
+    return toast('시작 시간과 종료 시간을 입력해 주세요.');
+  }
   if(end<=start)return toast('종료 시간은 시작 시간보다 늦어야 합니다.');
   if(!repeat&&!date)return toast('날짜를 선택해 주세요.');
 
@@ -1157,7 +1297,7 @@ $('saveSchedule').onclick=()=>{
   toast('일정을 저장했어요.');
 };
 
-/* 일정 추가 버튼: 선택한 시간 칸을 기본 위치로 사용 */
+/* 일정 추가 버튼 */
 $('addEventBtn').onclick=()=>{
   const date=selectedSlot?.date||todayISO();
   const start=selectedSlot?.start??960;
@@ -1165,7 +1305,7 @@ $('addEventBtn').onclick=()=>{
   openScheduleModal(null,{
     date,
     start,
-    end:Math.min(END_MIN,start+60)
+    end:Math.min(1440,start+60)
   });
 };
 
@@ -1519,11 +1659,13 @@ $('importFile').onchange=async e=>{
     }
 
     data=normalizeData(value);
+
     selectedBlockId=null;
     selectedSlot=null;
     clipboardBlock=null;
     pasteTarget=null;
 
+    buildViewOptions();
     save();
     toast('데이터를 불러왔어요.');
   }catch{
