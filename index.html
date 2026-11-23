@@ -418,6 +418,54 @@ button:disabled{opacity:.4;cursor:not-allowed}
  .todo-item-title{font-size:11px}
 }
 
+
+/* APP NAVIGATION */
+.app{max-width:1600px;margin:auto;padding:22px 28px 40px}
+header{margin-bottom:22px}
+.app-layout{display:grid;grid-template-columns:218px minmax(0,1fr);gap:24px;align-items:start}
+.sidebar{position:sticky;top:18px;min-height:calc(100vh - 150px);padding:17px 12px;background:linear-gradient(160deg,#171e2c,#121722);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.sidebar-label{padding:4px 11px 13px;color:#74819a;font-size:9px;font-weight:800;letter-spacing:1.8px}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:13px 12px;margin:4px 0;border:1px solid transparent;border-radius:11px;background:transparent;color:#aeb9cd;text-align:left;font-size:13px;font-weight:700;transition:.18s}
+.nav-item:hover{background:#222c40;color:var(--text)}
+.nav-item.active{background:#273552;border-color:#3c4c70;color:#dce5ff}
+.nav-icon{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:#202b40;color:#aebfff;font-size:17px}
+.nav-item.active .nav-icon{background:#526a9f;color:#fff}
+.sidebar-note{position:absolute;left:23px;bottom:22px;color:#71809a;font-size:10px;line-height:1.8}
+.main-content{min-width:0;}
+.page-view{display:none;animation:pageIn .2s ease}
+.page-view.active{display:block}
+@keyframes pageIn{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.page-intro{margin:8px 0 23px}
+.page-intro h2{font-size:clamp(25px,3vw,35px);letter-spacing:-1.2px;margin:5px 0}
+.page-intro p{margin:0;color:var(--muted);font-size:13px}
+.page-intro .eyebrow{color:var(--accent2);font-size:10px;font-weight:800;letter-spacing:2px}
+.page-view .grid{align-items:start}
+.page-view .side{grid-column:span 12}
+.page-view .todo-card{grid-column:span 12}
+.footer{margin-top:24px;text-align:center;color:#65718a;font-size:9px;letter-spacing:1px}
+@media(max-width:900px){
+ .app-layout{grid-template-columns:1fr;gap:14px}
+ .sidebar{position:static;min-height:0;display:flex;align-items:center;gap:6px;padding:7px;border-radius:14px}
+ .sidebar-label,.sidebar-note{display:none}
+ .nav-item{justify-content:center;gap:7px;margin:0;padding:10px 8px;flex:1;font-size:11px}
+ .nav-icon{width:21px;height:21px;font-size:15px}
+}
+@media(max-width:560px){
+ .app{padding:14px 12px 28px}
+ header{gap:10px;margin-bottom:16px}
+ .header-right{gap:6px}
+ #accountControls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+ #accountEmail{font-size:9px}
+ #syncStatus{font-size:9px}
+ .app-layout{gap:12px}
+ .sidebar{position:fixed;left:12px;right:12px;bottom:12px;z-index:30;min-height:0;padding:5px;gap:3px;background:#171e2cf2;backdrop-filter:blur(14px);box-shadow:0 12px 34px #0009}
+ .app{padding-bottom:92px}
+ .nav-item{flex-direction:column;gap:3px;padding:7px 3px;font-size:10px}
+ .nav-icon{width:22px;height:22px}
+ .page-intro{margin:6px 0 17px}
+ .page-intro h2{font-size:26px}
+}
+
 </style>
 </head>
 
@@ -446,49 +494,73 @@ button:disabled{opacity:.4;cursor:not-allowed}
   </div>
 </header>
 
-<section class="hero">
-  <div>
-    <div class="eyebrow">YOUR STUDY, YOUR FLOW</div>
-    <h2>오늘의 공부를 쌓아가자.</h2>
-    <p>작은 기록이 모여 큰 변화를 만듭니다.</p>
-  </div>
-  <div class="hero-note">
-    로그인한 계정에 학습 데이터가 저장됩니다.<br>
-    인터넷 연결 시 여러 기기에서 동기화됩니다.
-  </div>
-</section>
-
-<section class="grid">
-
-  <div class="card stat">
+<div class="app-layout">
+  <aside class="sidebar" aria-label="주요 메뉴">
+    <div class="sidebar-label">WORKSPACE</div>
+    <button class="nav-item active" type="button" data-page="home"><span class="nav-icon">⌂</span><span>홈</span></button>
+    <button class="nav-item" type="button" data-page="weekly"><span class="nav-icon">▦</span><span>주간 플래너</span></button>
+    <button class="nav-item" type="button" data-page="learning"><span class="nav-icon">✓</span><span>학습 관리</span></button>
+    <div class="sidebar-note">나의 학습 흐름을<br>한곳에서 관리하세요.</div>
+  </aside>
+  <main class="main-content">
+<div class="page-view active" data-page-view="home">
+<div class="page-intro" id="pageIntro">
+  <div class="eyebrow">YOUR STUDY, YOUR FLOW</div>
+  <h2 id="pageTitle">오늘의 공부를 쌓아가자.</h2>
+  <p id="pageDescription">작은 기록이 모여 큰 변화를 만듭니다.</p>
+</div><section class="grid">
+<div class="card stat">
     <div class="stat-icon">◷</div>
     <div class="stat-label">오늘 공부 시간</div>
     <div class="stat-value" id="todayHours">0h 00m</div>
     <div class="stat-foot">오늘 완료한 학습 기록 기준</div>
-  </div>
-
-  <div class="card stat">
+  </div><div class="card stat">
     <div class="stat-icon">▥</div>
     <div class="stat-label">이번 주 누적</div>
     <div class="stat-value" id="weekHours">0h 00m</div>
     <div class="stat-foot">월요일부터 오늘까지</div>
-  </div>
-
-  <div class="card stat">
+  </div><div class="card stat">
     <div class="stat-icon">◎</div>
     <div class="stat-label">이번 주 목표</div>
     <div class="stat-value" id="goalPercent">0%</div>
     <div class="stat-foot" id="goalFoot">목표 40시간</div>
-  </div>
-
-  <div class="card stat">
+  </div><div class="card stat">
     <div class="stat-icon">✓</div>
     <div class="stat-label">완료한 강의</div>
     <div class="stat-value" id="doneCount">0개</div>
     <div class="stat-foot">인강 수강 완료 누적</div>
-  </div>
+  </div><div class="card side">
+    <div class="card-head">
+      <h3>학습 타이머</h3>
+      <span class="tag" id="timerStatus">대기 중</span>
+    </div>
 
-  <div class="card wide">
+    <select class="field" id="timerSubject">
+      <option>국어</option>
+      <option>수학</option>
+      <option>영어</option>
+      <option>통합사회</option>
+      <option>통합과학</option>
+    </select>
+
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
+
+    <div class="timer-controls">
+      <button class="btn primary" id="timerStart">시작</button>
+      <button class="btn" id="timerPause" disabled>일시정지</button>
+      <button class="btn" id="timerFinish" disabled>완료</button>
+    </div>
+
+    <div class="muted" style="font-size:10px;text-align:center">
+      타이머가 실행 중인 동안 이 페이지를 열어 두세요.
+    </div>
+  </div></section>
+</div>
+<div class="page-view" data-page-view="weekly">
+  <div class="page-intro"><div class="eyebrow">PLAN YOUR WEEK</div><h2>주간 플래너</h2><p>시간표와 최근 학습 흐름을 한눈에 확인하세요.</p></div>
+  <section class="grid">
+<div class="card wide">
     <div class="card-head">
       <h3>주간 시간표</h3>
       <button class="mini" id="addEventBtn">＋ 일정 추가</button>
@@ -528,10 +600,18 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <div class="schedule-selected" id="scheduleSelected">
       <span class="schedule-empty-hint">빈 시간 칸을 선택하거나 일정을 클릭하세요.</span>
     </div>
-  </div>
-
-
-  <div class="card todo-card">
+  </div><div class="card half">
+    <div class="card-head">
+      <h3>최근 7일 학습 시간</h3>
+      <span class="tag">시간</span>
+    </div>
+    <div class="bar-chart" id="weeklyChart"></div>
+  </div></section>
+</div>
+<div class="page-view" data-page-view="learning">
+  <div class="page-intro"><div class="eyebrow">MANAGE YOUR LEARNING</div><h2>학습 관리</h2><p>할 일과 강의 진도, 학습 기록을 체계적으로 관리하세요.</p></div>
+  <section class="grid">
+<div class="card todo-card">
     <div class="card-head">
       <h3>TO DO LIST</h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -565,53 +645,13 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
       <div class="todo-routine-list" id="todoRoutineList"></div>
     </div>
-  </div>
-
-  <div class="card side">
-    <div class="card-head">
-      <h3>학습 타이머</h3>
-      <span class="tag" id="timerStatus">대기 중</span>
-    </div>
-
-    <select class="field" id="timerSubject">
-      <option>국어</option>
-      <option>수학</option>
-      <option>영어</option>
-      <option>통합사회</option>
-      <option>통합과학</option>
-    </select>
-
-    <div class="timer-display" id="timerDisplay">00:00:00</div>
-    <div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
-
-    <div class="timer-controls">
-      <button class="btn primary" id="timerStart">시작</button>
-      <button class="btn" id="timerPause" disabled>일시정지</button>
-      <button class="btn" id="timerFinish" disabled>완료</button>
-    </div>
-
-    <div class="muted" style="font-size:10px;text-align:center">
-      타이머가 실행 중인 동안 이 페이지를 열어 두세요.
-    </div>
-  </div>
-
-  <div class="card half">
+  </div><div class="card half">
     <div class="card-head">
       <h3>과목별 진도</h3>
       <button class="mini" id="addTaskBtn">＋ 학습 항목</button>
     </div>
     <div id="subjectsProgress"></div>
-  </div>
-
-  <div class="card half">
-    <div class="card-head">
-      <h3>최근 7일 학습 시간</h3>
-      <span class="tag">시간</span>
-    </div>
-    <div class="bar-chart" id="weeklyChart"></div>
-  </div>
-
-  <div class="card full">
+  </div><div class="card full">
     <div class="card-head">
       <h3>최근 학습 기록</h3>
       <button class="mini" id="manualLogBtn">＋ 시간 직접 기록</button>
@@ -630,11 +670,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
         <tbody id="logTable"></tbody>
       </table>
     </div>
-  </div>
-
-</section>
-
+  </div></section>
+</div>
 <div class="footer">STUDY FLOW · PERSONAL LEARNING · YOUR DATA SYNCED TO YOUR ACCOUNT</div>
+  </main>
 </div>
 
 <!-- 일정 추가 및 편집 모달 -->
@@ -1899,6 +1938,23 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('.todo-menu-wrap'))document.querySelectorAll('.todo-menu.open').forEach(m=>m.classList.remove('open'));
 });
 
+
+/* 메뉴 전환: 페이지 이동 시 기존 학습 데이터와 타이머 상태는 유지됩니다. */
+function setActivePage(page){
+  const valid=['home','weekly','learning'];
+  if(!valid.includes(page))page='home';
+  document.querySelectorAll('[data-page]').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===page));
+  document.querySelectorAll('[data-page-view]').forEach(view=>view.classList.toggle('active',view.dataset.pageView===page));
+  if(page==='weekly'){
+    requestAnimationFrame(()=>{ if(typeof renderSchedule==='function') renderSchedule(); });
+  }
+  try{sessionStorage.setItem('study-flow-active-page',page);}catch(e){}
+}
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('[data-page]');
+  if(nav)setActivePage(nav.dataset.page);
+});
+
 /* 대시보드 렌더링 */
 function render(){
   const today=todayISO();
@@ -2525,6 +2581,7 @@ timerButtons();
   }
 
   // 기존 앱은 먼저 렌더링되지만 인증 오버레이가 데이터를 가립니다.
+  setActivePage((()=>{try{return sessionStorage.getItem("study-flow-active-page")||"home";}catch(e){return "home";}})());
   showGate();
   initAuth();
 })();
