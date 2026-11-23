@@ -389,6 +389,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <button class="btn" id="exportBtn">데이터 백업 ↓</button>
     <button class="btn" id="importBtn">불러오기 ↑</button>
     <input type="file" id="importFile" accept="application/json" hidden>
+    <div id="accountControls" style="display:none">
+      <span id="accountEmail"></span>
+      <span id="syncStatus">연결됨</span>
+      <button class="btn" id="logoutBtn" type="button">로그아웃</button>
+    </div>
   </div>
 </header>
 
@@ -630,6 +635,43 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <button class="btn primary" id="closeCelebrate">확인</button>
   </div>
 </div>
+
+
+<!-- Supabase Auth: 로그인 전에는 기존 대시보드를 덮어 데이터가 노출되지 않도록 합니다. -->
+<style>
+#authGate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 15% -10%,#27345888,transparent 42%),#0d1018}
+#authCard{width:min(420px,100%);padding:28px;background:linear-gradient(145deg,#1a2030,#141925);border:1px solid #35415a;border-radius:20px;box-shadow:0 18px 55px #0008}
+#authCard h2{margin:0 0 6px;font-size:24px;letter-spacing:-.5px}
+#authCard .auth-sub{margin:0 0 22px;color:#929db2;font-size:13px}
+#authCard label{display:block;margin:13px 0 6px;color:#b8c4d9;font-size:12px}
+#authCard input{width:100%;background:#101622;border:1px solid #35415a;color:#edf1fa;border-radius:10px;padding:12px;outline:none}
+#authCard input:focus{border-color:#8ba8ff}
+#authSubmit{width:100%;margin-top:18px}
+#authSwitch{width:100%;margin-top:10px;background:transparent;border:0;color:#b5c5ff;padding:9px}
+#authMessage{min-height:20px;margin:12px 0 0;color:#f0bd78;font-size:12px;line-height:1.5}
+#authMessage.error{color:#ff8d9a}
+#accountControls{display:flex;align-items:center;gap:8px}
+#accountEmail{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#929db2;font-size:11px}
+#syncStatus{font-size:10px;color:#79d6b0;min-width:42px}
+@media(max-width:560px){#authCard{padding:22px}#accountEmail{max-width:110px}}
+</style>
+<div id="authGate" role="dialog" aria-modal="true" aria-labelledby="authHeading">
+  <div id="authCard">
+    <div class="eyebrow">ROUTEN · PERSONAL LEARNING</div>
+    <h2 id="authHeading">로그인</h2>
+    <p class="auth-sub">학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.</p>
+    <form id="authForm">
+      <label for="authEmail">이메일</label>
+      <input id="authEmail" type="email" autocomplete="email" required placeholder="name@example.com">
+      <label for="authPassword">비밀번호</label>
+      <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="8자 이상">
+      <button class="btn primary" id="authSubmit" type="submit">로그인</button>
+    </form>
+    <button id="authSwitch" type="button">계정이 없으신가요? 회원가입</button>
+    <p id="authMessage" aria-live="polite"></p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 const SUBJECTS=['국어','수학','영어','통합사회','통합과학'];
@@ -1901,5 +1943,214 @@ document.addEventListener('keydown',e=>{
 render();
 timerButtons();
 </script>
+
+<script>
+/* ================= Supabase 인증 및 사용자별 동기화 =================
+   공개 Publishable Key만 브라우저에서 사용합니다. Secret/service_role 키는 넣지 마세요.
+===================================================================== */
+(function(){
+  const SUPABASE_URL='https://ravpqvaosmulgddearso.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY='sb_publishable_daj6HmlmXnXV6q8L2SPDdQ_LbAIKj6y';
+  const LEGACY_MIGRATED_KEY='study-flow-legacy-migrated-v1';
+  const authGate=document.getElementById('authGate');
+  const authForm=document.getElementById('authForm');
+  const authHeading=document.getElementById('authHeading');
+  const authSubmit=document.getElementById('authSubmit');
+  const authSwitch=document.getElementById('authSwitch');
+  const authMessage=document.getElementById('authMessage');
+  const authPassword=document.getElementById('authPassword');
+  const accountControls=document.getElementById('accountControls');
+  const accountEmail=document.getElementById('accountEmail');
+  const syncStatus=document.getElementById('syncStatus');
+  let isSignUp=false;
+  let currentUser=null;
+  let saveTimer=null;
+  let loadingUser=false;
+  let supabaseClient=null;
+
+  function message(text,isError=false){
+    authMessage.textContent=text||'';
+    authMessage.classList.toggle('error',!!isError);
+  }
+  function setBusy(busy){
+    authSubmit.disabled=busy;
+    authSubmit.textContent=busy?'처리 중…':(isSignUp?'회원가입':'로그인');
+  }
+  function showGate(){
+    authGate.style.display='grid';
+    accountControls.style.display='none';
+  }
+  function showApp(user){
+    authGate.style.display='none';
+    accountControls.style.display='flex';
+    accountEmail.textContent=user.email||'로그인됨';
+    accountEmail.title=user.email||'';
+    syncStatus.textContent='동기화됨';
+  }
+  function userStorageKey(userId){return `${KEY}:user:${userId}`;}
+
+  async function loadUserData(user){
+    if(!user||loadingUser)return;
+    if(currentUser&&currentUser.id===user.id){showApp(user);return;}
+    loadingUser=true;
+    message('');
+    try{
+      const {data:row,error}=await supabaseClient
+        .from('user_data').select('data').eq('user_id',user.id).maybeSingle();
+      if(error)throw error;
+
+      if(row&&row.data&&typeof row.data==='object'){
+        data=normalizeData(row.data);
+      }else{
+        const alreadyMigrated=localStorage.getItem(LEGACY_MIGRATED_KEY)==='1';
+        const legacyRaw=alreadyMigrated?null:localStorage.getItem(KEY);
+        if(legacyRaw){
+          try{data=normalizeData(JSON.parse(legacyRaw));}
+          catch{data=defaultData();}
+        }else{
+          data=defaultData();
+        }
+        const {error:insertError}=await supabaseClient.from('user_data').upsert({
+          user_id:user.id,data,updated_at:new Date().toISOString()
+        },{onConflict:'user_id'});
+        if(insertError)throw insertError;
+        if(legacyRaw)localStorage.setItem(LEGACY_MIGRATED_KEY,'1');
+      }
+
+      currentUser=user;
+      localStorage.setItem(userStorageKey(user.id),JSON.stringify(data));
+      selectedBlockId=null;selectedSlot=null;clipboardBlock=null;pasteTarget=null;
+      buildViewOptions();
+      render();
+      showApp(user);
+      toast('계정 데이터를 불러왔어요.');
+    }catch(err){
+      console.error('ROUTEN data load error:',err);
+      currentUser=null;
+      showGate();
+      message('데이터를 불러오지 못했어요. 네트워크와 Supabase RLS 설정을 확인해 주세요.',true);
+    }finally{loadingUser=false;}
+  }
+
+  async function saveToCloud(){
+    if(!currentUser)return;
+    const user=currentUser;
+    syncStatus.textContent='저장 중…';
+    const snapshot=JSON.parse(JSON.stringify(data));
+    const {error}=await supabaseClient.from('user_data').upsert({
+      user_id:user.id,data:snapshot,updated_at:new Date().toISOString()
+    },{onConflict:'user_id'});
+    if(error){
+      console.error('ROUTEN cloud save error:',error);
+      if(currentUser&&currentUser.id===user.id)syncStatus.textContent='저장 오류';
+      toast('클라우드 저장에 실패했어요. 인터넷 연결을 확인해 주세요.');
+    }else if(currentUser&&currentUser.id===user.id){
+      syncStatus.textContent='동기화됨';
+    }
+  }
+
+  function queueCloudSave(){
+    if(!currentUser)return;
+    localStorage.setItem(userStorageKey(currentUser.id),JSON.stringify(data));
+    syncStatus.textContent='변경됨';
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(saveToCloud,700);
+  }
+
+  // 기존 save()를 확장해 기존 렌더링 동작을 유지하면서 계정별 저장을 추가합니다.
+  const originalSave=save;
+  save=function(){
+    if(currentUser){
+      localStorage.setItem(userStorageKey(currentUser.id),JSON.stringify(data));
+      queueCloudSave();
+    }else{
+      // 인증 전에는 기존 로컬 데이터에 접근하거나 덮어쓰지 않습니다.
+    }
+    render();
+  };
+
+  authSwitch.addEventListener('click',()=>{
+    isSignUp=!isSignUp;
+    authHeading.textContent=isSignUp?'회원가입':'로그인';
+    authSubmit.textContent=isSignUp?'회원가입':'로그인';
+    authSwitch.textContent=isSignUp?'이미 계정이 있으신가요? 로그인':'계정이 없으신가요? 회원가입';
+    authPassword.autocomplete=isSignUp?'new-password':'current-password';
+    message('');
+  });
+
+  authForm.addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!supabaseClient)return message('인증 서비스를 불러오는 중이에요. 잠시 후 다시 시도해 주세요.',true);
+    const email=document.getElementById('authEmail').value.trim();
+    const password=authPassword.value;
+    if(password.length<8)return message('비밀번호는 8자 이상 입력해 주세요.',true);
+    setBusy(true);message('');
+    try{
+      if(isSignUp){
+        const {data:result,error}=await supabaseClient.auth.signUp({
+          email,password,options:{emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev')}
+        });
+        if(error)throw error;
+        if(result.session){
+          await loadUserData(result.user);
+        }else{
+          message('가입 요청이 완료됐어요. 이메일 인증 링크를 확인한 뒤 로그인해 주세요.');
+          isSignUp=false;
+          authHeading.textContent='로그인';
+          authSubmit.textContent='로그인';
+          authSwitch.textContent='계정이 없으신가요? 회원가입';
+          authPassword.value='';
+        }
+      }else{
+        const {data:result,error}=await supabaseClient.auth.signInWithPassword({email,password});
+        if(error)throw error;
+        await loadUserData(result.user);
+      }
+    }catch(err){
+      console.error('ROUTEN auth error:',err);
+      message(err.message||'인증 중 문제가 발생했어요.',true);
+    }finally{setBusy(false);}
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click',async()=>{
+    if(!confirm('로그아웃할까요? 저장되지 않은 변경 사항이 있다면 잠시 기다려 주세요.'))return;
+    if(saveTimer){clearTimeout(saveTimer);await saveToCloud();}
+    const {error}=await supabaseClient.auth.signOut();
+    if(error){toast('로그아웃에 실패했어요.');return;}
+    currentUser=null;
+    data=defaultData();
+    render();
+    showGate();
+    message('로그아웃했어요. 다시 로그인하면 데이터를 불러올 수 있어요.');
+  });
+
+  async function initAuth(){
+    try{
+      if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase 라이브러리를 불러오지 못했어요.');
+      supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+      const {data:sessionData,error}=await supabaseClient.auth.getSession();
+      if(error)throw error;
+      if(sessionData.session?.user){await loadUserData(sessionData.session.user);}
+      else{showGate();}
+      supabaseClient.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_IN'&&session?.user){
+          setTimeout(()=>loadUserData(session.user),0);
+        }else if(event==='SIGNED_OUT'){
+          currentUser=null;showGate();
+        }
+      });
+    }catch(err){
+      console.error('ROUTEN Supabase init error:',err);
+      showGate();
+      message('Supabase 연결에 실패했어요. 페이지를 새로고침하거나 연결 설정을 확인해 주세요.',true);
+    }
+  }
+
+  // 기존 앱은 먼저 렌더링되지만 인증 오버레이가 데이터를 가립니다.
+  showGate();
+  initAuth();
+})();
+</script>
+
 </body>
 </html>
