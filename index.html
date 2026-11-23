@@ -789,6 +789,57 @@ header{margin-bottom:22px}
 #accountEmail{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#929db2;font-size:11px}
 #syncStatus{font-size:10px;color:#79d6b0;min-width:42px}
 @media(max-width:560px){#authCard{padding:22px}#accountEmail{max-width:110px}}
+
+/* RESPONSIVE NAVIGATION HOTFIX: phones + tablets (including iPad split-view) */
+@media (max-width: 1200px), (pointer: coarse) {
+  .app { max-width: 100%; padding: 16px 14px calc(112px + env(safe-area-inset-bottom)); }
+  .app-layout { display: block; grid-template-columns: minmax(0,1fr); gap: 0; padding-bottom: 0; }
+  .main-content { width: 100%; min-width: 0; }
+  .sidebar {
+    position: fixed !important;
+    top: auto !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+    box-sizing: border-box !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 5px !important;
+    padding: 5px !important;
+    overflow: hidden !important;
+    border-radius: 16px;
+    z-index: 9999;
+  }
+  .sidebar-label, .sidebar-note { display: none !important; }
+  .sidebar .nav-item {
+    display: flex !important;
+    flex: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 5px 2px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+  }
+  .sidebar .nav-icon { flex: none; width: 23px; height: 23px; font-size: 15px; }
+}
+@media (max-width: 560px) {
+  .app { padding: 12px 10px calc(112px + env(safe-area-inset-bottom)); }
+  .sidebar { left: 9px !important; right: 9px !important; }
+  .sidebar .nav-item { font-size: 10px !important; }
+}
 </style>
 <div id="authGate" role="dialog" aria-modal="true" aria-labelledby="authHeading">
   <div id="authCard">
