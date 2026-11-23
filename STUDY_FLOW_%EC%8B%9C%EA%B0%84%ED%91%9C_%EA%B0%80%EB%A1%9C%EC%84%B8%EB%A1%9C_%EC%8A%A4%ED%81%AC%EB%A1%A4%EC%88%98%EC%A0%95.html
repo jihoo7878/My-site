@@ -319,7 +319,8 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:pan-y;
+  /* 블록을 직접 잡으면 블록 이동/길이 조절 제스처가 우선 */
+  touch-action:none;
   cursor:grab;
 }
 .schedule-block:active{cursor:grabbing}
@@ -1262,6 +1263,8 @@ function enableScheduleHorizontalSwipe(){
 
   scroll.addEventListener('pointerdown',e=>{
     if(e.pointerType!=='touch')return;
+    /* 일정 블록 위에서는 블록 자체의 드래그가 우선 */
+    if(e.target.closest('.schedule-block'))return;
 
     const startX=e.clientX;
     const startY=e.clientY;
@@ -1438,9 +1441,7 @@ function renderSchedule(){
         document.querySelectorAll('.schedule-block').forEach(x=>x.classList.toggle('selected',x===el));
         renderSelection();
 
-        /* 터치 세로 드래그는 페이지 스크롤, 가로 드래그는 시간표 스크롤 */
-        if(e.pointerType==='touch')return;
-
+        /* 빈 공간은 페이지/시간표 스크롤, 블록을 직접 잡으면 블록 이동 */
         const rect=el.getBoundingClientRect();
         const relativeY=e.clientY-rect.top;
         const mode=relativeY>=rect.height*0.65?'resize':'move';
