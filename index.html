@@ -1903,7 +1903,7 @@ function renderTodo(){
   }).join('');
   const unassigned=stats.items.filter(item=>!item.categoryId||!categories.some(c=>c.id===item.categoryId));
   const unassignedHtml=unassigned.length?`<section class="todo-category"><div class="todo-category-head"><div class="todo-category-title">미분류 <span class="todo-category-type">카테고리 미지정</span></div></div>${unassigned.map(item=>`<div class="todo-item ${item.done?'done':''}"><input class="todo-check" type="checkbox" data-todo-check="${escapeHTML(item.id)}" ${item.done?'checked':''}><span class="todo-item-title">${escapeHTML(item.title)}</span><div class="todo-menu-wrap"><button class="todo-menu-btn" type="button" data-todo-menu-toggle="${escapeHTML(item.id)}">⋮</button><div class="todo-menu" id="todoMenu-${escapeHTML(item.id)}"><button type="button" data-todo-action="edit" data-todo-id="${escapeHTML(item.id)}">수정</button><button type="button" data-todo-action="delete" data-todo-id="${escapeHTML(item.id)}">삭제</button></div></div></div>`).join('')}</section>`:'';
-  $('todoCategories').innerHTML=(html+unassignedHtml)||(categories.length?'<div class="todo-empty">이 날짜에 등록된 할 일이 없어요. 할 일을 추가해 보세요.</div>':'<div class="todo-empty">아직 카테고리가 없어요.<br>카테고리 관리에서 과목이나 생활 카테고리를 직접 추가해 보세요.</div>');
+  $('todoCategories').innerHTML=(html+unassignedHtml)||'<div class="todo-empty">이 날짜에 등록된 할 일이 없어요. 할 일을 추가해 보세요.</div>';
 
   const routines=data.todoRoutines;
   $('todoRoutineList').innerHTML=routines.length?routines.map(r=>`
@@ -1925,10 +1925,12 @@ function todoCategoryOptions(selected=''){
 }
 
 function openAddTodoModal(){
-  if(!data.todoCategories.length)return toast('먼저 카테고리를 추가해 주세요.');
   openModal('할 일 추가',`
-    <label class="muted">카테고리</label>
-    <select class="field" id="todoFormCategory">${todoCategoryOptions()}</select>
+    <label class="muted">카테고리 <span style="color:var(--muted);font-weight:400">(선택 사항)</span></label>
+    <select class="field" id="todoFormCategory">
+      <option value="">카테고리 없이 추가</option>
+      ${todoCategoryOptions()}
+    </select>
     <label class="muted" style="display:block;margin-top:12px">할 일</label>
     <input class="field" id="todoFormTitle" maxlength="100" placeholder="예: 수학 미적분 문제 20개 풀기">
     <label class="muted" style="display:block;margin-top:12px">날짜</label>
@@ -1938,7 +1940,7 @@ function openAddTodoModal(){
     const date=$('todoFormDate').value;
     if(!title)return toast('할 일 내용을 입력해 주세요.');
     if(!date)return toast('날짜를 선택해 주세요.');
-    data.todoItems.push({id:uid(),title,date,categoryId:$('todoFormCategory').value,done:false,routineId:null,routineSourceDate:null,createdAt:new Date().toISOString()});
+    data.todoItems.push({id:uid(),title,date,categoryId:$('todoFormCategory').value||'',done:false,routineId:null,routineSourceDate:null,createdAt:new Date().toISOString()});
     data.todoCelebratedDates=data.todoCelebratedDates.filter(d=>d!==date);
     selectedTodoDate=date;closeModal();save();toast('할 일을 추가했어요.');
   });
