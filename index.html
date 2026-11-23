@@ -241,8 +241,8 @@ th{color:var(--muted);font-weight:600}
 
   -webkit-overflow-scrolling:touch;
 
-  /* 가로 스크롤 허용, 세로 제스처는 페이지로 전달 */
-  touch-action:none;
+  /* 세로 제스처는 페이지, 가로 제스처는 아래 JS가 시간표에 적용 */
+  touch-action:pan-y;
 }
 
 .week-grid{
@@ -287,7 +287,7 @@ th{color:var(--muted);font-weight:600}
     #293246 31.4px,
     #293246 32.4px
   );
-  touch-action:none;
+  touch-action:pan-y;
 }
 .day-column.today{background-color:#8ba8ff08}
 
@@ -319,7 +319,7 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:none;
+  touch-action:pan-y;
   cursor:grab;
 }
 .schedule-block:active{cursor:grabbing}
@@ -1254,6 +1254,49 @@ function getBlockVisibleRange(block){
 }
 
 /* 주간 시간표 그리기 */
+/* 시간표 영역: 가로 스와이프만 시간표를 이동시키고 세로 스와이프는 페이지에 맡김 */
+function enableScheduleHorizontalSwipe(){
+  const scroll=$('scheduleScroll');
+  if(!scroll||scroll.dataset.horizontalSwipeReady)return;
+  scroll.dataset.horizontalSwipeReady='1';
+
+  scroll.addEventListener('pointerdown',e=>{
+    if(e.pointerType!=='touch')return;
+
+    const startX=e.clientX;
+    const startY=e.clientY;
+    const startScrollLeft=scroll.scrollLeft;
+    let axis=null;
+
+    const onMove=ev=>{
+      const dx=ev.clientX-startX;
+      const dy=ev.clientY-startY;
+
+      if(!axis){
+        if(Math.max(Math.abs(dx),Math.abs(dy))<7)return;
+        axis=Math.abs(dx)>Math.abs(dy)?'x':'y';
+      }
+
+      if(axis==='x'){
+        scroll.scrollLeft=startScrollLeft-dx;
+        ev.preventDefault();
+      }else{
+        cleanup();
+      }
+    };
+
+    const cleanup=()=>{
+      window.removeEventListener('pointermove',onMove);
+      window.removeEventListener('pointerup',cleanup);
+      window.removeEventListener('pointercancel',cleanup);
+    };
+
+    window.addEventListener('pointermove',onMove,{passive:false});
+    window.addEventListener('pointerup',cleanup,{once:true});
+    window.addEventListener('pointercancel',cleanup,{once:true});
+  },{passive:true});
+}
+
 function renderSchedule(){
   const grid=$('scheduleGrid');
   const dates=getWeekDates();
@@ -1394,6 +1437,10 @@ function renderSchedule(){
         pasteTarget={date,start:block.start};
         document.querySelectorAll('.schedule-block').forEach(x=>x.classList.toggle('selected',x===el));
         renderSelection();
+
+        /* 터치 세로 드래그는 페이지 스크롤, 가로 드래그는 시간표 스크롤 */
+        if(e.pointerType==='touch')return;
+
         const rect=el.getBoundingClientRect();
         const relativeY=e.clientY-rect.top;
         const mode=relativeY>=rect.height*0.65?'resize':'move';
