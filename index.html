@@ -325,12 +325,12 @@ th{color:var(--muted);font-weight:600}
 .schedule-block:active{cursor:grabbing}
 .schedule-block::after{
   content:'';position:absolute;left:0;right:0;bottom:0;height:35%;
-  border-top:1px dashed #ffffff30;background:linear-gradient(to bottom,#ffffff00,#ffffff0d);
+  border-top:0;background:linear-gradient(to bottom,#ffffff00,#ffffff0d);
   pointer-events:none;
 }
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
-.schedule-block.selected{outline:2px solid #e8edff;z-index:8}
+.schedule-block.selected{outline:2px solid #ffffff;border:1px solid #ffffff;box-shadow:0 0 0 2px #ffffff35,0 0 12px #ffffff45;z-index:8}
 
 .block-title{font-weight:750;overflow-wrap:anywhere}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
@@ -341,9 +341,11 @@ th{color:var(--muted);font-weight:600}
 
 .schedule-selected{
   display:flex;align-items:center;gap:7px;
-  flex-wrap:wrap;margin-top:10px;min-height:28px;
+  flex-wrap:wrap;margin-top:10px;min-height:38px;
+  padding:8px 10px;border:1px solid var(--line);border-radius:10px;
+  background:#111722;
 }
-.schedule-selected-info{font-size:11px;color:var(--muted);margin-right:auto}
+.schedule-selected-info{font-size:11px;color:var(--muted);margin-right:auto;min-width:160px}
 .schedule-empty-hint{font-size:11px;color:var(--muted)}
 
 button:disabled{opacity:.4;cursor:not-allowed}
@@ -574,10 +576,6 @@ header{margin-bottom:22px}
         <button class="mini" id="thisWeek">오늘</button>
       </div>
 
-      <div class="schedule-actions">
-        <button class="mini" id="copyEventBtn">복사</button>
-        <button class="mini" id="pasteEventBtn" disabled>붙여넣기</button>
-      </div>
     </div>
 
     <div class="schedule-settings">
@@ -1398,7 +1396,6 @@ function renderSchedule(){
   scroll.scrollLeft=previousLeft;
   scroll.scrollTop=previousTop;
 
-  $('pasteEventBtn').disabled=!clipboardBlock;
   renderSelection();
 }
 
@@ -1406,58 +1403,39 @@ function renderSchedule(){
 function renderSelection(){
   const area=$('scheduleSelected');
   const block=data.scheduleBlocks.find(b=>b.id===selectedBlockId);
-
-  if(!block){
-    if(selectedSlot){
-      area.innerHTML=`
-        <span class="schedule-selected-info">
-          선택 위치: ${escapeHTML(selectedSlot.date)} ·
-          ${timeText(selectedSlot.start)}~${timeText(selectedSlot.start+60)}
-        </span>
-      `;
-    }else{
-      area.innerHTML=`
-        <span class="schedule-empty-hint">
-          빈 시간대를 선택하거나 일정을 클릭하세요.
-        </span>
-      `;
-    }
-    return;
-  }
+  const info=block
+    ? `${escapeHTML(block.title)} · ${timeText(block.start)}–${timeText(block.end)}${block.repeat?' · 매주 반복':''}`
+    : selectedSlot
+      ? `선택 위치: ${escapeHTML(selectedSlot.date)} · ${timeText(selectedSlot.start)}~${timeText(selectedSlot.start+60)}`
+      : '일정을 선택하면 편집·복사·삭제할 수 있습니다.';
 
   area.innerHTML=`
-    <span class="schedule-selected-info">
-      ${escapeHTML(block.title)} · ${timeText(block.start)}–${timeText(block.end)}
-      ${block.repeat?' · 매주 반복':''}
-    </span>
-    <button class="mini" id="editSelectedBlock">편집</button>
-    <button class="mini" id="copySelectedBlock">복사</button>
-    <button class="mini" id="deleteSelectedBlock">삭제</button>
+    <span class="schedule-selected-info">${info}</span>
+    <button class="mini" id="editSelectedBlock" ${block?'':'disabled'}>편집</button>
+    <button class="mini" id="copyEventBtn" ${block?'':'disabled'}>복사</button>
+    <button class="mini" id="pasteEventBtn" ${clipboardBlock?'':'disabled'}>붙여넣기</button>
+    <button class="mini" id="deleteSelectedBlock" ${block?'':'disabled'}>삭제</button>
   `;
 
-  $('editSelectedBlock').onclick=()=>{
-    openScheduleModal(block.id,{
+  if(block){
+    $('editSelectedBlock').onclick=()=>openScheduleModal(block.id,{
       date:pasteTarget?.date||block.date||todayISO()
     });
-  };
-
-  $('copySelectedBlock').onclick=()=>copyScheduleBlock(block);
-
-  $('deleteSelectedBlock').onclick=()=>{
-    const message=block.repeat
-      ?'매주 반복되는 이 일정을 전체 삭제할까요?'
-      :'이 일정을 삭제할까요?';
-
-    if(!confirm(message))return;
-
-    data.scheduleBlocks=data.scheduleBlocks.filter(b=>b.id!==block.id);
-    selectedBlockId=null;
-    selectedSlot=null;
-    pasteTarget=null;
-
-    save();
-    toast('일정을 삭제했어요.');
-  };
+    $('copyEventBtn').onclick=()=>copyScheduleBlock(block);
+    $('deleteSelectedBlock').onclick=()=>{
+      const message=block.repeat
+        ?'매주 반복되는 이 일정을 전체 삭제할까요?'
+        :'이 일정을 삭제할까요?';
+      if(!confirm(message))return;
+      data.scheduleBlocks=data.scheduleBlocks.filter(b=>b.id!==block.id);
+      selectedBlockId=null;
+      selectedSlot=null;
+      pasteTarget=null;
+      save();
+      toast('일정을 삭제했어요.');
+    };
+  }
+  $('pasteEventBtn').onclick=pasteScheduleBlock;
 }
 
 /* 복사 */
@@ -1790,18 +1768,7 @@ $('thisWeek').onclick=()=>{
   renderSchedule();
 };
 
-$('copyEventBtn').onclick=()=>{
-  const block=data.scheduleBlocks.find(b=>b.id===selectedBlockId);
-
-  if(!block){
-    toast('먼저 복사할 일정을 선택해 주세요.');
-    return;
-  }
-
-  copyScheduleBlock(block);
-};
-
-$('pasteEventBtn').onclick=pasteScheduleBlock;
+// 복사·붙여넣기 버튼은 renderSelection()에서 선택 영역에 함께 표시합니다.
 
 /* TO DO LIST */
 let selectedTodoDate=todayISO();
