@@ -911,6 +911,13 @@ header{margin-bottom:22px}
   .page-view .stat { grid-column:span 6 !important; }
 }
 
+/* FIX: keep only the selected page visible on tablet/touch layouts. */
+@media (max-width:1200px), (pointer:coarse) {
+  .main-content { display:block !important; width:100% !important; min-width:0 !important; }
+  .page-view { display:none !important; width:100% !important; max-width:none !important; min-width:0 !important; }
+  .page-view.active { display:block !important; }
+  .page-view .grid { display:grid !important; width:100% !important; max-width:none !important; min-width:0 !important; }
+}
 </style>
 <div id="authGate" role="dialog" aria-modal="true" aria-labelledby="authHeading">
   <div id="authCard">
