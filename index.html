@@ -133,6 +133,49 @@ th{color:var(--muted);font-weight:600}
 .toast.show{opacity:1}
 .footer{text-align:center;color:#667187;font-size:10px;margin-top:22px}
 
+/* 인강 진도 관리 */
+.course-item{
+  background:#111827;border:1px solid #2b354a;border-radius:13px;
+  padding:12px;margin-top:9px;
+}
+.course-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.course-name{font-size:12px;font-weight:750;overflow-wrap:anywhere}
+.course-count{font-size:11px;color:var(--muted);white-space:nowrap}
+.course-progress{height:8px;background:#2a3347;border-radius:20px;overflow:hidden;margin:10px 0 8px}
+.course-progress-fill{
+  height:100%;width:0;
+  background:linear-gradient(90deg,#70d6ad,#a0f0c9);
+  border-radius:20px;transition:width .3s ease;
+}
+.course-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.course-percent{font-size:10px;color:var(--muted)}
+.course-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.course-btn{
+  border:1px solid var(--line);background:#202a3c;color:var(--text);
+  border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;
+}
+.course-btn.plus{background:#284d43;border-color:#39745e;color:#baf3d9}
+.course-btn:disabled{opacity:.35;cursor:not-allowed}
+.course-empty{font-size:11px;color:var(--muted);padding:9px 2px}
+.celebrate-back{
+  position:fixed;inset:0;background:#050914d9;display:none;
+  place-items:center;padding:18px;z-index:60;
+}
+.celebrate-box{
+  width:min(390px,100%);text-align:center;padding:30px 22px;
+  background:linear-gradient(145deg,#202c43,#151c2b);
+  border:1px solid #637fb9;border-radius:22px;box-shadow:0 20px 70px #0009;
+  animation:celebrateIn .35s ease-out;
+}
+.celebrate-icon{font-size:48px;margin-bottom:8px}
+.celebrate-box h2{font-size:23px;margin:5px 0 8px}
+.celebrate-box p{font-size:13px;color:#b8c4d9;margin:0 0 20px}
+@keyframes celebrateIn{
+  from{opacity:0;transform:translateY(12px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+
 /* 주간 시간표 */
 .schedule-toolbar{
   display:flex;justify-content:space-between;align-items:center;
@@ -386,9 +429,9 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
   <div class="card stat">
     <div class="stat-icon">✓</div>
-    <div class="stat-label">완료한 진도</div>
+    <div class="stat-label">완료한 강의</div>
     <div class="stat-value" id="doneCount">0개</div>
-    <div class="stat-foot">전체 학습 항목 기준</div>
+    <div class="stat-foot">인강 수강 완료 누적</div>
   </div>
 
   <div class="card wide">
@@ -578,6 +621,16 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 <div class="toast" id="toast"></div>
 
+<!-- 완강 축하 팝업 -->
+<div class="celebrate-back" id="celebrateBack">
+  <div class="celebrate-box">
+    <div class="celebrate-icon">🎉</div>
+    <h2>완강을 축하합니다!</h2>
+    <p id="celebrateMessage">강의를 끝까지 수강했어요.</p>
+    <button class="btn primary" id="closeCelebrate">확인</button>
+  </div>
+</div>
+
 <script>
 const SUBJECTS=['국어','수학','영어','통합사회','통합과학'];
 const KEY='study-flow-v1';
@@ -636,6 +689,7 @@ function defaultData(){
       end:DEFAULT_VIEW_END
     },
     tasks:SUBJECTS.map(s=>({id:uid(),subject:s,title:'',done:false})),
+    courses:[],
     logs:[]
   };
 }
@@ -650,12 +704,33 @@ function normalizeData(raw){
     goal:Number(d.goal)||40,
     events:Array.isArray(d.events)?d.events:[],
     tasks:Array.isArray(d.tasks)?d.tasks:base.tasks,
+    courses:Array.isArray(d.courses)?d.courses:
+      (Array.isArray(d.tasks)?d.tasks.filter(t=>t&&String(t.title||'').trim()).map(t=>({
+        id:t.id||uid(),
+        subject:SUBJECTS.includes(t.subject)?t.subject:SUBJECTS[0],
+        title:String(t.title||'기존 학습 항목'),
+        total:1,
+        completed:t.done?1:0
+      })):[]),
     logs:Array.isArray(d.logs)?d.logs:[],
     scheduleView:{
       start:Number(d.scheduleView?.start??DEFAULT_VIEW_START),
       end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
     }
   };
+
+  result.courses=result.courses
+    .filter(c=>c&&String(c.title||'').trim())
+    .map(c=>{
+      const total=Math.max(1,Math.floor(Number(c.total)||1));
+      return {
+        id:c.id||uid(),
+        subject:SUBJECTS.includes(c.subject)?c.subject:SUBJECTS[0],
+        title:String(c.title||'강의'),
+        total,
+        completed:clamp(Math.floor(Number(c.completed)||0),0,total)
+      };
+    });
 
   result.scheduleView.start=clamp(result.scheduleView.start,0,1380);
   result.scheduleView.end=clamp(result.scheduleView.end,60,1440);
@@ -1425,37 +1500,50 @@ function render(){
     Math.round(weekM/(data.goal*60)*100)+'%';
 
   $('goalFoot').textContent=`목표 ${data.goal}시간`;
-  $('doneCount').textContent=
-    data.tasks.filter(t=>t.done).length+'개';
+  const completedLectureCount=data.courses.reduce((sum,c)=>sum+c.completed,0);
+  $('doneCount').textContent=completedLectureCount+'강';
 
-  $('subjectsProgress').innerHTML=SUBJECTS.map(s=>{
-    const list=data.tasks.filter(t=>t.subject===s);
-    const done=list.filter(t=>t.done).length;
-    const p=list.length?Math.round(done/list.length*100):0;
+  $('subjectsProgress').innerHTML=SUBJECTS.map(subject=>{
+    const list=data.courses.filter(c=>c.subject===subject);
+    const completed=list.reduce((sum,c)=>sum+c.completed,0);
+    const total=list.reduce((sum,c)=>sum+c.total,0);
+    const percent=total?Math.round(completed/total*100):0;
 
     return `
       <div class="subject">
         <div class="subject-top">
-          <strong>${s}</strong>
-          <span>${done}/${list.length} 완료 · ${p}%</span>
+          <strong>${subject}</strong>
+          <span>${completed}/${total}강 · ${percent}%</span>
         </div>
-
         <div class="progress-track">
-          <div class="progress-fill" style="width:${p}%"></div>
+          <div class="progress-fill" style="width:${percent}%"></div>
         </div>
 
-        ${list.map(t=>`
-          <div style="display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px">
-            <input type="checkbox" data-task="${escapeHTML(t.id)}"
-              ${t.done?'checked':''} style="accent-color:#91aaff">
-
-            <span style="flex:1;color:${t.done?'#758198':'#dce3f1'};text-decoration:${t.done?'line-through':'none'}">
-              ${escapeHTML(t.title||'학습 항목을 추가해 주세요')}
-            </span>
-
-            <button class="mini" data-delete-task="${escapeHTML(t.id)}">×</button>
-          </div>
-        `).join('')}
+        ${list.length?list.map(course=>{
+          const p=Math.round(course.completed/course.total*100);
+          const finished=course.completed>=course.total;
+          return `
+            <div class="course-item">
+              <div class="course-head">
+                <div class="course-name">${escapeHTML(course.title)}</div>
+                <div class="course-count">${course.completed}/${course.total}강</div>
+              </div>
+              <div class="course-progress">
+                <div class="course-progress-fill" style="width:${p}%"></div>
+              </div>
+              <div class="course-bottom">
+                <span class="course-percent">${finished?'완강 완료':`진도율 ${p}%`}</span>
+                <div class="course-actions">
+                  <button class="course-btn" data-course-minus="${escapeHTML(course.id)}"
+                    ${course.completed===0?'disabled':''}>−1</button>
+                  <button class="course-btn plus" data-course-plus="${escapeHTML(course.id)}"
+                    ${finished?'disabled':''}>+1강 수강 완료</button>
+                  <button class="course-btn" data-course-delete="${escapeHTML(course.id)}">삭제</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join(''):'<div class="course-empty">등록된 인강이 없습니다.</div>'}
       </div>
     `;
   }).join('');
@@ -1519,29 +1607,40 @@ $('saveModal').onclick=()=>{
   if(modalAction)modalAction();
 };
 
-/* 학습 항목 추가 */
-$('addTaskBtn').onclick=()=>openModal('학습 항목 추가',`
+/* 인강 추가 */
+$('addTaskBtn').textContent='＋ 인강 추가';
+$('addTaskBtn').onclick=()=>openModal('인강 추가',`
   <label class="muted">과목</label>
   <select class="field" id="fSubject">
-    ${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}
+    ${SUBJECTS.map(subject=>`<option>${subject}</option>`).join('')}
   </select>
 
-  <label class="muted">교재·강의·학습 내용</label>
-  <input class="field" id="fTitle" placeholder="예: 수학 미적분 3강">
+  <label class="muted" style="display:block;margin-top:12px">강의 제목</label>
+  <input class="field" id="fTitle" placeholder="예: 미적분 개념 완성">
+
+  <label class="muted" style="display:block;margin-top:12px">전체 강의 수</label>
+  <input class="field" id="fTotal" type="number" min="1" max="1000" step="1" placeholder="예: 30">
+  <p class="muted" style="font-size:10px;margin:7px 0 0">전체 강의 수를 입력하면 수강할 때마다 진도율이 자동으로 올라갑니다.</p>
 `,()=>{
   const title=$('fTitle').value.trim();
+  const total=Math.floor(Number($('fTotal').value));
 
-  if(!title)return toast('학습 내용을 입력해 주세요.');
+  if(!title)return toast('강의 제목을 입력해 주세요.');
+  if(!Number.isInteger(total)||total<1||total>1000){
+    return toast('전체 강의 수를 1~1000 사이로 입력해 주세요.');
+  }
 
-  data.tasks.push({
+  data.courses.push({
     id:uid(),
     subject:$('fSubject').value,
     title,
-    done:false
+    total,
+    completed:0
   });
 
   closeModal();
   save();
+  toast('인강을 등록했어요.');
 });
 
 /* 학습 시간 직접 기록 */
@@ -1583,18 +1682,44 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
 });
 
 /* 학습 항목 및 기록 삭제 */
-document.addEventListener('change',e=>{
-  if(e.target.dataset.task){
-    const task=data.tasks.find(t=>t.id===e.target.dataset.task);
+document.addEventListener('click',e=>{
+  const plusId=e.target.dataset.coursePlus;
+  const minusId=e.target.dataset.courseMinus;
+  const deleteCourseId=e.target.dataset.courseDelete;
 
-    if(task){
-      task.done=e.target.checked;
+  if(plusId){
+    const course=data.courses.find(c=>c.id===plusId);
+    if(course&&course.completed<course.total){
+      course.completed++;
+      const justFinished=course.completed===course.total;
       save();
+      if(justFinished){
+        $('celebrateMessage').textContent=`${course.title} · ${course.total}강을 모두 수강했어요!`;
+        $('celebrateBack').style.display='grid';
+      }else{
+        toast(`${course.title} ${course.completed}강 수강 완료!`);
+      }
     }
   }
-});
 
-document.addEventListener('click',e=>{
+  if(minusId){
+    const course=data.courses.find(c=>c.id===minusId);
+    if(course&&course.completed>0){
+      course.completed--;
+      save();
+      toast('수강 진도를 1강 되돌렸어요.');
+    }
+  }
+
+  if(deleteCourseId){
+    const course=data.courses.find(c=>c.id===deleteCourseId);
+    if(course&&confirm(`"${course.title}" 인강을 삭제할까요?`)){
+      data.courses=data.courses.filter(c=>c.id!==deleteCourseId);
+      save();
+      toast('인강을 삭제했어요.');
+    }
+  }
+
   if(e.target.dataset.deleteTask){
     data.tasks=data.tasks.filter(t=>t.id!==e.target.dataset.deleteTask);
     save();
@@ -1604,6 +1729,11 @@ document.addEventListener('click',e=>{
     data.logs=data.logs.filter(l=>String(l.id)!==e.target.dataset.deleteLog);
     save();
   }
+});
+
+$('closeCelebrate').onclick=()=>{$('celebrateBack').style.display='none';};
+$('celebrateBack').addEventListener('click',e=>{
+  if(e.target===$('celebrateBack'))$('celebrateBack').style.display='none';
 });
 
 /* 타이머 */
@@ -1716,7 +1846,7 @@ $('importFile').onchange=async e=>{
 
     if(
       !Array.isArray(value.logs)||
-      !Array.isArray(value.tasks)||
+      (!Array.isArray(value.tasks)&&!Array.isArray(value.courses))||
       (!Array.isArray(value.events)&&!Array.isArray(value.scheduleBlocks))
     ){
       throw Error('invalid');
