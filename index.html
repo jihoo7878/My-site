@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -156,10 +157,14 @@ th{color:var(--muted);font-weight:600}
 }
 
 .schedule-scroll{
-  width:100%;overflow:auto;border:1px solid var(--line);
-  border-radius:12px;background:#111622;
+  width:100%;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#111622;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
+  touch-action:pan-x pan-y;
 }
 
 .week-grid{
@@ -219,34 +224,74 @@ th{color:var(--muted);font-weight:600}
   box-shadow:0 0 8px #ffffff35;
 }
 
+/* 일정 본문: 터치 스크롤 허용 */
 .schedule-block{
-  position:absolute;left:2px;right:2px;
-  min-height:5px;border-radius:6px;
-  padding:3px 4px;overflow:hidden;z-index:2;
-  color:#eaf0ff;background:#354b7c;
+  position:absolute;
+  left:2px;right:2px;
+  min-height:5px;
+  border-radius:6px;
+  padding:3px 4px;
+  overflow:hidden;
+  z-index:2;
+  color:#eaf0ff;
+  background:#354b7c;
   border:1px solid #7189c855;
-  font-size:9px;line-height:1.25;
-  user-select:none;-webkit-user-select:none;
-  touch-action:none;cursor:grab;
+  font-size:9px;
+  line-height:1.25;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y;
+  cursor:grab;
 }
 .schedule-block:active{cursor:grabbing}
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
 .schedule-block.selected{outline:2px solid #e8edff;z-index:8}
+
 .block-title{font-weight:750;overflow-wrap:anywhere}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
 .block-repeat{font-size:8px;opacity:.75;margin-top:1px}
-.resize-handle{
-  position:absolute;left:0;right:0;bottom:0;
-  height:8px;cursor:ns-resize;touch-action:none;
+
+/* 이동·길이 조절 손잡이: 일정 박스와 별도인 형제 요소 */
+.schedule-move-handle{
+  position:absolute;
+  width:19px;height:19px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+  background:#ffffff35;
+  border:1px solid #ffffff35;
+  border-radius:5px;
+  font-size:13px;
+  font-weight:900;
+  z-index:10;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
 }
+.schedule-resize-handle{
+  position:absolute;
+  height:10px;
+  min-width:22px;
+  background:#dce5ff55;
+  border:1px solid #ffffff55;
+  border-radius:5px;
+  z-index:10;
+  cursor:ns-resize;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.schedule-block.dragging{opacity:.85;z-index:12;box-shadow:0 8px 20px #0007}
+.schedule-block.dragging~.schedule-move-handle,
+.schedule-block.dragging~.schedule-resize-handle{display:none}
+
 .schedule-selected{
   display:flex;align-items:center;gap:7px;
   flex-wrap:wrap;margin-top:10px;min-height:28px;
 }
 .schedule-selected-info{font-size:11px;color:var(--muted);margin-right:auto}
 .schedule-empty-hint{font-size:11px;color:var(--muted)}
-.schedule-block.dragging{opacity:.85;z-index:12;box-shadow:0 8px 20px #0007}
 
 button:disabled{opacity:.4;cursor:not-allowed}
 
@@ -588,7 +633,6 @@ function defaultData(){
   };
 }
 
-/* 기존 데이터 호환 및 시간표 설정 */
 function normalizeData(raw){
   const base=defaultData();
   const d=raw&&typeof raw==='object'?raw:{};
@@ -606,19 +650,11 @@ function normalizeData(raw){
     }
   };
 
-  result.scheduleView.start=clamp(
-    result.scheduleView.start,0,1380
-  );
-
-  result.scheduleView.end=clamp(
-    result.scheduleView.end,60,1440
-  );
+  result.scheduleView.start=clamp(result.scheduleView.start,0,1380);
+  result.scheduleView.end=clamp(result.scheduleView.end,60,1440);
 
   if(result.scheduleView.end<=result.scheduleView.start){
-    result.scheduleView={
-      start:DEFAULT_VIEW_START,
-      end:DEFAULT_VIEW_END
-    };
+    result.scheduleView={start:DEFAULT_VIEW_START,end:DEFAULT_VIEW_END};
   }
 
   if(Array.isArray(d.scheduleBlocks)){
@@ -748,7 +784,6 @@ function updateViewRange(){
   }
 
   data.scheduleView={start,end};
-
   selectedSlot=null;
   selectedBlockId=null;
   pasteTarget=null;
@@ -823,7 +858,6 @@ function renderSchedule(){
     grid.appendChild(head);
   });
 
-  /* 시간 표시 열 */
   const timeCol=document.createElement('div');
   timeCol.className='time-column';
   timeCol.style.height=totalHeight+'px';
@@ -844,9 +878,10 @@ function renderSchedule(){
     col.dataset.date=date;
     col.style.height=totalHeight+'px';
 
-    /* 빈 시간 칸 클릭 */
     col.addEventListener('click',e=>{
       if(e.target.closest('.schedule-block'))return;
+      if(e.target.closest('.schedule-move-handle'))return;
+      if(e.target.closest('.schedule-resize-handle'))return;
 
       const rect=col.getBoundingClientRect();
       const y=clamp(e.clientY-rect.top,0,totalHeight);
@@ -863,7 +898,6 @@ function renderSchedule(){
       renderSchedule();
     });
 
-    /* 선택한 1시간 칸 표시 */
     if(selectedSlot&&selectedSlot.date===date){
       const selection=document.createElement('div');
       selection.className='slot-selection';
@@ -883,7 +917,6 @@ function renderSchedule(){
       }
     }
 
-    /* 일정 블록 */
     blocksForDate(date).forEach(block=>{
       const visible=getBlockVisibleRange(block);
       if(!visible)return;
@@ -894,7 +927,6 @@ function renderSchedule(){
         (selectedBlockId===block.id?' selected':'');
 
       el.dataset.id=block.id;
-
       el.style.top=visible.top+'px';
       el.style.height=visible.height+'px';
 
@@ -902,7 +934,6 @@ function renderSchedule(){
         <div class="block-title">${escapeHTML(block.title)}</div>
         <div class="block-time">${timeText(block.start)}–${timeText(block.end)}</div>
         ${block.repeat?'<div class="block-repeat">↻ 매주 반복</div>':''}
-        <div class="resize-handle" aria-label="일정 길이 조절"></div>
       `;
 
       /* 일정 선택 */
@@ -923,16 +954,44 @@ function renderSchedule(){
         renderSelection();
       });
 
+      /* PC에서는 일정 본문을 마우스로 드래그 */
       el.addEventListener('pointerdown',e=>{
-        if(e.target.closest('.resize-handle'))return;
+        if(e.pointerType==='touch')return;
         beginBlockGesture(e,block,'move',el);
       });
 
-      el.querySelector('.resize-handle').addEventListener('pointerdown',e=>{
+      col.appendChild(el);
+
+      /* 이동 손잡이: 일정 박스와 분리된 형제 요소 */
+      const moveHandle=document.createElement('div');
+      moveHandle.className='schedule-move-handle';
+      moveHandle.textContent='⠿';
+      moveHandle.setAttribute('aria-label','일정 이동');
+
+      moveHandle.style.top=(visible.top+2)+'px';
+      moveHandle.style.right='4px';
+
+      moveHandle.addEventListener('pointerdown',e=>{
+        beginBlockGesture(e,block,'move',el);
+      });
+
+      col.appendChild(moveHandle);
+
+      /* 길이 조절 손잡이: 일정 박스와 분리된 형제 요소 */
+      const resizeHandle=document.createElement('div');
+      resizeHandle.className='schedule-resize-handle';
+      resizeHandle.setAttribute('aria-label','일정 길이 조절');
+
+      resizeHandle.style.top=
+        (visible.top+visible.height-9)+'px';
+      resizeHandle.style.right='4px';
+      resizeHandle.style.width='24px';
+
+      resizeHandle.addEventListener('pointerdown',e=>{
         beginBlockGesture(e,block,'resize',el);
       });
 
-      col.appendChild(el);
+      col.appendChild(resizeHandle);
     });
 
     grid.appendChild(col);
@@ -1086,7 +1145,6 @@ function beginBlockGesture(e,block,mode,element){
     if(Math.abs(dy)>4)moved=true;
 
     if(mode==='resize'){
-      /* 길이 조절은 5분 단위 */
       const delta=Math.round(
         (dy/HOUR_HEIGHT*HOUR)/5
       )*5;
@@ -1101,7 +1159,6 @@ function beginBlockGesture(e,block,mode,element){
         ((currentEnd-currentStart)/HOUR*HOUR_HEIGHT)+'px';
 
     }else{
-      /* 이동은 1시간 단위 */
       const delta=Math.round(dy/HOUR_HEIGHT)*HOUR;
       const duration=initialEnd-initialStart;
 
