@@ -269,7 +269,7 @@ th{color:var(--muted);font-weight:600}
   background:#151c29;border-right:1px solid var(--line);
 }
 .time-label{
-  height:36px;position:relative;text-align:center;
+  height:32.4px;position:relative;text-align:center;
   font-size:9px;color:var(--muted);line-height:1;
 }
 .time-label span{
@@ -283,9 +283,9 @@ th{color:var(--muted);font-weight:600}
   background-image:repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent 35px,
-    #293246 35px,
-    #293246 36px
+    transparent 31.4px,
+    #293246 31.4px,
+    #293246 32.4px
   );
   touch-action:none;
 }
@@ -330,7 +330,7 @@ th{color:var(--muted);font-weight:600}
 }
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
-.schedule-block.selected{outline:2px solid #ffffff;border:1px solid #ffffff;box-shadow:0 0 0 2px #ffffff35,0 0 12px #ffffff45;z-index:8}
+.schedule-block.selected{outline:2px solid #fff !important;outline-offset:1px;border:1px solid #fff !important;box-shadow:0 0 0 2px #ffffff55,0 0 14px #ffffff75 !important;z-index:20}
 
 .block-title{font-weight:750;overflow-wrap:anywhere}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
@@ -346,6 +346,12 @@ th{color:var(--muted);font-weight:600}
   background:#111722;
 }
 .schedule-selected-info{font-size:11px;color:var(--muted);margin-right:auto;min-width:160px}
+.schedule-card-head{align-items:flex-start;gap:10px}
+.schedule-top-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:1;min-width:0;flex-wrap:wrap}
+.schedule-top-actions .schedule-selected{margin:0;min-height:32px;padding:4px 6px;border:0;background:transparent;flex:1;justify-content:flex-end}
+.schedule-top-actions .schedule-selected-info{min-width:0;font-size:10px}
+@media(max-width:700px){.schedule-card-head{flex-direction:column}.schedule-top-actions{width:100%;justify-content:flex-start}.schedule-top-actions .schedule-selected{justify-content:flex-start}}
+
 .schedule-empty-hint{font-size:11px;color:var(--muted)}
 
 button:disabled{opacity:.4;cursor:not-allowed}
@@ -563,9 +569,14 @@ header{margin-bottom:22px}
   <div class="page-intro"><div class="eyebrow">PLAN YOUR WEEK</div><h2>주간 플래너</h2><p>이번 주 계획을 확인하고 조정하세요.</p></div>
   <section class="grid">
 <div class="card wide">
-    <div class="card-head">
+    <div class="card-head schedule-card-head">
       <h3>주간 시간표</h3>
-      <button class="mini" id="addEventBtn">＋ 일정 추가</button>
+      <div class="schedule-top-actions">
+        <div class="schedule-selected" id="scheduleSelected">
+          <span class="schedule-empty-hint">일정을 선택하면 편집·복사·붙여넣기·삭제할 수 있습니다.</span>
+        </div>
+        <button class="mini" id="addEventBtn">＋ 일정 추가</button>
+      </div>
     </div>
 
     <div class="schedule-toolbar">
@@ -595,9 +606,6 @@ header{margin-bottom:22px}
       <div class="week-grid" id="scheduleGrid"></div>
     </div>
 
-    <div class="schedule-selected" id="scheduleSelected">
-      <span class="schedule-empty-hint">빈 시간 칸을 선택하거나 일정을 클릭하세요.</span>
-    </div>
   </div></section>
 </div>
 <div class="page-view" data-page-view="learning">
@@ -925,7 +933,7 @@ const DEFAULT_VIEW_START=360;
 const DEFAULT_VIEW_END=1440;
 
 const HOUR=60;
-const HOUR_HEIGHT=36;
+const HOUR_HEIGHT=32.4;
 
 const DAY_NAMES=['일','월','화','수','목','금','토'];
 const $=id=>document.getElementById(id);
@@ -1381,6 +1389,11 @@ function renderSchedule(){
 
       /* 블록 상단 65%: 이동 / 하단 35%: 길이 조절 */
       el.addEventListener('pointerdown',e=>{
+        selectedBlockId=block.id;
+        selectedSlot=null;
+        pasteTarget={date,start:block.start};
+        document.querySelectorAll('.schedule-block').forEach(x=>x.classList.toggle('selected',x===el));
+        renderSelection();
         const rect=el.getBoundingClientRect();
         const relativeY=e.clientY-rect.top;
         const mode=relativeY>=rect.height*0.65?'resize':'move';
