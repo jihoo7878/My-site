@@ -242,7 +242,7 @@ th{color:var(--muted);font-weight:600}
   -webkit-overflow-scrolling:touch;
 
   /* 가로 스크롤 허용, 세로 제스처는 페이지로 전달 */
-  touch-action:pan-x pan-y;
+  touch-action:none;
 }
 
 .week-grid{
@@ -287,7 +287,7 @@ th{color:var(--muted);font-weight:600}
     #293246 35px,
     #293246 36px
   );
-  touch-action:pan-x pan-y;
+  touch-action:none;
 }
 .day-column.today{background-color:#8ba8ff08}
 
@@ -319,10 +319,15 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:pan-x pan-y;
+  touch-action:none;
   cursor:grab;
 }
 .schedule-block:active{cursor:grabbing}
+.schedule-block::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:35%;
+  border-top:1px dashed #ffffff30;background:linear-gradient(to bottom,#ffffff00,#ffffff0d);
+  pointer-events:none;
+}
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
 .schedule-block.selected{outline:2px solid #e8edff;z-index:8}
@@ -331,39 +336,8 @@ th{color:var(--muted);font-weight:600}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
 .block-repeat{font-size:8px;opacity:.75;margin-top:1px}
 
-/* 이동·길이 조절 손잡이 */
-.schedule-move-handle{
-  position:absolute;
-  width:19px;height:19px;
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;
-  background:#ffffff35;
-  border:1px solid #ffffff35;
-  border-radius:5px;
-  font-size:13px;
-  font-weight:900;
-  z-index:10;
-  cursor:grab;
-  touch-action:none;
-  user-select:none;
-  -webkit-user-select:none;
-}
-.schedule-resize-handle{
-  position:absolute;
-  height:10px;
-  min-width:22px;
-  background:#dce5ff55;
-  border:1px solid #ffffff55;
-  border-radius:5px;
-  z-index:10;
-  cursor:ns-resize;
-  touch-action:none;
-  user-select:none;
-  -webkit-user-select:none;
-}
+/* 이동·길이 조절은 블록 영역 자체에서 수행 */
 .schedule-block.dragging{opacity:.85;z-index:12;box-shadow:0 8px 20px #0007}
-.schedule-block.dragging~.schedule-move-handle,
-.schedule-block.dragging~.schedule-resize-handle{display:none}
 
 .schedule-selected{
   display:flex;align-items:center;gap:7px;
@@ -725,6 +699,14 @@ header{margin-bottom:22px}
         <option value="personal">개인 일정</option>
         <option value="other">기타</option>
       </select>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="muted" for="scheduleColor">블록 색상</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <input class="field" id="scheduleColor" type="color" value="#354b7c" aria-label="일정 블록 색상" style="width:64px;height:42px;padding:4px;cursor:pointer">
+        <span class="muted" style="font-size:11px">시간표에서 표시할 색상을 선택하세요.</span>
+      </div>
     </div>
 
     <div style="margin-top:12px">
@@ -1323,8 +1305,6 @@ function renderSchedule(){
 
     col.addEventListener('click',e=>{
       if(e.target.closest('.schedule-block'))return;
-      if(e.target.closest('.schedule-move-handle'))return;
-      if(e.target.closest('.schedule-resize-handle'))return;
 
       const rect=col.getBoundingClientRect();
       const y=clamp(e.clientY-rect.top,0,totalHeight);
@@ -1372,6 +1352,10 @@ function renderSchedule(){
       el.dataset.id=block.id;
       el.style.top=visible.top+'px';
       el.style.height=visible.height+'px';
+      if(/^#[0-9a-fA-F]{6}$/.test(block.color||'')){
+        el.style.backgroundColor=block.color;
+        el.style.borderColor=block.color+'99';
+      }
 
       el.innerHTML=`
         <div class="block-title">${escapeHTML(block.title)}</div>
@@ -1397,44 +1381,15 @@ function renderSchedule(){
         renderSelection();
       });
 
-      /* PC에서는 일정 본문을 마우스로 드래그 */
+      /* 블록 상단 65%: 이동 / 하단 35%: 길이 조절 */
       el.addEventListener('pointerdown',e=>{
-        if(e.pointerType==='touch')return;
-        beginBlockGesture(e,block,'move',el);
+        const rect=el.getBoundingClientRect();
+        const relativeY=e.clientY-rect.top;
+        const mode=relativeY>=rect.height*0.65?'resize':'move';
+        beginBlockGesture(e,block,mode,el);
       });
 
       col.appendChild(el);
-
-      /* 이동 손잡이 */
-      const moveHandle=document.createElement('div');
-      moveHandle.className='schedule-move-handle';
-      moveHandle.textContent='⠿';
-      moveHandle.setAttribute('aria-label','일정 이동');
-
-      moveHandle.style.top=(visible.top+2)+'px';
-      moveHandle.style.right='4px';
-
-      moveHandle.addEventListener('pointerdown',e=>{
-        beginBlockGesture(e,block,'move',el);
-      });
-
-      col.appendChild(moveHandle);
-
-      /* 길이 조절 손잡이 */
-      const resizeHandle=document.createElement('div');
-      resizeHandle.className='schedule-resize-handle';
-      resizeHandle.setAttribute('aria-label','일정 길이 조절');
-
-      resizeHandle.style.top=
-        (visible.top+visible.height-9)+'px';
-      resizeHandle.style.right='4px';
-      resizeHandle.style.width='24px';
-
-      resizeHandle.addEventListener('pointerdown',e=>{
-        beginBlockGesture(e,block,'resize',el);
-      });
-
-      col.appendChild(resizeHandle);
     });
 
     grid.appendChild(col);
@@ -1512,6 +1467,7 @@ function copyScheduleBlock(block){
     start:block.start,
     end:block.end,
     type:block.type,
+    color:block.color,
     repeat:block.repeat
   };
 
@@ -1550,7 +1506,8 @@ function pasteScheduleBlock(){
     start,
     end,
     repeat:false,
-    type:source.type||'study'
+    type:source.type||'study',
+    color:source.color||''
   };
 
   data.scheduleBlocks.push(copy);
@@ -1723,6 +1680,9 @@ function openScheduleModal(id=null,defaults={}){
   );
 
   $('scheduleType').value=block?.type||'study';
+  const defaultColors={study:'#354b7c',personal:'#604777',other:'#356458'};
+  $('scheduleColor').value=/^#[0-9a-fA-F]{6}$/.test(block?.color||'')
+    ?block.color:(defaultColors[block?.type||'study']||'#354b7c');
 
   const defaultRepeat=defaults.date?false:true;
 
@@ -1773,7 +1733,8 @@ $('saveSchedule').onclick=()=>{
     day,
     date:repeat?null:date,
     repeat,
-    type:$('scheduleType').value
+    type:$('scheduleType').value,
+    color:$('scheduleColor').value
   };
 
   if(editingBlockId){
