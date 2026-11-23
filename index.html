@@ -927,7 +927,8 @@ header{margin-bottom:22px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const SUBJECTS=['국어','수학','영어','통합사회','통합과학'];
+const SUBJECTS=['국어','수학','영어','사회','과학','한국사','기타'];
+const normalizeLectureSubject=subject=>({'통합사회':'사회','통합과학':'과학'}[String(subject||'')]||String(subject||''));
 const KEY='study-flow-v1';
 
 const DEFAULT_VIEW_START=360;
@@ -1012,7 +1013,7 @@ function normalizeData(raw){
     courses:Array.isArray(d.courses)?d.courses:
       (Array.isArray(d.tasks)?d.tasks.filter(t=>t&&String(t.title||'').trim()).map(t=>({
         id:t.id||uid(),
-        subject:SUBJECTS.includes(t.subject)?t.subject:SUBJECTS[0],
+        subject:SUBJECTS.includes(normalizeLectureSubject(t.subject))?normalizeLectureSubject(t.subject):SUBJECTS[0],
         title:String(t.title||'기존 학습 항목'),
         total:1,
         completed:t.done?1:0
@@ -1043,7 +1044,7 @@ function normalizeData(raw){
       const total=Math.max(1,Math.floor(Number(c.total)||1));
       return {
         id:c.id||uid(),
-        subject:SUBJECTS.includes(c.subject)?c.subject:SUBJECTS[0],
+        subject:SUBJECTS.includes(normalizeLectureSubject(c.subject))?normalizeLectureSubject(c.subject):SUBJECTS[0],
         title:String(c.title||'강의'),
         total,
         completed:clamp(Math.floor(Number(c.completed)||0),0,total)
