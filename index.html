@@ -504,61 +504,32 @@ header{margin-bottom:22px}
   </aside>
   <main class="main-content">
 <div class="page-view active" data-page-view="home">
-<div class="page-intro" id="pageIntro">
-  <div class="eyebrow">YOUR STUDY, YOUR FLOW</div>
-  <h2 id="pageTitle">오늘의 공부를 쌓아가자.</h2>
-  <p id="pageDescription">작은 기록이 모여 큰 변화를 만듭니다.</p>
-</div><section class="grid">
-<div class="card stat">
-    <div class="stat-icon">◷</div>
-    <div class="stat-label">오늘 공부 시간</div>
-    <div class="stat-value" id="todayHours">0h 00m</div>
-    <div class="stat-foot">오늘 완료한 학습 기록 기준</div>
-  </div><div class="card stat">
-    <div class="stat-icon">▥</div>
-    <div class="stat-label">이번 주 누적</div>
-    <div class="stat-value" id="weekHours">0h 00m</div>
-    <div class="stat-foot">월요일부터 오늘까지</div>
-  </div><div class="card stat">
-    <div class="stat-icon">◎</div>
-    <div class="stat-label">이번 주 목표</div>
-    <div class="stat-value" id="goalPercent">0%</div>
-    <div class="stat-foot" id="goalFoot">목표 40시간</div>
-  </div><div class="card stat">
-    <div class="stat-icon">✓</div>
-    <div class="stat-label">완료한 강의</div>
-    <div class="stat-value" id="doneCount">0개</div>
-    <div class="stat-foot">인강 수강 완료 누적</div>
-  </div><div class="card side">
-    <div class="card-head">
-      <h3>학습 타이머</h3>
-      <span class="tag" id="timerStatus">대기 중</span>
+  <div class="page-intro" id="pageIntro">
+    <div class="eyebrow">YOUR STUDY, YOUR FLOW</div>
+    <h2 id="pageTitle">오늘의 공부를 쌓아가자.</h2>
+    <p id="pageDescription">학습 시간과 최근 기록을 한눈에 확인하세요.</p>
+  </div>
+  <section class="grid">
+    <div class="card stat"><div class="stat-icon">◷</div><div class="stat-label">오늘 공부 시간</div><div class="stat-value" id="todayHours">0h 00m</div><div class="stat-foot">오늘 완료한 학습 기록 기준</div></div>
+    <div class="card stat"><div class="stat-icon">▥</div><div class="stat-label">이번 주 누적</div><div class="stat-value" id="weekHours">0h 00m</div><div class="stat-foot">월요일부터 오늘까지</div></div>
+    <div class="card stat"><div class="stat-icon">◎</div><div class="stat-label">이번 주 목표</div><div class="stat-value" id="goalPercent">0%</div><div class="stat-foot" id="goalFoot">목표 40시간</div></div>
+    <div class="card stat"><div class="stat-icon">✓</div><div class="stat-label">완료한 강의</div><div class="stat-value" id="doneCount">0개</div><div class="stat-foot">인강 수강 완료 누적</div></div>
+    <div class="card side">
+      <div class="card-head"><h3>학습 타이머</h3><span class="tag" id="timerStatus">대기 중</span></div>
+      <select class="field" id="timerSubject"><option>국어</option><option>수학</option><option>영어</option><option>통합사회</option><option>통합과학</option></select>
+      <div class="timer-display" id="timerDisplay">00:00:00</div><div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
+      <div class="timer-controls"><button class="btn primary" id="timerStart">시작</button><button class="btn" id="timerPause" disabled>일시정지</button><button class="btn" id="timerFinish" disabled>완료</button></div>
+      <div class="muted" style="font-size:10px;text-align:center">타이머가 실행 중인 동안 이 페이지를 열어 두세요.</div>
     </div>
-
-    <select class="field" id="timerSubject">
-      <option>국어</option>
-      <option>수학</option>
-      <option>영어</option>
-      <option>통합사회</option>
-      <option>통합과학</option>
-    </select>
-
-    <div class="timer-display" id="timerDisplay">00:00:00</div>
-    <div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
-
-    <div class="timer-controls">
-      <button class="btn primary" id="timerStart">시작</button>
-      <button class="btn" id="timerPause" disabled>일시정지</button>
-      <button class="btn" id="timerFinish" disabled>완료</button>
+    <div class="card half"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
+    <div class="card full">
+      <div class="card-head"><h3>최근 학습 기록</h3><button class="mini" id="manualLogBtn">＋ 시간 직접 기록</button></div>
+      <div class="table-wrap"><table><thead><tr><th>날짜</th><th>과목</th><th>학습 내용</th><th>시간</th><th></th></tr></thead><tbody id="logTable"></tbody></table></div>
     </div>
-
-    <div class="muted" style="font-size:10px;text-align:center">
-      타이머가 실행 중인 동안 이 페이지를 열어 두세요.
-    </div>
-  </div></section>
+  </section>
 </div>
 <div class="page-view" data-page-view="weekly">
-  <div class="page-intro"><div class="eyebrow">PLAN YOUR WEEK</div><h2>주간 플래너</h2><p>시간표와 최근 학습 흐름을 한눈에 확인하세요.</p></div>
+  <div class="page-intro"><div class="eyebrow">PLAN YOUR WEEK</div><h2>주간 플래너</h2><p>이번 주 계획을 확인하고 조정하세요.</p></div>
   <section class="grid">
 <div class="card wide">
     <div class="card-head">
@@ -600,16 +571,10 @@ header{margin-bottom:22px}
     <div class="schedule-selected" id="scheduleSelected">
       <span class="schedule-empty-hint">빈 시간 칸을 선택하거나 일정을 클릭하세요.</span>
     </div>
-  </div><div class="card half">
-    <div class="card-head">
-      <h3>최근 7일 학습 시간</h3>
-      <span class="tag">시간</span>
-    </div>
-    <div class="bar-chart" id="weeklyChart"></div>
   </div></section>
 </div>
 <div class="page-view" data-page-view="learning">
-  <div class="page-intro"><div class="eyebrow">MANAGE YOUR LEARNING</div><h2>학습 관리</h2><p>할 일과 강의 진도, 학습 기록을 체계적으로 관리하세요.</p></div>
+  <div class="page-intro"><div class="eyebrow">MANAGE YOUR LEARNING</div><h2>학습 관리</h2><p>할 일과 과목별 강의 진도를 관리하세요.</p></div>
   <section class="grid">
 <div class="card todo-card">
     <div class="card-head">
@@ -651,25 +616,6 @@ header{margin-bottom:22px}
       <button class="mini" id="addTaskBtn">＋ 학습 항목</button>
     </div>
     <div id="subjectsProgress"></div>
-  </div><div class="card full">
-    <div class="card-head">
-      <h3>최근 학습 기록</h3>
-      <button class="mini" id="manualLogBtn">＋ 시간 직접 기록</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>날짜</th>
-            <th>과목</th>
-            <th>학습 내용</th>
-            <th>시간</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="logTable"></tbody>
-      </table>
-    </div>
   </div></section>
 </div>
 <div class="footer">STUDY FLOW · PERSONAL LEARNING · YOUR DATA SYNCED TO YOUR ACCOUNT</div>
@@ -847,13 +793,7 @@ const timeToMinutes=t=>{
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 
 function defaultTodoCategories(){
-  return [
-    ...SUBJECTS.map((name,i)=>({id:'subject-'+i,name,type:'subject',builtin:true})),
-    {id:'life-exercise',name:'운동',type:'life',builtin:true},
-    {id:'life-sleep',name:'수면',type:'life',builtin:true},
-    {id:'life-habit',name:'생활 습관',type:'life',builtin:true},
-    {id:'life-other',name:'기타',type:'life',builtin:true}
-  ];
+  return [];
 }
 
 function defaultData(){
@@ -975,15 +915,16 @@ function normalizeData(raw){
     const id=String(c.id||uid());
     categoryMap.set(id,{id,name:String(c.name).trim(),type:['subject','life'].includes(c.type)?c.type:'life',builtin:!!c.builtin});
   });
-  result.todoCategories=[...categoryMap.values()];
+  result.todoCategories=[...categoryMap.values()].filter(c=>!c.builtin);
+  const migratedCategoryIds=new Set([...categoryMap.values()].filter(c=>c.builtin).map(c=>c.id));
   const validCategoryIds=new Set(result.todoCategories.map(c=>c.id));
   result.todoItems=result.todoItems.filter(x=>x&&String(x.title||'').trim()&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')).map(x=>({
     id:String(x.id||uid()),title:String(x.title).trim(),date:x.date,
-    categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):(result.todoCategories.find(c=>c.id==='life-other')?.id||result.todoCategories[0]?.id),
+    categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):'',
     done:!!x.done,routineId:x.routineId?String(x.routineId):null,routineSourceDate:/^\d{4}-\d{2}-\d{2}$/.test(x.routineSourceDate||'')?x.routineSourceDate:null,createdAt:x.createdAt||new Date().toISOString()
   }));
   result.todoRoutines=result.todoRoutines.filter(x=>x&&String(x.title||'').trim()).map(x=>({
-    id:String(x.id||uid()),title:String(x.title).trim(),categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):(result.todoCategories.find(c=>c.id==='life-other')?.id||result.todoCategories[0]?.id),
+    id:String(x.id||uid()),title:String(x.title).trim(),categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):'',
     startDate:/^\d{4}-\d{2}-\d{2}$/.test(x.startDate||'')?x.startDate:todayISO(),active:x.active!==false,createdAt:x.createdAt||new Date().toISOString()
   }));
   result.todoCelebratedDates=[...new Set(result.todoCelebratedDates.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)))];
@@ -1756,7 +1697,9 @@ function renderTodo(){
       </section>
     `;
   }).join('');
-  $('todoCategories').innerHTML=html||'<div class="todo-empty">이 날짜에 등록된 할 일이 없어요. 할 일을 추가해 보세요.</div>';
+  const unassigned=stats.items.filter(item=>!item.categoryId||!categories.some(c=>c.id===item.categoryId));
+  const unassignedHtml=unassigned.length?`<section class="todo-category"><div class="todo-category-head"><div class="todo-category-title">미분류 <span class="todo-category-type">카테고리 미지정</span></div></div>${unassigned.map(item=>`<div class="todo-item ${item.done?'done':''}"><input class="todo-check" type="checkbox" data-todo-check="${escapeHTML(item.id)}" ${item.done?'checked':''}><span class="todo-item-title">${escapeHTML(item.title)}</span><div class="todo-menu-wrap"><button class="todo-menu-btn" type="button" data-todo-menu-toggle="${escapeHTML(item.id)}">⋮</button><div class="todo-menu" id="todoMenu-${escapeHTML(item.id)}"><button type="button" data-todo-action="edit" data-todo-id="${escapeHTML(item.id)}">수정</button><button type="button" data-todo-action="delete" data-todo-id="${escapeHTML(item.id)}">삭제</button></div></div></div>`).join('')}</section>`:'';
+  $('todoCategories').innerHTML=(html+unassignedHtml)||(categories.length?'<div class="todo-empty">이 날짜에 등록된 할 일이 없어요. 할 일을 추가해 보세요.</div>':'<div class="todo-empty">아직 카테고리가 없어요.<br>카테고리 관리에서 과목이나 생활 카테고리를 직접 추가해 보세요.</div>');
 
   const routines=data.todoRoutines;
   $('todoRoutineList').innerHTML=routines.length?routines.map(r=>`
@@ -1798,6 +1741,7 @@ function openAddTodoModal(){
 }
 
 function openAddRoutineModal(){
+  if(!data.todoCategories.length)return toast('먼저 카테고리를 추가해 주세요.');
   openModal('매일 반복하는 루틴 등록',`
     <label class="muted">카테고리</label>
     <select class="field" id="routineFormCategory">${todoCategoryOptions()}</select>
@@ -1848,7 +1792,7 @@ function openAddCategoryModal(category=null){
     if(data.todoCategories.some(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==category?.id))return toast('같은 이름의 카테고리가 이미 있어요.');
     if(category){category.name=name;category.type=$('todoCategoryType').value;}
     else data.todoCategories.push({id:uid(),name,type:$('todoCategoryType').value,builtin:false});
-    closeModal();save();toast(category?'카테고리를 수정했어요.':'카테고리를 추가했어요.');
+    closeModal();save();renderTodo();toast(category?'카테고리를 수정했어요.':'카테고리를 추가했어요.');
   });
 }
 
@@ -1907,6 +1851,7 @@ document.addEventListener('click',e=>{
     if(action==='move')moveTodoItem(id);
     if(action==='delete'&&confirm(`"${item.title}" 할 일을 삭제할까요?`)){data.todoItems=data.todoItems.filter(x=>x.id!==id);save();toast('할 일을 삭제했어요.');}
     if(action==='edit'){
+      if(!data.todoCategories.length)return toast('먼저 카테고리를 추가해 주세요.');
       openModal('할 일 수정',`
         <label class="muted">카테고리</label><select class="field" id="todoEditCategory">${todoCategoryOptions(item.categoryId)}</select>
         <label class="muted" style="display:block;margin-top:12px">할 일</label><input class="field" id="todoEditTitle" maxlength="100" value="${escapeHTML(item.title)}">
@@ -1924,11 +1869,9 @@ document.addEventListener('click',e=>{
   const deleteCategory=e.target.closest('[data-category-delete]');
   if(deleteCategory){
     const c=data.todoCategories.find(x=>x.id===deleteCategory.dataset.categoryDelete);if(!c)return;
-    if(!confirm(`"${c.name}" 카테고리를 삭제할까요? 기존 할 일과 루틴은 '기타' 카테고리로 옮겨집니다.`))return;
-    let fallback=data.todoCategories.find(x=>x.id==='life-other'&&x.id!==c.id);
-    if(!fallback){fallback={id:uid(),name:'기타',type:'life',builtin:true};data.todoCategories.push(fallback);}
-    data.todoItems.forEach(x=>{if(x.categoryId===c.id)x.categoryId=fallback.id;});
-    data.todoRoutines.forEach(x=>{if(x.categoryId===c.id)x.categoryId=fallback.id;});
+    if(!confirm(`"${c.name}" 카테고리를 삭제할까요? 기존 할 일과 루틴은 미분류 상태로 유지됩니다.`))return;
+    data.todoItems.forEach(x=>{if(x.categoryId===c.id)x.categoryId='';});
+    data.todoRoutines.forEach(x=>{if(x.categoryId===c.id)x.categoryId='';});
     data.todoCategories=data.todoCategories.filter(x=>x.id!==c.id);openTodoCategoryManager();save();toast('카테고리를 삭제했어요.');return;
   }
   const routineToggle=e.target.closest('[data-routine-toggle]');
