@@ -369,6 +369,55 @@ button:disabled{opacity:.4;cursor:not-allowed}
   .schedule-help{line-height:1.5}
   .schedule-toolbar{align-items:flex-start}
 }
+
+/* TO DO LIST */
+.todo-card{grid-column:span 12}
+.todo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.todo-date-nav{display:flex;align-items:center;gap:6px;min-width:0}
+.todo-date-nav .field{width:auto;min-width:145px}
+.todo-summary{display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:12px;padding:12px 14px;margin-bottom:16px;background:#111827;border:1px solid #2b354a;border-radius:12px}
+.todo-summary strong{font-size:20px;color:var(--accent2)}
+.todo-category{margin:14px 0;padding:13px;background:#111827;border:1px solid #2b354a;border-radius:13px}
+.todo-category-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.todo-category-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800}
+.todo-category-type{font-size:9px;color:var(--muted);padding:3px 6px;border-radius:6px;background:#263147}
+.todo-category-actions{display:flex;gap:5px}
+.todo-item{display:flex;align-items:center;gap:9px;padding:10px 5px;border-top:1px solid #293246;min-width:0}
+.todo-item:first-of-type{border-top:0}
+.todo-check{width:17px;height:17px;accent-color:#8ba8ff;flex:none}
+.todo-item-title{flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere}
+.todo-item.done .todo-item-title{color:#8490a5;text-decoration:line-through}
+.todo-item-meta{font-size:9px;color:var(--muted);white-space:nowrap}
+.todo-menu-wrap{position:relative;flex:none}
+.todo-menu-btn{width:30px;height:30px;border:1px solid transparent;background:transparent;color:#aab5ca;border-radius:8px;font-size:19px;line-height:1}
+.todo-menu-btn:hover{background:#27334a;border-color:#3a4965}
+.todo-menu{position:absolute;right:0;top:32px;z-index:15;display:none;min-width:112px;padding:5px;background:#202a3c;border:1px solid #40506d;border-radius:10px;box-shadow:0 10px 28px #0008}
+.todo-menu.open{display:block}
+.todo-menu button{display:block;width:100%;text-align:left;padding:8px 9px;border:0;border-radius:6px;background:transparent;color:var(--text);font-size:11px}
+.todo-menu button:hover{background:#33415b}
+.todo-empty{padding:15px;text-align:center;color:var(--muted);font-size:11px}
+.todo-routine-box{margin-top:18px;padding:14px;background:#111827;border:1px solid #2b354a;border-radius:13px}
+.todo-routine-list{display:grid;gap:7px;margin-top:10px}
+.todo-routine-item{display:flex;align-items:center;gap:8px;padding:9px 10px;background:#1a2435;border-radius:9px;font-size:11px}
+.todo-routine-item span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.todo-routine-item .muted{font-size:9px}
+.todo-routine-actions{display:flex;gap:5px}
+.todo-routine-actions button{font-size:9px;padding:5px 7px}
+.todo-category-manage-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.todo-category-manage-row:last-child{border-bottom:0}
+.todo-category-manage-row span{flex:1;font-size:12px}
+.todo-category-manage-row small{color:var(--muted);font-size:9px}
+.todo-inline-actions{display:flex;gap:5px}
+@media(max-width:560px){
+ .todo-toolbar{align-items:stretch}
+ .todo-date-nav{width:100%}
+ .todo-date-nav .field{flex:1;min-width:0}
+ .todo-summary{grid-template-columns:45px 1fr;gap:8px}
+ .todo-summary .muted{grid-column:1/-1;text-align:right}
+ .todo-item{gap:7px}
+ .todo-item-title{font-size:11px}
+}
+
 </style>
 </head>
 
@@ -404,8 +453,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <p>작은 기록이 모여 큰 변화를 만듭니다.</p>
   </div>
   <div class="hero-note">
-    기록은 이 브라우저에 자동 저장됩니다.<br>
-    다른 기기와 자동 동기화되지는 않습니다.
+    로그인한 계정에 학습 데이터가 저장됩니다.<br>
+    인터넷 연결 시 여러 기기에서 동기화됩니다.
   </div>
 </section>
 
@@ -481,6 +530,43 @@ button:disabled{opacity:.4;cursor:not-allowed}
     </div>
   </div>
 
+
+  <div class="card todo-card">
+    <div class="card-head">
+      <h3>TO DO LIST</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="mini" id="manageTodoCategoriesBtn">카테고리 관리</button>
+        <button class="mini" id="addTodoBtn">＋ 할 일 추가</button>
+      </div>
+    </div>
+
+    <div class="todo-toolbar">
+      <div class="todo-date-nav">
+        <button class="mini" id="todoPrevDay" aria-label="이전 날짜">‹</button>
+        <input class="field" type="date" id="todoDate">
+        <button class="mini" id="todoNextDay" aria-label="다음 날짜">›</button>
+        <button class="mini" id="todoToday">오늘</button>
+      </div>
+      <button class="mini" id="addRoutineBtn">＋ 매일 루틴 등록</button>
+    </div>
+
+    <div class="todo-summary">
+      <strong id="todoPercent">0%</strong>
+      <div class="progress-track"><div class="progress-fill" id="todoProgress" style="width:0%"></div></div>
+      <span class="muted" id="todoCount" style="font-size:11px">0 / 0개</span>
+    </div>
+
+    <div id="todoCategories"></div>
+
+    <div class="todo-routine-box">
+      <div class="card-head" style="margin-bottom:0">
+        <h3>매일 반복하는 루틴</h3>
+        <span class="muted" style="font-size:10px">매일 새 항목 생성</span>
+      </div>
+      <div class="todo-routine-list" id="todoRoutineList"></div>
+    </div>
+  </div>
+
   <div class="card side">
     <div class="card-head">
       <h3>학습 타이머</h3>
@@ -548,7 +634,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
 </section>
 
-<div class="footer">STUDY FLOW · LOCAL FIRST · YOUR DATA STAYS IN THIS BROWSER</div>
+<div class="footer">STUDY FLOW · PERSONAL LEARNING · YOUR DATA SYNCED TO YOUR ACCOUNT</div>
 </div>
 
 <!-- 일정 추가 및 편집 모달 -->
@@ -630,7 +716,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 <div class="celebrate-back" id="celebrateBack">
   <div class="celebrate-box">
     <div class="celebrate-icon">🎉</div>
-    <h2>완강을 축하합니다!</h2>
+    <h2 id="celebrateTitle">완강을 축하합니다!</h2>
     <p id="celebrateMessage">강의를 끝까지 수강했어요.</p>
     <button class="btn primary" id="closeCelebrate">확인</button>
   </div>
@@ -721,6 +807,16 @@ const timeToMinutes=t=>{
 
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 
+function defaultTodoCategories(){
+  return [
+    ...SUBJECTS.map((name,i)=>({id:'subject-'+i,name,type:'subject',builtin:true})),
+    {id:'life-exercise',name:'운동',type:'life',builtin:true},
+    {id:'life-sleep',name:'수면',type:'life',builtin:true},
+    {id:'life-habit',name:'생활 습관',type:'life',builtin:true},
+    {id:'life-other',name:'기타',type:'life',builtin:true}
+  ];
+}
+
 function defaultData(){
   return {
     goal:40,
@@ -732,7 +828,11 @@ function defaultData(){
     },
     tasks:SUBJECTS.map(s=>({id:uid(),subject:s,title:'',done:false})),
     courses:[],
-    logs:[]
+    logs:[],
+    todoCategories:defaultTodoCategories(),
+    todoItems:[],
+    todoRoutines:[],
+    todoCelebratedDates:[]
   };
 }
 
@@ -755,6 +855,10 @@ function normalizeData(raw){
         completed:t.done?1:0
       })):[]),
     logs:Array.isArray(d.logs)?d.logs:[],
+    todoCategories:Array.isArray(d.todoCategories)?d.todoCategories:defaultTodoCategories(),
+    todoItems:Array.isArray(d.todoItems)?d.todoItems:[],
+    todoRoutines:Array.isArray(d.todoRoutines)?d.todoRoutines:[],
+    todoCelebratedDates:Array.isArray(d.todoCelebratedDates)?d.todoCelebratedDates:[],
     scheduleView:{
       start:Number(d.scheduleView?.start??DEFAULT_VIEW_START),
       end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
@@ -823,6 +927,27 @@ function normalizeData(raw){
       };
     })
     .filter(b=>b.end>b.start);
+
+  const defaultCategories=defaultTodoCategories();
+  const savedCategories=Array.isArray(d.todoCategories)?d.todoCategories:defaultCategories;
+  const categoryMap=new Map();
+  savedCategories.forEach(c=>{
+    if(!c||!String(c.name||'').trim())return;
+    const id=String(c.id||uid());
+    categoryMap.set(id,{id,name:String(c.name).trim(),type:['subject','life'].includes(c.type)?c.type:'life',builtin:!!c.builtin});
+  });
+  result.todoCategories=[...categoryMap.values()];
+  const validCategoryIds=new Set(result.todoCategories.map(c=>c.id));
+  result.todoItems=result.todoItems.filter(x=>x&&String(x.title||'').trim()&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')).map(x=>({
+    id:String(x.id||uid()),title:String(x.title).trim(),date:x.date,
+    categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):(result.todoCategories.find(c=>c.id==='life-other')?.id||result.todoCategories[0]?.id),
+    done:!!x.done,routineId:x.routineId?String(x.routineId):null,routineSourceDate:/^\d{4}-\d{2}-\d{2}$/.test(x.routineSourceDate||'')?x.routineSourceDate:null,createdAt:x.createdAt||new Date().toISOString()
+  }));
+  result.todoRoutines=result.todoRoutines.filter(x=>x&&String(x.title||'').trim()).map(x=>({
+    id:String(x.id||uid()),title:String(x.title).trim(),categoryId:validCategoryIds.has(String(x.categoryId))?String(x.categoryId):(result.todoCategories.find(c=>c.id==='life-other')?.id||result.todoCategories[0]?.id),
+    startDate:/^\d{4}-\d{2}-\d{2}$/.test(x.startDate||'')?x.startDate:todayISO(),active:x.active!==false,createdAt:x.createdAt||new Date().toISOString()
+  }));
+  result.todoCelebratedDates=[...new Set(result.todoCelebratedDates.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)))];
 
   return result;
 }
@@ -1523,6 +1648,257 @@ $('copyEventBtn').onclick=()=>{
 
 $('pasteEventBtn').onclick=pasteScheduleBlock;
 
+/* TO DO LIST */
+let selectedTodoDate=todayISO();
+
+function todoCategoryById(id){
+  return data.todoCategories.find(c=>c.id===id)||data.todoCategories[0];
+}
+
+function ensureDailyRoutines(date){
+  let changed=false;
+  data.todoRoutines.filter(r=>r.active!==false&&r.startDate<=date).forEach(r=>{
+    const exists=data.todoItems.some(item=>item.routineId===r.id&&(item.routineSourceDate||item.date)===date);
+    if(!exists){
+      data.todoItems.push({id:uid(),title:r.title,date,categoryId:r.categoryId,done:false,routineId:r.id,routineSourceDate:date,createdAt:new Date().toISOString()});
+      changed=true;
+    }
+  });
+  return changed;
+}
+
+function todoItemsForDate(date=selectedTodoDate){
+  return data.todoItems.filter(item=>item.date===date);
+}
+
+function todoProgressForDate(date=selectedTodoDate){
+  const items=todoItemsForDate(date);
+  const done=items.filter(item=>item.done).length;
+  return {items,done,total:items.length,percent:items.length?Math.round(done/items.length*100):0};
+}
+
+function renderTodo(){
+  const dateInput=$('todoDate');
+  if(!dateInput)return;
+  dateInput.value=selectedTodoDate;
+  const generated=ensureDailyRoutines(selectedTodoDate);
+  const stats=todoProgressForDate();
+  $('todoPercent').textContent=stats.percent+'%';
+  $('todoProgress').style.width=stats.percent+'%';
+  $('todoCount').textContent=`${stats.done} / ${stats.total}개`;
+
+  const categories=data.todoCategories;
+  const html=categories.map(category=>{
+    const items=stats.items.filter(item=>item.categoryId===category.id);
+    return `
+      <section class="todo-category">
+        <div class="todo-category-head">
+          <div class="todo-category-title">${escapeHTML(category.name)} <span class="todo-category-type">${category.type==='subject'?'과목':'생활'}</span></div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span class="muted" style="font-size:10px">${items.filter(x=>x.done).length}/${items.length}</span>
+            <button class="mini" data-add-todo-category="${escapeHTML(category.id)}">＋ 추가</button>
+          </div>
+        </div>
+        ${items.length?items.map(item=>`
+          <div class="todo-item ${item.done?'done':''}" data-todo-row="${escapeHTML(item.id)}">
+            <input class="todo-check" type="checkbox" data-todo-check="${escapeHTML(item.id)}" ${item.done?'checked':''} aria-label="${escapeHTML(item.title)} 완료">
+            <span class="todo-item-title">${escapeHTML(item.title)}</span>
+            ${item.routineId?'<span class="todo-item-meta">루틴</span>':''}
+            <div class="todo-menu-wrap">
+              <button class="todo-menu-btn" type="button" data-todo-menu-toggle="${escapeHTML(item.id)}" aria-label="할 일 설정">⋮</button>
+              <div class="todo-menu" id="todoMenu-${escapeHTML(item.id)}">
+                <button type="button" data-todo-action="move" data-todo-id="${escapeHTML(item.id)}">이월</button>
+                <button type="button" data-todo-action="edit" data-todo-id="${escapeHTML(item.id)}">수정</button>
+                <button type="button" data-todo-action="delete" data-todo-id="${escapeHTML(item.id)}">삭제</button>
+              </div>
+            </div>
+          </div>
+        `).join(''):'<div class="todo-empty">아직 등록된 할 일이 없어요.</div>'}
+      </section>
+    `;
+  }).join('');
+  $('todoCategories').innerHTML=html||'<div class="todo-empty">이 날짜에 등록된 할 일이 없어요. 할 일을 추가해 보세요.</div>';
+
+  const routines=data.todoRoutines;
+  $('todoRoutineList').innerHTML=routines.length?routines.map(r=>`
+    <div class="todo-routine-item">
+      <span>${escapeHTML(r.title)}</span>
+      <span class="muted">${escapeHTML(todoCategoryById(r.categoryId)?.name||'기타')} · ${r.active?'반복 중':'중지됨'}</span>
+      <div class="todo-routine-actions">
+        <button class="mini" data-routine-toggle="${escapeHTML(r.id)}">${r.active?'중지':'재개'}</button>
+        <button class="mini" data-routine-delete="${escapeHTML(r.id)}">삭제</button>
+      </div>
+    </div>
+  `).join(''):'<div class="todo-empty">등록된 루틴이 없어요.</div>';
+
+  if(generated){data.todoCelebratedDates=data.todoCelebratedDates.filter(d=>d!==selectedTodoDate);save();}
+}
+
+function todoCategoryOptions(selected=''){
+  return data.todoCategories.map(c=>`<option value="${escapeHTML(c.id)}" ${c.id===selected?'selected':''}>${escapeHTML(c.name)} · ${c.type==='subject'?'과목':'생활'}</option>`).join('');
+}
+
+function openAddTodoModal(){
+  if(!data.todoCategories.length)return toast('먼저 카테고리를 추가해 주세요.');
+  openModal('할 일 추가',`
+    <label class="muted">카테고리</label>
+    <select class="field" id="todoFormCategory">${todoCategoryOptions()}</select>
+    <label class="muted" style="display:block;margin-top:12px">할 일</label>
+    <input class="field" id="todoFormTitle" maxlength="100" placeholder="예: 수학 미적분 문제 20개 풀기">
+    <label class="muted" style="display:block;margin-top:12px">날짜</label>
+    <input class="field" id="todoFormDate" type="date" value="${selectedTodoDate}">
+  `,()=>{
+    const title=$('todoFormTitle').value.trim();
+    const date=$('todoFormDate').value;
+    if(!title)return toast('할 일 내용을 입력해 주세요.');
+    if(!date)return toast('날짜를 선택해 주세요.');
+    data.todoItems.push({id:uid(),title,date,categoryId:$('todoFormCategory').value,done:false,routineId:null,routineSourceDate:null,createdAt:new Date().toISOString()});
+    data.todoCelebratedDates=data.todoCelebratedDates.filter(d=>d!==date);
+    selectedTodoDate=date;closeModal();save();toast('할 일을 추가했어요.');
+  });
+}
+
+function openAddRoutineModal(){
+  openModal('매일 반복하는 루틴 등록',`
+    <label class="muted">카테고리</label>
+    <select class="field" id="routineFormCategory">${todoCategoryOptions()}</select>
+    <label class="muted" style="display:block;margin-top:12px">루틴 이름</label>
+    <input class="field" id="routineFormTitle" maxlength="100" placeholder="예: 영어 단어 30개 암기">
+    <label class="muted" style="display:block;margin-top:12px">시작 날짜</label>
+    <input class="field" id="routineFormDate" type="date" value="${selectedTodoDate}">
+    <p class="muted" style="font-size:10px;margin:8px 0 0">시작 날짜부터 해당 날짜를 열 때마다 새로운 할 일이 생성됩니다. 전날 완료 여부와 관계없이 매일 독립적으로 관리됩니다.</p>
+  `,()=>{
+    const title=$('routineFormTitle').value.trim();
+    const startDate=$('routineFormDate').value;
+    if(!title)return toast('루틴 이름을 입력해 주세요.');
+    if(!startDate)return toast('시작 날짜를 선택해 주세요.');
+    data.todoRoutines.push({id:uid(),title,categoryId:$('routineFormCategory').value,startDate,active:true,createdAt:new Date().toISOString()});
+    closeModal();renderTodo();save();toast('매일 루틴을 등록했어요.');
+  });
+}
+
+function openTodoCategoryManager(){
+  const rows=data.todoCategories.map(c=>`
+    <div class="todo-category-manage-row">
+      <span>${escapeHTML(c.name)}</span><small>${c.type==='subject'?'과목':'생활'}</small>
+      <div class="todo-inline-actions">
+        <button class="mini" data-category-edit="${escapeHTML(c.id)}">수정</button>
+        <button class="mini" data-category-delete="${escapeHTML(c.id)}">삭제</button>
+      </div>
+    </div>
+  `).join('');
+  openModal('카테고리 관리',`
+    <div>${rows||'<div class="todo-empty">카테고리가 없습니다.</div>'}</div>
+    <button class="btn primary" type="button" id="todoAddCategoryInManager" style="width:100%;margin-top:14px">＋ 카테고리 추가</button>
+  `,()=>closeModal());
+  $('todoAddCategoryInManager').onclick=()=>openAddCategoryModal();
+}
+
+function openAddCategoryModal(category=null){
+  openModal(category?'카테고리 수정':'카테고리 추가',`
+    <label class="muted">카테고리 이름</label>
+    <input class="field" id="todoCategoryName" maxlength="30" value="${escapeHTML(category?.name||'')}" placeholder="예: 독서, 코딩, 개인 프로젝트">
+    <label class="muted" style="display:block;margin-top:12px">분류</label>
+    <select class="field" id="todoCategoryType">
+      <option value="subject" ${category?.type==='subject'?'selected':''}>과목</option>
+      <option value="life" ${!category||category.type==='life'?'selected':''}>생활</option>
+    </select>
+  `,()=>{
+    const name=$('todoCategoryName').value.trim();
+    if(!name)return toast('카테고리 이름을 입력해 주세요.');
+    if(data.todoCategories.some(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==category?.id))return toast('같은 이름의 카테고리가 이미 있어요.');
+    if(category){category.name=name;category.type=$('todoCategoryType').value;}
+    else data.todoCategories.push({id:uid(),name,type:$('todoCategoryType').value,builtin:false});
+    closeModal();save();toast(category?'카테고리를 수정했어요.':'카테고리를 추가했어요.');
+  });
+}
+
+function moveTodoItem(id){
+  const item=data.todoItems.find(x=>x.id===id);if(!item)return;
+  const target=prompt('이 할 일을 옮길 날짜를 입력해 주세요. (YYYY-MM-DD)',dateOffset(item.date,1));
+  if(target===null)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(target)||!Number.isFinite(new Date(target+'T12:00:00').getTime())||iso(new Date(target+'T12:00:00'))!==target)return toast('올바른 날짜를 입력해 주세요.');
+  item.date=target;item.done=false;selectedTodoDate=target;save();toast('할 일을 선택한 날짜로 옮겼어요.');
+}
+
+function checkTodoCompletion(date){
+  const stats=todoProgressForDate(date);
+  if(!stats.total||stats.done!==stats.total||data.todoCelebratedDates.includes(date))return;
+  data.todoCelebratedDates.push(date);
+  save();
+  $('celebrateTitle').textContent='오늘의 할 일을 모두 완료했어요!';
+  $('celebrateMessage').textContent=`${date} · ${stats.total}개의 할 일을 모두 달성했어요. 정말 수고했어요!`;
+  $('celebrateBack').style.display='grid';
+}
+
+$('todoDate').value=selectedTodoDate;
+$('todoDate').addEventListener('change',e=>{if(!e.target.value)return;selectedTodoDate=e.target.value;renderTodo();});
+$('todoPrevDay').onclick=()=>{selectedTodoDate=dateOffset(selectedTodoDate,-1);renderTodo();};
+$('todoNextDay').onclick=()=>{selectedTodoDate=dateOffset(selectedTodoDate,1);renderTodo();};
+$('todoToday').onclick=()=>{selectedTodoDate=todayISO();renderTodo();};
+$('addTodoBtn').onclick=openAddTodoModal;
+$('addRoutineBtn').onclick=openAddRoutineModal;
+$('manageTodoCategoriesBtn').onclick=openTodoCategoryManager;
+
+$('todoCategories').addEventListener('change',e=>{
+  const check=e.target.closest('[data-todo-check]');if(!check)return;
+  const item=data.todoItems.find(x=>x.id===check.dataset.todoCheck);if(!item)return;
+  item.done=check.checked;save();
+  if(item.done)checkTodoCompletion(item.date);
+});
+
+document.addEventListener('click',e=>{
+  const addInCategory=e.target.closest('[data-add-todo-category]');
+  if(addInCategory){
+    const categoryId=addInCategory.dataset.addTodoCategory;
+    openModal('할 일 추가',`<label class=\"muted\">할 일</label><input class=\"field\" id=\"todoQuickTitle\" maxlength=\"100\" placeholder=\"할 일을 입력하세요\"><label class=\"muted\" style=\"display:block;margin-top:12px\">날짜</label><input class=\"field\" id=\"todoQuickDate\" type=\"date\" value=\"${selectedTodoDate}\">`,()=>{const title=$('todoQuickTitle').value.trim(),date=$('todoQuickDate').value;if(!title)return toast('할 일 내용을 입력해 주세요.');if(!date)return toast('날짜를 선택해 주세요.');data.todoItems.push({id:uid(),title,date,categoryId,done:false,routineId:null,routineSourceDate:null,createdAt:new Date().toISOString()});data.todoCelebratedDates=data.todoCelebratedDates.filter(d=>d!==date);selectedTodoDate=date;closeModal();save();toast('할 일을 추가했어요.');});
+    return;
+  }
+  const menuToggle=e.target.closest('[data-todo-menu-toggle]');
+  if(menuToggle){
+    const id=menuToggle.dataset.todoMenuToggle;
+    document.querySelectorAll('.todo-menu.open').forEach(m=>{if(m.id!=='todoMenu-'+id)m.classList.remove('open');});
+    $('todoMenu-'+id)?.classList.toggle('open');return;
+  }
+  const todoAction=e.target.closest('[data-todo-action]');
+  if(todoAction){
+    const id=todoAction.dataset.todoId;const action=todoAction.dataset.todoAction;
+    $('todoMenu-'+id)?.classList.remove('open');
+    const item=data.todoItems.find(x=>x.id===id);if(!item)return;
+    if(action==='move')moveTodoItem(id);
+    if(action==='delete'&&confirm(`"${item.title}" 할 일을 삭제할까요?`)){data.todoItems=data.todoItems.filter(x=>x.id!==id);save();toast('할 일을 삭제했어요.');}
+    if(action==='edit'){
+      openModal('할 일 수정',`
+        <label class="muted">카테고리</label><select class="field" id="todoEditCategory">${todoCategoryOptions(item.categoryId)}</select>
+        <label class="muted" style="display:block;margin-top:12px">할 일</label><input class="field" id="todoEditTitle" maxlength="100" value="${escapeHTML(item.title)}">
+        <label class="muted" style="display:block;margin-top:12px">날짜</label><input class="field" id="todoEditDate" type="date" value="${item.date}">
+      `,()=>{
+        const title=$('todoEditTitle').value.trim(),date=$('todoEditDate').value;
+        if(!title)return toast('할 일 내용을 입력해 주세요.');if(!date)return toast('날짜를 선택해 주세요.');
+        item.title=title;item.date=date;item.categoryId=$('todoEditCategory').value;selectedTodoDate=date;closeModal();save();toast('할 일을 수정했어요.');
+      });
+    }
+    return;
+  }
+  const editCategory=e.target.closest('[data-category-edit]');
+  if(editCategory){const c=data.todoCategories.find(x=>x.id===editCategory.dataset.categoryEdit);if(c)openAddCategoryModal(c);return;}
+  const deleteCategory=e.target.closest('[data-category-delete]');
+  if(deleteCategory){
+    const c=data.todoCategories.find(x=>x.id===deleteCategory.dataset.categoryDelete);if(!c)return;
+    if(!confirm(`"${c.name}" 카테고리를 삭제할까요? 기존 할 일과 루틴은 '기타' 카테고리로 옮겨집니다.`))return;
+    let fallback=data.todoCategories.find(x=>x.id==='life-other'&&x.id!==c.id);
+    if(!fallback){fallback={id:uid(),name:'기타',type:'life',builtin:true};data.todoCategories.push(fallback);}
+    data.todoItems.forEach(x=>{if(x.categoryId===c.id)x.categoryId=fallback.id;});
+    data.todoRoutines.forEach(x=>{if(x.categoryId===c.id)x.categoryId=fallback.id;});
+    data.todoCategories=data.todoCategories.filter(x=>x.id!==c.id);openTodoCategoryManager();save();toast('카테고리를 삭제했어요.');return;
+  }
+  const routineToggle=e.target.closest('[data-routine-toggle]');
+  if(routineToggle){const r=data.todoRoutines.find(x=>x.id===routineToggle.dataset.routineToggle);if(r){r.active=!r.active;save();}return;}
+  const routineDelete=e.target.closest('[data-routine-delete]');
+  if(routineDelete){const r=data.todoRoutines.find(x=>x.id===routineDelete.dataset.routineDelete);if(r&&confirm(`"${r.title}" 루틴을 삭제할까요? 이미 생성된 날짜별 할 일은 유지됩니다.`)){data.todoRoutines=data.todoRoutines.filter(x=>x.id!==r.id);save();}return;}
+  if(!e.target.closest('.todo-menu-wrap'))document.querySelectorAll('.todo-menu.open').forEach(m=>m.classList.remove('open'));
+});
+
 /* 대시보드 렌더링 */
 function render(){
   const today=todayISO();
@@ -1629,6 +2005,7 @@ function render(){
   `;
 
   renderSchedule();
+  renderTodo();
 }
 
 /* 일반 모달 */
@@ -1736,6 +2113,7 @@ document.addEventListener('click',e=>{
       const justFinished=course.completed===course.total;
       save();
       if(justFinished){
+        $('celebrateTitle').textContent='완강을 축하합니다!';
         $('celebrateMessage').textContent=`${course.title} · ${course.total}강을 모두 수강했어요!`;
         $('celebrateBack').style.display='grid';
       }else{
