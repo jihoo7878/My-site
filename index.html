@@ -111,6 +111,33 @@ th{color:var(--muted);font-weight:600}
 .bar-number{font-size:9px;color:var(--muted)}
 .empty-state{padding:20px;text-align:center;color:var(--muted);font-size:12px}
 
+/* 홈 미니 학습 캘린더 */
+.calendar-card{min-width:0}
+.calendar-head{margin-bottom:12px}
+.calendar-nav{display:flex;align-items:center;gap:7px}
+.calendar-nav strong{font-size:12px;min-width:76px;text-align:center}
+.calendar-weekdays,.mini-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.calendar-weekdays{margin-bottom:5px}
+.calendar-weekdays span{text-align:center;color:var(--muted);font-size:10px;padding:3px 0}
+.calendar-day{min-width:0;min-height:49px;border:1px solid transparent;border-radius:8px;background:#111827;color:var(--text);padding:4px 1px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px}
+.calendar-day:hover{border-color:#6479ad;background:#202b40}
+.calendar-day.muted-day{opacity:.35}
+.calendar-day.today{border-color:#829cff}
+.calendar-day.selected{background:#2b3b60;border-color:var(--accent)}
+.calendar-day .day-num{font-size:11px;font-weight:700}
+.calendar-day .study-minutes{font-size:8px;color:#9fe0c5;white-space:nowrap;line-height:1.2}
+.calendar-day.has-events:after{content:'';width:4px;height:4px;border-radius:50%;background:var(--orange);margin-top:1px}
+.calendar-detail{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
+.calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.calendar-detail-head strong{font-size:11px}
+.calendar-event-list{display:grid;gap:5px}
+.calendar-event{display:flex;align-items:center;gap:7px;padding:6px 8px;background:#111827;border:1px solid #293246;border-radius:8px;font-size:10px}
+.calendar-event-time{color:var(--accent2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.calendar-event-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.calendar-event-delete{border:0;background:transparent;color:var(--muted);font-size:14px;padding:0 3px}
+.calendar-empty{font-size:10px;color:var(--muted);padding:5px 1px}
+@media(max-width:560px){.calendar-day{min-height:45px}.calendar-day .study-minutes{font-size:7px}.calendar-weekdays,.mini-calendar{gap:3px}}
+
 .modal-back{
   position:fixed;inset:0;background:#0009;display:none;
   place-items:center;padding:18px;z-index:20;
@@ -522,6 +549,12 @@ header{margin-bottom:22px}
       <div class="muted" style="font-size:10px;text-align:center">타이머가 실행 중인 동안 이 페이지를 열어 두세요.</div>
     </div>
     <div class="card half"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
+    <div class="card half calendar-card">
+      <div class="card-head calendar-head"><h3>학습 캘린더</h3><div class="calendar-nav"><button class="mini" id="calendarPrev" aria-label="이전 달">‹</button><strong id="calendarMonth"></strong><button class="mini" id="calendarNext" aria-label="다음 달">›</button></div></div>
+      <div class="calendar-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="mini-calendar" id="miniCalendar"></div>
+      <div class="calendar-detail" id="calendarDetail"></div>
+    </div>
     <div class="card full">
       <div class="card-head"><h3>최근 학습 기록</h3><button class="mini" id="manualLogBtn">＋ 시간 직접 기록</button></div>
       <div class="table-wrap"><table><thead><tr><th>날짜</th><th>과목</th><th>학습 내용</th><th>시간</th><th></th></tr></thead><tbody id="logTable"></tbody></table></div>
@@ -574,7 +607,7 @@ header{margin-bottom:22px}
   </div></section>
 </div>
 <div class="page-view" data-page-view="learning">
-  <div class="page-intro"><div class="eyebrow">MANAGE YOUR LEARNING</div><h2>학습 관리</h2><p>할 일과 과목별 강의 진도를 관리하세요.</p></div>
+  <div class="page-intro"><div class="eyebrow">MANAGE YOUR LEARNING</div><h2>학습 관리</h2><p>할 일과 인강 수강 진도를 관리하세요.</p></div>
   <section class="grid">
 <div class="card todo-card">
     <div class="card-head">
@@ -612,7 +645,7 @@ header{margin-bottom:22px}
     </div>
   </div><div class="card half">
     <div class="card-head">
-      <h3>과목별 진도</h3>
+      <h3>인강 관리</h3>
       <button class="mini" id="addTaskBtn">＋ 학습 항목</button>
     </div>
     <div id="subjectsProgress"></div>
@@ -808,6 +841,7 @@ function defaultData(){
     tasks:SUBJECTS.map(s=>({id:uid(),subject:s,title:'',done:false})),
     courses:[],
     logs:[],
+    calendarEvents:[],
     todoCategories:defaultTodoCategories(),
     todoItems:[],
     todoRoutines:[],
@@ -834,6 +868,7 @@ function normalizeData(raw){
         completed:t.done?1:0
       })):[]),
     logs:Array.isArray(d.logs)?d.logs:[],
+    calendarEvents:Array.isArray(d.calendarEvents)?d.calendarEvents:[],
     todoCategories:Array.isArray(d.todoCategories)?d.todoCategories:defaultTodoCategories(),
     todoItems:Array.isArray(d.todoItems)?d.todoItems:[],
     todoRoutines:Array.isArray(d.todoRoutines)?d.todoRoutines:[],
@@ -843,6 +878,10 @@ function normalizeData(raw){
       end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
     }
   };
+
+  result.calendarEvents=result.calendarEvents.filter(ev=>ev&&/^\d{4}-\d{2}-\d{2}$/.test(ev.date||'')&&String(ev.title||'').trim()).map(ev=>({
+    id:String(ev.id||uid()),date:ev.date,title:String(ev.title).trim(),start:String(ev.start||''),end:String(ev.end||'')
+  }));
 
   result.courses=result.courses
     .filter(c=>c&&String(c.title||'').trim())
@@ -946,6 +985,8 @@ let clipboardBlock=null;
 let pasteTarget=null;
 let editingBlockId=null;
 let modalAction=null;
+let calendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+let selectedCalendarDate=todayISO();
 
 function save(){
   localStorage.setItem(KEY,JSON.stringify(data));
@@ -1898,6 +1939,31 @@ document.addEventListener('click',e=>{
   if(nav)setActivePage(nav.dataset.page);
 });
 
+/* 홈 미니 학습 캘린더 */
+function renderCalendar(){
+  const year=calendarMonth.getFullYear();
+  const month=calendarMonth.getMonth();
+  $('calendarMonth').textContent=`${year}년 ${month+1}월`;
+  const first=new Date(year,month,1);
+  const start=new Date(year,month,1-first.getDay());
+  const cells=[];
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const minutes=sumLogs(iso,iso);
+    const hasEvents=data.calendarEvents.some(ev=>ev.date===iso);
+    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':'',hasEvents?'has-events':''].filter(Boolean).join(' ');
+    const timeLabel=minutes?`${Math.floor(minutes/60)?Math.floor(minutes/60)+'h ':''}${minutes%60?minutes%60+'m':''}`:'&nbsp;';
+    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분"><span class="day-num">${d.getDate()}</span><span class="study-minutes">${timeLabel}</span></button>`);
+  }
+  $('miniCalendar').innerHTML=cells.join('');
+  const selected=new Date(selectedCalendarDate+'T12:00:00');
+  const label=`${selected.getMonth()+1}월 ${selected.getDate()}일 (${DAY_NAMES[selected.getDay()]})`;
+  const events=data.calendarEvents.filter(ev=>ev.date===selectedCalendarDate).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  $('calendarDetail').innerHTML=`<div class="calendar-detail-head"><strong>${label} 일정</strong><button class="mini" id="addCalendarEvent">＋ 일정 등록</button></div>`+
+    (events.length?`<div class="calendar-event-list">${events.map(ev=>`<div class="calendar-event"><span class="calendar-event-time">${escapeHTML(ev.start||'')} ${ev.end?'– '+escapeHTML(ev.end):''}</span><span class="calendar-event-title">${escapeHTML(ev.title)}</span><button class="calendar-event-delete" data-calendar-delete="${escapeHTML(ev.id)}" aria-label="일정 삭제">×</button></div>`).join('')}</div>`:'<div class="calendar-empty">등록된 일정이 없어요. 날짜를 선택하고 일정을 추가해 보세요.</div>');
+}
+
 /* 대시보드 렌더링 */
 function render(){
   const today=todayISO();
@@ -2003,9 +2069,50 @@ function render(){
     </tr>
   `;
 
+  renderCalendar();
   renderSchedule();
   renderTodo();
 }
+
+/* 학습 캘린더 날짜 선택 및 일정 등록 */
+document.addEventListener('click',e=>{
+  const dateButton=e.target.closest('[data-calendar-date]');
+  if(dateButton){
+    selectedCalendarDate=dateButton.dataset.calendarDate;
+    const d=new Date(selectedCalendarDate+'T12:00:00');
+    calendarMonth=new Date(d.getFullYear(),d.getMonth(),1);
+    renderCalendar();
+    return;
+  }
+  if(e.target.closest('#calendarPrev')){calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1);renderCalendar();return;}
+  if(e.target.closest('#calendarNext')){calendarMonth=new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1);renderCalendar();return;}
+  if(e.target.closest('#addCalendarEvent')){
+    openModal('일정 등록',`
+      <label class="muted">일정 이름</label>
+      <input class="field" id="calendarEventTitle" placeholder="예: 수학 문제 풀이">
+      <label class="muted" style="display:block;margin-top:12px">시작 시간</label>
+      <input class="field" id="calendarEventStart" type="time" value="16:00">
+      <label class="muted" style="display:block;margin-top:12px">종료 시간</label>
+      <input class="field" id="calendarEventEnd" type="time" value="17:00">
+      <p class="muted" style="font-size:10px;margin:8px 0 0">${selectedCalendarDate} 일정으로 등록됩니다. 공부 시간은 학습 기록에서 자동 합산됩니다.</p>
+    `,()=>{
+      const title=$('calendarEventTitle').value.trim();
+      const start=$('calendarEventStart').value;
+      const end=$('calendarEventEnd').value;
+      if(!title)return toast('일정 이름을 입력해 주세요.');
+      if(start&&end&&end<=start)return toast('종료 시간은 시작 시간보다 늦어야 해요.');
+      data.calendarEvents.push({id:uid(),date:selectedCalendarDate,title,start,end});
+      closeModal();save();toast('캘린더에 일정을 등록했어요.');
+    });
+    return;
+  }
+  const del=e.target.closest('[data-calendar-delete]');
+  if(del){
+    const id=del.dataset.calendarDelete;
+    data.calendarEvents=data.calendarEvents.filter(ev=>String(ev.id)!==id);
+    save();toast('일정을 삭제했어요.');
+  }
+});
 
 /* 일반 모달 */
 function openModal(title,fields,action){
