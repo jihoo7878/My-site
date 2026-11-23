@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -156,14 +155,21 @@ th{color:var(--muted);font-weight:600}
   padding:6px 8px;font-size:11px;
 }
 
+/* 수정: 시간표는 가로 스크롤만 담당 */
 .schedule-scroll{
   width:100%;
-  overflow:auto;
+  overflow-x:auto;
+  overflow-y:hidden;
   border:1px solid var(--line);
   border-radius:12px;
   background:#111622;
-  overscroll-behavior:contain;
+
+  overscroll-behavior-x:contain;
+  overscroll-behavior-y:auto;
+
   -webkit-overflow-scrolling:touch;
+
+  /* 가로 스크롤 허용, 세로 제스처는 페이지로 전달 */
   touch-action:pan-x pan-y;
 }
 
@@ -198,6 +204,7 @@ th{color:var(--muted);font-weight:600}
   position:relative;top:-4px;background:#151c29;padding:0 2px;
 }
 
+/* 수정: 날짜 칸에서 가로·세로 제스처 허용 */
 .day-column{
   position:relative;
   border-right:1px solid var(--line);
@@ -208,7 +215,7 @@ th{color:var(--muted);font-weight:600}
     #293246 35px,
     #293246 36px
   );
-  touch-action:pan-y;
+  touch-action:pan-x pan-y;
 }
 .day-column.today{background-color:#8ba8ff08}
 
@@ -224,7 +231,7 @@ th{color:var(--muted);font-weight:600}
   box-shadow:0 0 8px #ffffff35;
 }
 
-/* 일정 본문: 터치 스크롤 허용 */
+/* 수정: 일정 본문에서도 가로 스크롤과 세로 페이지 스크롤 허용 */
 .schedule-block{
   position:absolute;
   left:2px;right:2px;
@@ -240,7 +247,7 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:pan-y;
+  touch-action:pan-x pan-y;
   cursor:grab;
 }
 .schedule-block:active{cursor:grabbing}
@@ -252,7 +259,7 @@ th{color:var(--muted);font-weight:600}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
 .block-repeat{font-size:8px;opacity:.75;margin-top:1px}
 
-/* 이동·길이 조절 손잡이: 일정 박스와 별도인 형제 요소 */
+/* 이동·길이 조절 손잡이 */
 .schedule-move-handle{
   position:absolute;
   width:19px;height:19px;
@@ -962,7 +969,7 @@ function renderSchedule(){
 
       col.appendChild(el);
 
-      /* 이동 손잡이: 일정 박스와 분리된 형제 요소 */
+      /* 이동 손잡이 */
       const moveHandle=document.createElement('div');
       moveHandle.className='schedule-move-handle';
       moveHandle.textContent='⠿';
@@ -977,7 +984,7 @@ function renderSchedule(){
 
       col.appendChild(moveHandle);
 
-      /* 길이 조절 손잡이: 일정 박스와 분리된 형제 요소 */
+      /* 길이 조절 손잡이 */
       const resizeHandle=document.createElement('div');
       resizeHandle.className='schedule-resize-handle';
       resizeHandle.setAttribute('aria-label','일정 길이 조절');
