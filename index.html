@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -149,7 +150,6 @@ th{color:var(--muted);font-weight:600}
   -webkit-overflow-scrolling:touch;
 }
 
-/* 화면이 넓으면 7일을 모두 표시하고, 좁으면 가로 스크롤 */
 .week-grid{
   display:grid;
   grid-template-columns:55px repeat(7,minmax(0,1fr));
@@ -195,6 +195,20 @@ th{color:var(--muted);font-weight:600}
   touch-action:pan-y;
 }
 .day-column.today{background-color:#8ba8ff08}
+
+/* 선택한 빈 시간 칸 */
+.slot-selection{
+  position:absolute;
+  left:1px;
+  right:1px;
+  height:22px;
+  border:3px solid #f4f6ff;
+  border-radius:4px;
+  background:#ffffff12;
+  z-index:1;
+  pointer-events:none;
+  box-shadow:0 0 8px #ffffff35;
+}
 
 .schedule-block{
   position:absolute;left:2px;right:2px;
@@ -337,8 +351,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
     </div>
 
     <p class="schedule-help">
-      06:00~24:00 · 30분 단위 · 일정을 드래그해 이동하고 아래쪽 끝을 드래그해 길이를 조절하세요.
-      빈 시간대를 한 번 누르면 해당 시간에 일정을 추가할 수 있습니다.
+      06:00~24:00 · 30분 단위 · 빈 칸을 선택한 뒤 일정 추가 또는 붙여넣기를 이용하세요.
+      일정을 드래그해 이동하고 아래쪽 끝을 드래그해 길이를 조절할 수 있습니다.
     </p>
 
     <div class="schedule-scroll" id="scheduleScroll">
@@ -346,7 +360,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
     </div>
 
     <div class="schedule-selected" id="scheduleSelected">
-      <span class="schedule-empty-hint">일정을 선택하면 편집·삭제할 수 있습니다.</span>
+      <span class="schedule-empty-hint">빈 시간 칸을 선택하거나 일정을 클릭하세요.</span>
     </div>
   </div>
 
@@ -608,6 +622,7 @@ try{
 
 let viewedWeek=mondayOf(todayISO());
 let selectedBlockId=null;
+let selectedSlot=null;
 let clipboardBlock=null;
 let pasteTarget=null;
 let editingBlockId=null;
@@ -683,6 +698,10 @@ function renderSchedule(){
   const dates=getWeekDates();
   const today=todayISO();
 
+  const scroll=$('scheduleScroll');
+  const previousLeft=scroll.scrollLeft;
+  const previousTop=scroll.scrollTop;
+
   $('weekLabel').textContent=
     `${viewedWeek.replaceAll('-','.')} ~ ${dates[6].replaceAll('-','.')}`;
 
@@ -722,7 +741,7 @@ function renderSchedule(){
     col.className='day-column'+(date===today?' today':'');
     col.dataset.date=date;
 
-    /* 빈 시간대를 누르면 일정 추가 */
+    /* 빈 칸 클릭: 해당 시간대 선택 */
     col.addEventListener('click',e=>{
       if(e.target.closest('.schedule-block'))return;
 
@@ -733,15 +752,23 @@ function renderSchedule(){
       );
 
       const start=START_MIN+slot*SLOT;
-      pasteTarget={date,start};
-      selectedBlockId=null;
 
-      openScheduleModal(null,{
-        date,
-        start,
-        end:Math.min(END_MIN,start+60)
-      });
+      selectedBlockId=null;
+      selectedSlot={date,start};
+      pasteTarget={date,start};
+
+      renderSchedule();
     });
+
+    /* 선택한 30분 칸 표시 */
+    if(selectedSlot&&selectedSlot.date===date){
+      const selection=document.createElement('div');
+      selection.className='slot-selection';
+      selection.style.top=
+        ((selectedSlot.start-START_MIN)/SLOT*SLOT_HEIGHT)+'px';
+
+      col.appendChild(selection);
+    }
 
     blocksForDate(date).forEach(block=>{
       const el=document.createElement('div');
@@ -760,14 +787,19 @@ function renderSchedule(){
         <div class="resize-handle" aria-label="일정 길이 조절"></div>
       `;
 
+      /* 일정 선택 */
       el.addEventListener('click',e=>{
         e.stopPropagation();
 
         selectedBlockId=block.id;
+        selectedSlot=null;
         pasteTarget={date,start:block.start};
 
         document.querySelectorAll('.schedule-block')
           .forEach(x=>x.classList.remove('selected'));
+
+        document.querySelectorAll('.slot-selection')
+          .forEach(x=>x.remove());
 
         el.classList.add('selected');
         renderSelection();
@@ -788,23 +820,33 @@ function renderSchedule(){
     grid.appendChild(col);
   });
 
+  scroll.scrollLeft=previousLeft;
+  scroll.scrollTop=previousTop;
+
   $('pasteEventBtn').disabled=!clipboardBlock;
   renderSelection();
 }
 
-/* 선택 일정 표시 */
+/* 선택 일정 및 선택 위치 표시 */
 function renderSelection(){
   const area=$('scheduleSelected');
   const block=data.scheduleBlocks.find(b=>b.id===selectedBlockId);
 
   if(!block){
-    const targetText=pasteTarget
-      ?`선택 위치: ${pasteTarget.date} ${timeText(pasteTarget.start)}`
-      :'빈 시간대를 누르면 일정을 추가할 수 있습니다.';
-
-    area.innerHTML=`
-      <span class="schedule-selected-info">${targetText}</span>
-    `;
+    if(selectedSlot){
+      area.innerHTML=`
+        <span class="schedule-selected-info">
+          선택 위치: ${escapeHTML(selectedSlot.date)} ·
+          ${timeText(selectedSlot.start)}~${timeText(selectedSlot.start+30)}
+        </span>
+      `;
+    }else{
+      area.innerHTML=`
+        <span class="schedule-empty-hint">
+          빈 시간 칸을 선택하거나 일정을 클릭하세요.
+        </span>
+      `;
+    }
     return;
   }
 
@@ -818,14 +860,26 @@ function renderSelection(){
     <button class="mini" id="deleteSelectedBlock">삭제</button>
   `;
 
-  $('editSelectedBlock').onclick=()=>openScheduleModal(block.id);
+  $('editSelectedBlock').onclick=()=>{
+    openScheduleModal(block.id,{
+      date:pasteTarget?.date||block.date||todayISO()
+    });
+  };
+
   $('copySelectedBlock').onclick=()=>copyScheduleBlock(block);
 
   $('deleteSelectedBlock').onclick=()=>{
-    if(!confirm('이 일정을 삭제할까요?'))return;
+    const message=block.repeat
+      ?'매주 반복되는 이 일정을 전체 삭제할까요?'
+      :'이 일정을 삭제할까요?';
+
+    if(!confirm(message))return;
 
     data.scheduleBlocks=data.scheduleBlocks.filter(b=>b.id!==block.id);
     selectedBlockId=null;
+    selectedSlot=null;
+    pasteTarget=null;
+
     save();
     toast('일정을 삭제했어요.');
   };
@@ -851,9 +905,13 @@ function pasteScheduleBlock(){
 
   const source=clipboardBlock;
 
-  /* 선택한 위치가 없으면 현재 주 월요일부터 사용 */
-  const date=pasteTarget?.date||viewedWeek;
-  const start=pasteTarget?.start??source.start;
+  if(!pasteTarget&&!selectedSlot){
+    toast('먼저 붙여넣을 시간 칸을 선택해 주세요.');
+    return;
+  }
+
+  const date=selectedSlot?.date||pasteTarget?.date;
+  const start=selectedSlot?.start??pasteTarget?.start??source.start;
   const duration=source.end-source.start;
   const end=start+duration;
 
@@ -876,7 +934,9 @@ function pasteScheduleBlock(){
   };
 
   data.scheduleBlocks.push(copy);
+
   selectedBlockId=copy.id;
+  selectedSlot=null;
   pasteTarget={date,start};
 
   save();
@@ -986,12 +1046,14 @@ function beginBlockGesture(e,block,mode,element){
 
         data.scheduleBlocks[index]=updated;
         selectedBlockId=updated.id;
+        selectedSlot=null;
         pasteTarget={date:currentDate,start:currentStart};
 
         save();
       }
     }else{
       selectedBlockId=block.id;
+      selectedSlot=null;
       renderSelection();
     }
   }
@@ -1025,7 +1087,6 @@ function openScheduleModal(id=null,defaults={}){
 
   $('scheduleType').value=block?.type||'study';
 
-  /* 빈 시간대에서 추가하면 특정 날짜 일정으로 기본 설정 */
   const defaultRepeat=defaults.date?false:true;
 
   $('scheduleRepeat').value=String(
@@ -1083,30 +1144,48 @@ $('saveSchedule').onclick=()=>{
   }
 
   selectedBlockId=block.id;
-  pasteTarget={
-    date:repeat?getWeekDates().find(d=>new Date(d+'T12:00:00').getDay()===day)||date:date,
-    start
-  };
+  selectedSlot=null;
+
+  const targetDate=repeat
+    ?getWeekDates().find(d=>new Date(d+'T12:00:00').getDay()===day)||date
+    :date;
+
+  pasteTarget={date:targetDate,start};
 
   closeScheduleModal();
   save();
   toast('일정을 저장했어요.');
 };
 
-$('addEventBtn').onclick=()=>openScheduleModal();
+/* 일정 추가 버튼: 선택한 시간 칸을 기본 위치로 사용 */
+$('addEventBtn').onclick=()=>{
+  const date=selectedSlot?.date||todayISO();
+  const start=selectedSlot?.start??960;
 
-$('prevWeek').onclick=()=>{
-  viewedWeek=dateOffset(viewedWeek,-7);
-  renderSchedule();
+  openScheduleModal(null,{
+    date,
+    start,
+    end:Math.min(END_MIN,start+60)
+  });
 };
 
-$('nextWeek').onclick=()=>{
-  viewedWeek=dateOffset(viewedWeek,7);
+/* 주간 이동 */
+function changeWeek(offset){
+  viewedWeek=dateOffset(viewedWeek,offset);
+  selectedSlot=null;
+  selectedBlockId=null;
+  pasteTarget=null;
   renderSchedule();
-};
+}
+
+$('prevWeek').onclick=()=>changeWeek(-7);
+$('nextWeek').onclick=()=>changeWeek(7);
 
 $('thisWeek').onclick=()=>{
   viewedWeek=mondayOf(todayISO());
+  selectedSlot=null;
+  selectedBlockId=null;
+  pasteTarget=null;
   renderSchedule();
 };
 
@@ -1177,7 +1256,6 @@ function render(){
     `;
   }).join('');
 
-  /* 최근 7일 그래프: 날짜 문자열을 Date 객체처럼 사용하지 않도록 수정 */
   const chartDays=Array.from(
     {length:7},
     (_,i)=>dateOffset(today,i-6)
@@ -1442,6 +1520,7 @@ $('importFile').onchange=async e=>{
 
     data=normalizeData(value);
     selectedBlockId=null;
+    selectedSlot=null;
     clipboardBlock=null;
     pasteTarget=null;
 
