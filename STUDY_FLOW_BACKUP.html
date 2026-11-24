@@ -523,9 +523,6 @@ header{margin-bottom:22px}
 
   <div class="header-right">
     <div class="date-pill" id="todayLabel"></div>
-    <button class="btn" id="exportBtn">데이터 백업 ↓</button>
-    <button class="btn" id="importBtn">불러오기 ↑</button>
-    <input type="file" id="importFile" accept="application/json" hidden>
     <div id="accountControls" style="display:none">
       <span id="accountEmail"></span>
       <span id="syncStatus">연결됨</span>
@@ -2706,58 +2703,6 @@ $('timerSubject').onchange=e=>{
     toast('과목 변경은 타이머를 멈춘 뒤 해주세요.');
     e.target.value=timer.subject;
   }
-};
-
-/* 백업 및 복원 */
-$('exportBtn').onclick=()=>{
-  const blob=new Blob(
-    [JSON.stringify(data,null,2)],
-    {type:'application/json'}
-  );
-
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-
-  a.href=url;
-  a.download='study-flow-backup.json';
-  a.click();
-
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast('백업 파일을 저장했어요.');
-};
-
-$('importBtn').onclick=()=>$('importFile').click();
-
-$('importFile').onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-
-  try{
-    const value=JSON.parse(await file.text());
-
-    if(
-      !Array.isArray(value.logs)||
-      (!Array.isArray(value.tasks)&&!Array.isArray(value.courses))||
-      (!Array.isArray(value.events)&&!Array.isArray(value.scheduleBlocks))
-    ){
-      throw Error('invalid');
-    }
-
-    data=normalizeData(value);
-
-    selectedBlockId=null;
-    selectedSlot=null;
-    clipboardBlock=null;
-    pasteTarget=null;
-
-    buildViewOptions();
-    save();
-    toast('데이터를 불러왔어요.');
-  }catch{
-    toast('올바른 백업 파일이 아닙니다.');
-  }
-
-  e.target.value='';
 };
 
 /* 키보드 복사·붙여넣기 */
