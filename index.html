@@ -610,9 +610,7 @@ header{margin-bottom:22px}
           <div><label for="schoolYearInput">학년도</label><input class="field" id="schoolYearInput" type="number" min="2020" max="2035"></div>
           <div><label for="schoolSemesterInput">학기</label><select class="field" id="schoolSemesterInput"><option value="1">1학기</option><option value="2">2학기</option></select></div>
         </div>
-        <label for="schoolApiKeyInput">NEIS 인증키</label>
-        <input class="field" id="schoolApiKeyInput" type="password" autocomplete="off" placeholder="발급받은 인증키 입력">
-        <div class="school-setting-note">인증키는 학교 시간표 조회에만 사용하며, 개인 시간표·학습 시간 기록과는 별도로 관리됩니다.</div>
+        <div class="school-setting-note">NEIS 인증키는 서버에서 안전하게 관리됩니다. 이 화면에 인증키를 입력하거나 저장할 필요가 없습니다.</div>
         <div class="school-card-actions">
           <button class="mini primary" type="button" id="schoolSaveBtn">설정 저장</button>
           <button class="mini" type="button" id="schoolClearBtn">학교 설정 초기화</button>
@@ -1306,7 +1304,6 @@ function defaultData(){
       className:'1',
       year:new Date().getFullYear(),
       semester:'1',
-      apiKey:'',
       selectedSchool:null,
       weekRows:[],
       fetchedWeek:'',
@@ -1358,6 +1355,11 @@ function normalizeData(raw){
       end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
     }
   };
+
+  // 과거 버전에 브라우저/클라우드로 저장된 NEIS 인증키가 있으면 로드 즉시 제거
+  if(result.schoolTimetable && Object.prototype.hasOwnProperty.call(result.schoolTimetable,'apiKey')){
+    delete result.schoolTimetable.apiKey;
+  }
 
   result.calendarEvents=result.calendarEvents.filter(ev=>ev&&/^\d{4}-\d{2}-\d{2}$/.test(ev.date||'')&&String(ev.title||'').trim()).map(ev=>({
     id:String(ev.id||uid()),date:ev.date,title:String(ev.title).trim(),start:String(ev.start||''),end:String(ev.end||'')
@@ -1466,6 +1468,8 @@ try{
 }catch{
   data=defaultData();
 }
+// 기존 버전에 저장된 NEIS 인증키가 있다면 LocalStorage에서도 즉시 제거
+try{localStorage.setItem(KEY,JSON.stringify(data));}catch{}
 
 let viewedWeek=mondayOf(todayISO());
 let selectedBlockId=null;
@@ -2619,7 +2623,6 @@ function renderCalendar(){
 
 
 /* 학교 시간표: NEIS Open API. 개인 주간 플래너와 완전히 분리된 데이터 */
-const SCHOOL_API_BASE='https://open.neis.go.kr/hub/';
 const schoolWeekDays=['월','화','수','목','금'];
 const schoolDateISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 function schoolWeekDates(){
@@ -2628,26 +2631,26 @@ function schoolWeekDates(){
   monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
   return schoolWeekDays.map((_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return schoolDateISO(d);});
 }
-function schoolQueryUrl(api,params){
-  const url=new URL(SCHOOL_API_BASE+api);
-  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,String(v)));
-  url.searchParams.set('Type','json');
-  url.searchParams.set('pIndex','1');
-  url.searchParams.set('pSize','100');
-  return url.toString();
-}
-async function schoolApiRows(api,params,rowKey){
-  const response=await fetch(schoolQueryUrl(api,params));
-  const raw=await response.text();
-  let json;
-  try{json=JSON.parse(raw);}catch(e){throw new Error(`NEIS 응답을 JSON으로 해석하지 못했습니다. HTTP ${response.status}`);}
-  if(!response.ok)throw new Error(`NEIS 요청 오류 (HTTP ${response.status})`);
-  const block=json[rowKey];
-  if(!Array.isArray(block)){
-    const topResult=json.RESULT;
-    if(topResult&&topResult.CODE!=='INFO-000')throw new Error(`${topResult.CODE}: ${topResult.MESSAGE}`);
-    throw new Error('NEIS 응답 형식이 예상과 다릅니다. API 이름과 인증키를 확인해 주세요.');
+async function schoolApiRows(action,params,rowKey){
+  if(typeof window.studyFlowCallSchoolApi!=='function'){
+    throw new Error('학교 API 연결이 아직 준비되지 않았습니다. 로그인 상태를 확인하고 다시 시도해 주세요.');
   }
+  const body=action==='search'
+    ? {action:'search',schoolName:params.SCHUL_NM}
+    : {
+        action:'timetable',
+        officeCode:params.ATPT_OFCDC_SC_CODE,
+        schoolCode:params.SD_SCHUL_CODE,
+        year:params.AY,
+        semester:params.SEM,
+        grade:params.GRADE,
+        classNum:params.CLASS_NM,
+        date:params.ALL_TI_YMD
+      };
+  const json=await window.studyFlowCallSchoolApi(body);
+  if(json?.error)throw new Error(json.error);
+  const block=json?.[rowKey];
+  if(!Array.isArray(block))throw new Error('NEIS 응답 형식이 예상과 다릅니다.');
   const head=block.find(part=>Array.isArray(part.head))?.head||[];
   const result=head.find(item=>item.RESULT)?.RESULT;
   if(result&&result.CODE!=='INFO-000')throw new Error(`${result.CODE}: ${result.MESSAGE}`);
@@ -2667,7 +2670,6 @@ function renderSchoolSummary(){
     $('schoolClassInput').value=s.className||'1';
     $('schoolYearInput').value=s.year||new Date().getFullYear();
     $('schoolSemesterInput').value=s.semester||'1';
-    $('schoolApiKeyInput').value=s.apiKey||'';
   }
   renderSchoolToday();
 }
@@ -2705,15 +2707,12 @@ function renderSchoolWeek(){
   box.hidden=false;box.innerHTML=table+'</tbody></table>';
 }
 async function searchNeisSchools(){
-  const s=data.schoolTimetable;
-  const key=$('schoolApiKeyInput').value.trim()||s.apiKey;
   const name=$('schoolNameInput').value.trim();
   const resultBox=$('schoolSearchResults');
-  if(!key){toast('먼저 NEIS 인증키를 입력해 주세요.');$('schoolApiKeyInput').focus();return;}
   if(!name){toast('학교명을 입력해 주세요.');$('schoolNameInput').focus();return;}
   resultBox.innerHTML='<div class="school-status">학교를 검색하고 있어요…</div>';
   try{
-    const rows=await schoolApiRows('schoolInfo',{KEY:key,SCHUL_NM:name},'schoolInfo');
+    const rows=await schoolApiRows('search',{SCHUL_NM:name},'schoolInfo');
     if(!rows.length){resultBox.innerHTML='<div class="school-status">검색 결과가 없습니다. 학교명을 확인해 주세요.</div>';return;}
     resultBox.innerHTML=rows.map((r,i)=>`<button type="button" class="school-search-result" data-school-index="${i}">${escapeHTML(r.SCHUL_NM||'학교명 없음')}<small>${escapeHTML(r.ORG_RDNMA||r.ORG_RDNDA||'주소 정보 없음')} · ${escapeHTML(r.ATPT_OFCDC_SC_NM||'')}</small></button>`).join('');
     resultBox._schoolRows=rows;
@@ -2728,16 +2727,14 @@ function saveSchoolSettings(){
   s.className=$('schoolClassInput').value.trim();
   s.year=Number($('schoolYearInput').value)||new Date().getFullYear();
   s.semester=$('schoolSemesterInput').value;
-  s.apiKey=$('schoolApiKeyInput').value.trim();
-  if(!s.schoolCode||!s.officeCode){toast('학교 검색 결과에서 학교를 먼저 선택해 주세요.');return;}
-  if(!s.apiKey){toast('NEIS 인증키를 입력해 주세요.');return;}
-  if(!/^\d+$/.test(s.className)||Number(s.className)<1){toast('반은 1 이상의 숫자로 입력해 주세요.');return;}
+  if(!s.schoolCode||!s.officeCode){toast('학교 검색 결과에서 학교를 먼저 선택해 주세요.');return false;}
+  if(!/^\d+$/.test(s.className)||Number(s.className)<1){toast('반은 1 이상의 숫자로 입력해 주세요.');return false;}
   save();renderSchoolSummary();toast('학교 시간표 설정을 저장했어요.');
+  return true;
 }
 async function fetchSchoolWeek(){
   const s=data.schoolTimetable;
   if(!s.schoolCode||!s.officeCode){toast('먼저 학교를 검색해 선택해 주세요.');return;}
-  if(!s.apiKey){toast('NEIS 인증키를 입력하고 설정을 저장해 주세요.');return;}
   const dates=schoolWeekDates();
   $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">이번 주 시간표를 불러오는 중…</div>';
   try{
@@ -2745,7 +2742,7 @@ async function fetchSchoolWeek(){
     for(const date of dates){
       const ymd=date.replaceAll('-','');
       const rows=await schoolApiRows('hisTimetable',{
-        KEY:s.apiKey,ATPT_OFCDC_SC_CODE:s.officeCode,SD_SCHUL_CODE:s.schoolCode,
+        ATPT_OFCDC_SC_CODE:s.officeCode,SD_SCHUL_CODE:s.schoolCode,
         AY:s.year,SEM:s.semester,ALL_TI_YMD:ymd,GRADE:s.grade,CLASS_NM:s.className
       },'hisTimetable');
       all.push(...rows.map(r=>({...r,ALL_TI_YMD:String(r.ALL_TI_YMD||ymd).replace(/^(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3')})));
@@ -2786,12 +2783,8 @@ function initSchoolTimetable(){
   });
   $('schoolSaveBtn')?.addEventListener('click',saveSchoolSettings);
   $('schoolRefreshBtn')?.addEventListener('click',async()=>{
-    const before=data.schoolTimetable;
-    const valid=!!(before.schoolCode&&before.officeCode&&$('schoolApiKeyInput').value.trim()
-      &&/^\d+$/.test($('schoolClassInput').value.trim()));
-    if(!valid){saveSchoolSettings();return;}
-    saveSchoolSettings();
-    if(data.schoolTimetable.apiKey&&data.schoolTimetable.schoolCode)await fetchSchoolWeek();
+    if(!saveSchoolSettings())return;
+    await fetchSchoolWeek();
   });
   $('schoolShowWeekBtn')?.addEventListener('click',()=>{
     const box=$('schoolWeekView');
@@ -2800,7 +2793,7 @@ function initSchoolTimetable(){
   });
   $('schoolClearBtn')?.addEventListener('click',()=>{
     if(!confirm('학교 시간표 설정을 초기화할까요? 개인 주간 플래너 일정은 변경되지 않습니다.'))return;
-    data.schoolTimetable={schoolName:'',officeCode:'',schoolCode:'',grade:'2',className:'1',year:new Date().getFullYear(),semester:'1',apiKey:'',selectedSchool:null,weekRows:[],fetchedWeek:'',lastError:''};
+    data.schoolTimetable={schoolName:'',officeCode:'',schoolCode:'',grade:'2',className:'1',year:new Date().getFullYear(),semester:'1',selectedSchool:null,weekRows:[],fetchedWeek:'',lastError:''};
     save();renderSchoolSummary();$('schoolSearchResults').innerHTML='';$('schoolWeekView').hidden=true;
     toast('학교 시간표 설정을 초기화했어요.');
   });
@@ -3467,6 +3460,8 @@ const authForm=document.getElementById('authForm');
       }
 
       currentUser=user;
+      // 기존 클라우드 데이터에 남아 있던 인증키를 정리한 안전한 데이터로 즉시 덮어씀
+      await saveToCloud();
       localStorage.setItem(userStorageKey(user.id),JSON.stringify(data));
       selectedBlockId=null;selectedSlot=null;clipboardBlock=null;pasteTarget=null;
       buildViewOptions();
@@ -3486,6 +3481,7 @@ const authForm=document.getElementById('authForm');
     const user=currentUser;
     syncStatus.textContent='저장 중…';
     const snapshot=JSON.parse(JSON.stringify(data));
+    if(snapshot.schoolTimetable)delete snapshot.schoolTimetable.apiKey;
     const {error}=await supabaseClient.from('user_data').upsert({
       user_id:user.id,data:snapshot,updated_at:new Date().toISOString()
     },{onConflict:'user_id'});
@@ -3634,6 +3630,27 @@ const authForm=document.getElementById('authForm');
     try{
       if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase 라이브러리를 불러오지 못했어요.');
       supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+      // NEIS 호출은 브라우저에서 직접 하지 않고 school-api Edge Function으로 전달
+      window.studyFlowCallSchoolApi=async function(payload){
+        const {data:sessionResult,error:sessionError}=await supabaseClient.auth.getSession();
+        if(sessionError)throw new Error('로그인 세션을 확인하지 못했습니다.');
+        const accessToken=sessionResult?.session?.access_token;
+        if(!accessToken)throw new Error('로그인이 필요합니다. 다시 로그인해 주세요.');
+        const response=await fetch(`${SUPABASE_URL}/functions/v1/school-api`,{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'apikey':SUPABASE_PUBLISHABLE_KEY,
+            'Authorization':`Bearer ${accessToken}`
+          },
+          body:JSON.stringify(payload)
+        });
+        const raw=await response.text();
+        let result;
+        try{result=JSON.parse(raw);}catch(e){throw new Error(`학교 서버 응답을 읽지 못했습니다. HTTP ${response.status}`);}
+        if(!response.ok)throw new Error(result?.error||`학교 서버 요청 실패 (HTTP ${response.status})`);
+        return result;
+      };
       const recoveryRedirect=window.location.hash.includes('type=recovery')||new URLSearchParams(window.location.search).get('type')==='recovery';
       // 세션 조회 전에 인증 이벤트를 구독해야 이메일 복구 링크 이벤트를 놓치지 않음
       supabaseClient.auth.onAuthStateChange((event,session)=>{
