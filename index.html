@@ -566,6 +566,29 @@ header{margin-bottom:22px}
  .school-settings-modal .school-card-actions button{flex:1}
 }
 
+
+/* Editable school timetable cells */
+.school-edit-hint{font-size:10px;color:var(--muted);margin:0 0 7px}
+.school-cell-edit{display:block;width:100%;min-height:34px;padding:5px 4px;text-align:left;border:0;background:transparent;color:var(--text);border-radius:5px;cursor:pointer}
+.school-cell-edit:hover{background:#2a3650}
+.school-cell-edit strong{display:block;font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:keep-all}
+.school-cell-edit span{display:block;font-size:9px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.school-week-cell.is-edited{background:#25344a}
+.school-cell-edit i{display:inline-block;margin-top:3px;font-size:8px;font-style:normal;color:#9fe0c5}
+@media(max-width:560px){
+  .school-week-view{overflow-x:hidden!important;width:100%}
+  .school-week-table{width:100%!important;min-width:0!important;max-width:100%;table-layout:fixed;font-size:8px}
+  .school-week-table th,.school-week-table td{padding:3px 1px!important;overflow-wrap:anywhere;word-break:break-word}
+  .school-week-table th:first-child{width:31px}
+  .school-week-table th:not(:first-child){font-size:7px;line-height:1.2}
+  .school-week-cell{min-width:0!important;min-height:0}
+  .school-cell-edit{min-height:38px;padding:3px 1px;text-align:center}
+  .school-cell-edit strong{font-size:7px;line-height:1.2;word-break:break-all}
+  .school-cell-edit span{font-size:6px;line-height:1.15;margin-top:2px;word-break:break-all}
+  .school-cell-edit i{font-size:6px;margin-top:1px}
+  .school-edit-hint{font-size:9px}
+}
+
 </style>
 </head>
 
@@ -1342,6 +1365,7 @@ function defaultData(){
       semester:'1',
       selectedSchool:null,
       weekRows:[],
+      manualEdits:{},
       fetchedWeek:'',
       lastError:''
     }
@@ -1384,7 +1408,8 @@ function normalizeData(raw){
       className:String(d.schoolTimetable?.className||'1'),
       year:Number(d.schoolTimetable?.year)||new Date().getFullYear(),
       semester:String(d.schoolTimetable?.semester||'1'),
-      weekRows:Array.isArray(d.schoolTimetable?.weekRows)?d.schoolTimetable.weekRows:[]
+      weekRows:Array.isArray(d.schoolTimetable?.weekRows)?d.schoolTimetable.weekRows:[],
+      manualEdits:d.schoolTimetable?.manualEdits&&typeof d.schoolTimetable.manualEdits==='object'?d.schoolTimetable.manualEdits:{}
     },
     scheduleView:{
       start:Number(d.scheduleView?.start??DEFAULT_VIEW_START),
@@ -2708,6 +2733,7 @@ function renderSchoolSummary(){
     $('schoolSemesterInput').value=s.semester||'1';
   }
 }
+function schoolCellKey(date,period){return `${date}|${period}`;}
 function renderSchoolWeek(){
   const box=$('schoolWeekView');
   const s=data.schoolTimetable||{};
@@ -2716,22 +2742,50 @@ function renderSchoolWeek(){
   const rows=s.weekRows||[];
   const periods=[...new Set(rows.map(r=>Number(r.PERIO)).filter(Number.isFinite))].sort((a,b)=>a-b);
   if(!periods.length){box.innerHTML='<div class="school-preview-empty">아직 조회된 시간표가 없습니다. 학교·학기 설정을 확인해 주세요.</div>';return;}
-  let table='<table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}<br>${d.slice(5)}</th>`).join('')+'</tr></thead><tbody>';
+  const edits=s.manualEdits||{};
+  let table='<div class="school-edit-hint">수업 칸을 누르면 과목과 교실을 직접 수정할 수 있어요. 수정 내용은 자동 저장됩니다.</div><table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}<br>${d.slice(5)}</th>`).join('')+'</tr></thead><tbody>';
   periods.forEach(p=>{
     table+=`<tr><th>${p}교시</th>`;
     dates.forEach(date=>{
-      const r=rows.find(x=>x.ALL_TI_YMD===date&&Number(x.PERIO)===p);
-      table+=`<td class="school-week-cell">${r?`<strong>${escapeHTML(r.ITRT_CNTNT||'')}</strong><span>${escapeHTML(r.CLAS_NM||'')}</span>`:'-'}</td>`;
+      const key=schoolCellKey(date,p);
+      const original=rows.find(x=>x.ALL_TI_YMD===date&&Number(x.PERIO)===p)||null;
+      const edited=Object.prototype.hasOwnProperty.call(edits,key);
+      const r=edited?edits[key]:original;
+      const subject=r&&!r._empty?(r.ITRT_CNTNT||''): '';
+      const room=r&&!r._empty?(r.CLAS_NM||''):'';
+      const shown=subject||'—';
+      table+=`<td class="school-week-cell ${edited?'is-edited':''}"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}${edited?'<i>수정</i>':''}</button></td>`;
     });
     table+='</tr>';
   });
   box.innerHTML=table+'</tbody></table>';
   const status=$('schoolTimetableStatus');
   if(status&&!s.lastError){
-    status.textContent=s.fetchedWeek
-      ? `저장된 시간표 표시 중 · ${s.year}학년도 ${s.semester}학기`
-      : '시간표가 표시되고 있습니다.';
+    const editCount=Object.keys(edits).length;
+    status.textContent=(s.fetchedWeek?`저장된 시간표 표시 중 · ${s.year}학년도 ${s.semester}학기`:'시간표가 표시되고 있습니다.')+(editCount?` · 직접 수정 ${editCount}건`: '');
   }
+}
+function editSchoolTimetableCell(date,period){
+  const s=data.schoolTimetable;
+  const key=schoolCellKey(date,period);
+  const edits=s.manualEdits||(s.manualEdits={});
+  const original=(s.weekRows||[]).find(x=>x.ALL_TI_YMD===date&&Number(x.PERIO)===Number(period))||null;
+  const current=Object.prototype.hasOwnProperty.call(edits,key)?edits[key]:original;
+  const currentSubject=current&&!current._empty?(current.ITRT_CNTNT||''):'';
+  const currentRoom=current&&!current._empty?(current.CLAS_NM||''):'';
+  const subject=prompt(`${date} ${period}교시 과목을 입력하세요.\n비워두면 해당 교시를 비웁니다.`,currentSubject);
+  if(subject===null)return;
+  if(!subject.trim()){
+    edits[key]={_empty:true,ITRT_CNTNT:'',CLAS_NM:''};
+  }else{
+    const room=prompt('교실 또는 수업 장소를 입력하세요. (선택)',currentRoom);
+    if(room===null)return;
+    edits[key]={ITRT_CNTNT:subject.trim(),CLAS_NM:room.trim()};
+  }
+  s.manualEdits=edits;
+  save();
+  renderSchoolWeek();
+  toast('시간표 수정 내용을 저장했어요.');
 }
 async function searchNeisSchools(){
   const name=$('schoolNameInput').value.trim();
@@ -2794,6 +2848,11 @@ function initSchoolTimetable(){
   if(yearInput&&!yearInput.value)yearInput.value=new Date().getFullYear();
   renderSchoolSummary();
   renderSchoolWeek();
+  $('schoolWeekView')?.addEventListener('click',e=>{
+    const cell=e.target.closest('[data-school-date][data-school-period]');
+    if(!cell)return;
+    editSchoolTimetableCell(cell.dataset.schoolDate,Number(cell.dataset.schoolPeriod));
+  });
 
   const modal=$('schoolSettingsModal');
   const openModal=()=>{renderSchoolSummary();modal.style.display='grid';};
