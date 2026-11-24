@@ -128,7 +128,7 @@ th{color:var(--muted);font-weight:600}
 .calendar-day.selected{background:#2b3b60;border-color:var(--accent)}
 .calendar-day .day-num{font-size:11px;font-weight:700;text-align:center;align-self:center}
 .calendar-day .study-minutes{font-size:8px;color:#9fe0c5;white-space:nowrap;line-height:1.2}
-.calendar-event-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:1.25;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
+.calendar-holiday-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#4b3037;border-left:3px solid #f08a9b;color:#ffdce2;font-size:8px;line-height:1.25;box-sizing:border-box;font-weight:700}.calendar-day.holiday-day .day-num{color:#ff9aaa}.calendar-holiday-name{color:#ff9aaa;font-weight:700}\n.calendar-event-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:1.25;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
 .calendar-detail{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
 .calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
 .calendar-detail-head strong{font-size:11px}
@@ -2180,6 +2180,24 @@ document.addEventListener('click',e=>{
 });
 
 /* 홈 미니 학습 캘린더 */
+// 대한민국 공휴일: 한국천문연구원 월력요항·달력자료 기준 (2026~2027)
+const KR_HOLIDAYS={
+"2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴",
+"2026-03-01":"삼일절","2026-03-02":"삼일절 대체공휴일","2026-05-05":"어린이날",
+"2026-05-24":"부처님오신날","2026-05-25":"부처님오신날 대체공휴일","2026-06-06":"현충일",
+"2026-08-15":"광복절","2026-08-17":"광복절 대체공휴일","2026-09-24":"추석 연휴",
+"2026-09-25":"추석","2026-09-26":"추석 연휴","2026-10-03":"개천절",
+"2026-10-05":"개천절 대체공휴일","2026-10-09":"한글날","2026-12-25":"기독탄신일",
+"2027-01-01":"신정","2027-02-06":"설날 연휴","2027-02-07":"설날","2027-02-08":"설날 연휴",
+"2027-02-09":"설날 대체공휴일","2027-03-01":"삼일절","2027-05-01":"노동절",
+"2027-05-03":"노동절 대체공휴일","2027-05-05":"어린이날","2027-05-13":"부처님오신날",
+"2027-06-06":"현충일","2027-07-17":"제헌절","2027-07-19":"제헌절 대체공휴일",
+"2027-08-15":"광복절","2027-08-16":"광복절 대체공휴일","2027-09-14":"추석 연휴",
+"2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-03":"개천절",
+"2027-10-04":"개천절 대체공휴일","2027-10-09":"한글날","2027-10-11":"한글날 대체공휴일",
+"2027-12-25":"기독탄신일","2027-12-27":"기독탄신일 대체공휴일"
+};
+
 function renderCalendar(){
   const year=calendarMonth.getFullYear();
   const month=calendarMonth.getMonth();
@@ -2192,18 +2210,22 @@ function renderCalendar(){
     const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const minutes=sumLogs(iso,iso);
     const dayEvents=data.calendarEvents.filter(ev=>ev.date===iso).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':''].filter(Boolean).join(' ');
+    const holiday=KR_HOLIDAYS[iso]||'';
+    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':'',holiday?'holiday-day':''].filter(Boolean).join(' ');
     const timeLabel=minutes?`${Math.floor(minutes/60)?Math.floor(minutes/60)+'h ':''}${minutes%60?minutes%60+'m':''}`:'&nbsp;';
+    const holidayLabel=holiday?`<span class="calendar-holiday-chip" title="${escapeHTML(holiday)}">${escapeHTML(holiday)}</span>`:'';
     const eventLabels=dayEvents.slice(0,2).map(ev=>`<span class="calendar-event-chip" title="${escapeHTML(ev.title)}">${escapeHTML(ev.title)}</span>`).join('');
     const moreLabel=dayEvents.length>2?`<span class="calendar-event-more">+${dayEvents.length-2}개</span>`:'';
     const eventAria=dayEvents.length?`, 일정 ${dayEvents.map(ev=>ev.title).join(', ')}`:'';
-    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분${escapeHTML(eventAria)}"><span class="day-num">${d.getDate()}</span><span class="study-minutes">${timeLabel}</span>${eventLabels}${moreLabel}</button>`);
+    const holidayAria=holiday?`, 공휴일 ${holiday}`:'';
+    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분${escapeHTML(holidayAria+eventAria)}"><span class="day-num">${d.getDate()}</span>${holidayLabel}<span class="study-minutes">${timeLabel}</span>${eventLabels}${moreLabel}</button>`);
   }
   $('miniCalendar').innerHTML=cells.join('');
   const selected=new Date(selectedCalendarDate+'T12:00:00');
   const label=`${selected.getMonth()+1}월 ${selected.getDate()}일 (${DAY_NAMES[selected.getDay()]})`;
   const events=data.calendarEvents.filter(ev=>ev.date===selectedCalendarDate).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-  $('calendarDetail').innerHTML=`<div class="calendar-detail-head"><strong>${label} 일정</strong><button class="mini" id="addCalendarEvent">＋ 일정 등록</button></div>`+
+  const selectedHoliday=KR_HOLIDAYS[selectedCalendarDate]||'';
+  $('calendarDetail').innerHTML=`<div class="calendar-detail-head"><strong>${label} ${selectedHoliday?`<span class="calendar-holiday-name">· ${escapeHTML(selectedHoliday)}</span>`:''} 일정</strong><button class="mini" id="addCalendarEvent">＋ 일정 등록</button></div>`+
     (events.length?`<div class="calendar-event-list">${events.map(ev=>`<div class="calendar-event"><span class="calendar-event-time">${escapeHTML(ev.start||'')} ${ev.end?'– '+escapeHTML(ev.end):''}</span><span class="calendar-event-title">${escapeHTML(ev.title)}</span><button class="calendar-event-delete" data-calendar-delete="${escapeHTML(ev.id)}" aria-label="일정 삭제">×</button></div>`).join('')}</div>`:'<div class="calendar-empty">등록된 일정이 없어요. 날짜를 선택하고 일정을 추가해 보세요.</div>');
 }
 
