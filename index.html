@@ -1105,7 +1105,7 @@ function normalizeData(raw){
         day:Number.isInteger(Number(b.day))?Number(b.day):1,
         repeat:b.repeat===true||b.repeat==='true',
         type:['class','study','personal','other'].includes(b.type)?b.type:(b.type==='lecture'?'study':'study'),
-        manualDone:!!b.manualDone
+        doneDates:b.doneDates&&typeof b.doneDates==='object'&&!Array.isArray(b.doneDates)?b.doneDates:{}
       };
     })
     .filter(b=>b.end>b.start);
@@ -1315,10 +1315,11 @@ function blockDateForRender(block, fallbackDate){
 }
 
 function getBlockProgress(block, date){
-  if(block.manualDone)return {percent:100,minutes:block.end-block.start,planned:block.end-block.start,manual:true};
+  const targetDate=blockDateForRender(block,date);
+  const manuallyDone=!!block.doneDates?.[targetDate];
+  if(manuallyDone)return {percent:100,minutes:block.end-block.start,planned:block.end-block.start,manual:true};
   if(block.type!=='study')return {percent:0,minutes:0,planned:block.end-block.start,manual:false};
 
-  const targetDate=blockDateForRender(block,date);
   const intervals=[];
   data.logs.filter(log=>log.date===targetDate).forEach(log=>{
     if(Array.isArray(log.sessions)){
@@ -1458,9 +1459,10 @@ function renderSchedule(){
 
       const progress=getBlockProgress(block,date);
       const categoryLabel=block.type==='class'?'수업':block.type==='study'?'인강·자습':block.type==='personal'?'개인 일정':'기타';
+      const occurrenceDone=!!block.doneDates?.[date];
       const statusMarkup=block.type==='study'
-        ? `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" aria-label="${escapeHTML(block.title)} 완료 체크" ${block.manualDone?'checked':''}><span class="block-progress">${progress.percent}%</span><span class="block-progress-track"><span class="block-progress-fill" style="display:block;width:${progress.percent}%"></span></span></div>`
-        : `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" aria-label="${escapeHTML(block.title)} 완료 체크" ${block.manualDone?'checked':''}><span class="block-progress">${block.manualDone?'완료':categoryLabel}</span></div>`;
+        ? `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" data-occurrence-date="${date}" aria-label="${escapeHTML(block.title)} 완료 체크" ${occurrenceDone?'checked':''}><span class="block-progress">${progress.percent}%</span><span class="block-progress-track"><span class="block-progress-fill" style="display:block;width:${progress.percent}%"></span></span></div>`
+        : `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" data-occurrence-date="${date}" aria-label="${escapeHTML(block.title)} 완료 체크" ${occurrenceDone?'checked':''}><span class="block-progress">${occurrenceDone?'완료':categoryLabel}</span></div>`;
       el.innerHTML=`
         <div class="block-title">${escapeHTML(block.title)}</div>
         <div class="block-time">${timeText(block.start)}–${timeText(block.end)}</div>
@@ -1473,9 +1475,12 @@ function renderSchedule(){
         e.stopPropagation();
         const target=data.scheduleBlocks.find(b=>b.id===block.id);
         if(!target)return;
-        target.manualDone=blockCheck.checked;
+        const occurrenceDate=blockCheck.dataset.occurrenceDate;
+        target.doneDates=target.doneDates&&typeof target.doneDates==='object'?target.doneDates:{};
+        if(blockCheck.checked)target.doneDates[occurrenceDate]=true;
+        else delete target.doneDates[occurrenceDate];
         save();
-        toast(target.manualDone?'일정을 완료로 표시했어요.':'완료 표시를 해제했어요.');
+        toast(blockCheck.checked?'이 날짜의 일정을 완료로 표시했어요.':'이 날짜의 완료 표시를 해제했어요.');
       });
 
       /* 일정 선택 */
@@ -1843,7 +1848,7 @@ $('saveSchedule').onclick=()=>{
     date:repeat?null:date,
     repeat,
     type:$('scheduleType').value,
-    manualDone:editingBlockId?(data.scheduleBlocks.find(b=>b.id===editingBlockId)?.manualDone||false):false,
+    doneDates:editingBlockId?(data.scheduleBlocks.find(b=>b.id===editingBlockId)?.doneDates||{}):{},
     color:$('scheduleColor').value
   };
 
