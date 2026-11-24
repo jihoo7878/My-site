@@ -511,6 +511,37 @@ header{margin-bottom:22px}
  .page-intro h2{font-size:26px}
 }
 
+
+/* SCHOOL TIMETABLE: independent from personal planner */
+.school-home-card{grid-column:span 6;min-width:0}
+.school-preview-empty,.school-setting-summary{padding:12px;background:#111827;border:1px solid #2b354a;border-radius:10px;color:var(--muted);font-size:12px;min-height:52px}
+.school-preview-list{display:grid;gap:7px}
+.school-preview-item{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:9px;padding:9px 10px;border:1px solid #2b354a;background:#111827;border-radius:9px;font-size:11px}
+.school-preview-time{color:var(--accent2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.school-preview-subject{font-weight:750;min-width:0;overflow-wrap:anywhere}
+.school-preview-room{color:var(--muted);font-size:10px;white-space:nowrap}
+.school-card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.school-setting-fields{margin-top:12px;display:grid;gap:7px}
+.school-setting-fields label{font-size:10px;color:var(--muted)}
+.school-search-row{display:flex;gap:7px}
+.school-search-row .field{min-width:0;flex:1}
+.school-search-results{display:grid;gap:5px}
+.school-search-result{width:100%;text-align:left;border:1px solid var(--line);background:#111827;color:var(--text);padding:9px 10px;border-radius:9px;font-size:11px}
+.school-search-result small{display:block;color:var(--muted);margin-top:3px}
+.school-config-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.school-config-grid .field{padding:8px;font-size:11px}
+.school-setting-note{font-size:10px;line-height:1.55;color:var(--muted)}
+.school-week-view{margin-top:12px;overflow-x:auto}
+.school-week-table{width:100%;min-width:460px;border-collapse:collapse;font-size:10px}
+.school-week-table th,.school-week-table td{border:1px solid var(--line);padding:7px 6px;white-space:normal;vertical-align:top}
+.school-week-table th{background:#202a3c;color:var(--muted);text-align:center}
+.school-week-cell{min-width:65px;min-height:42px}
+.school-week-cell strong{display:block;color:var(--text);font-size:10px}
+.school-week-cell span{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.school-status{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5}
+@media(max-width:900px){.school-home-card{grid-column:span 12}}
+@media(max-width:560px){.school-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.school-preview-item{grid-template-columns:58px 1fr auto;padding:8px}.school-home-card{grid-column:1/-1}}
+
 </style>
 </head>
 
@@ -554,8 +585,44 @@ header{margin-bottom:22px}
   <section class="grid">
     <div class="card stat"><div class="stat-icon">◷</div><div class="stat-label">오늘 공부 시간</div><div class="stat-value" id="todayHours">0h 00m</div><div class="stat-foot">오늘 완료한 학습 기록 기준</div></div>
     <div class="card stat"><div class="stat-icon">▥</div><div class="stat-label">이번 주 누적</div><div class="stat-value" id="weekHours">0h 00m</div><div class="stat-foot">월요일부터 오늘까지</div></div>
-    <div class="card stat goal-stat"><div class="stat-icon">◎</div><div class="stat-label">이번 주 목표</div><div class="stat-value" id="goalPercent">0%</div><div class="stat-foot goal-stat-foot"><span id="goalFoot">목표 40시간</span><button class="mini goal-edit-btn" id="editWeeklyGoal" type="button">수정</button></div></div>
-    <div class="card stat"><div class="stat-icon">✓</div><div class="stat-label">완료한 강의</div><div class="stat-value" id="doneCount">0개</div><div class="stat-foot">인강 수강 완료 누적</div></div>
+    <div class="card school-home-card">
+      <div class="card-head"><h3>오늘의 학교 시간표</h3><span class="tag" id="schoolTodayLabel">학교 미설정</span></div>
+      <div id="schoolTodayPreview" class="school-preview-empty">학교와 학급을 설정하면 오늘의 수업을 보여드려요.</div>
+      <div class="school-card-actions">
+        <button class="mini primary" type="button" id="schoolShowWeekBtn">주간 시간표</button>
+        <button class="mini" type="button" id="schoolRefreshBtn">시간표 새로고침</button>
+      </div>
+      <div id="schoolWeekView" class="school-week-view" hidden></div>
+    </div>
+    <div class="card school-home-card">
+      <div class="card-head"><h3>학교·학기 설정</h3><span class="tag">NEIS</span></div>
+      <div class="school-setting-summary" id="schoolSettingSummary">학교 정보를 등록해 주세요.</div>
+      <div class="school-setting-fields">
+        <label>학교명</label>
+        <div class="school-search-row">
+          <input class="field" id="schoolNameInput" placeholder="예: 배재고등학교">
+          <button class="mini" type="button" id="schoolSearchBtn">검색</button>
+        </div>
+        <div id="schoolSearchResults" class="school-search-results" aria-live="polite"></div>
+        <div class="school-config-grid">
+          <div><label for="schoolGradeInput">학년</label><select class="field" id="schoolGradeInput"><option value="1">1학년</option><option value="2" selected>2학년</option><option value="3">3학년</option></select></div>
+          <div><label for="schoolClassInput">반</label><input class="field" id="schoolClassInput" type="number" min="1" max="30" value="1"></div>
+          <div><label for="schoolYearInput">학년도</label><input class="field" id="schoolYearInput" type="number" min="2020" max="2035"></div>
+          <div><label for="schoolSemesterInput">학기</label><select class="field" id="schoolSemesterInput"><option value="1">1학기</option><option value="2">2학기</option></select></div>
+        </div>
+        <label for="schoolApiKeyInput">NEIS 인증키</label>
+        <input class="field" id="schoolApiKeyInput" type="password" autocomplete="off" placeholder="발급받은 인증키 입력">
+        <div class="school-setting-note">인증키는 학교 시간표 조회에만 사용하며, 개인 시간표·학습 시간 기록과는 별도로 관리됩니다.</div>
+        <div class="school-card-actions">
+          <button class="mini primary" type="button" id="schoolSaveBtn">설정 저장</button>
+          <button class="mini" type="button" id="schoolClearBtn">학교 설정 초기화</button>
+        </div>
+      </div>
+    </div>
+    <div hidden aria-hidden="true">
+      <span id="goalPercent"></span><span id="goalFoot"></span><span id="doneCount"></span>
+      <button id="editWeeklyGoal" type="button"></button>
+    </div>
     <div class="card side">
       <div class="card-head"><h3>학습 타이머</h3><span class="tag" id="timerStatus">대기 중</span></div>
       <div style="display:flex;gap:7px;align-items:center"><select class="field" id="timerSubject" style="flex:1"></select><button class="mini" type="button" id="manageTimerSubjects">과목 관리</button></div>
@@ -1230,7 +1297,21 @@ function defaultData(){
     todoCategories:defaultTodoCategories(),
     todoItems:[],
     todoRoutines:[],
-    todoCelebratedDates:[]
+    todoCelebratedDates:[],
+    schoolTimetable:{
+      schoolName:'',
+      officeCode:'',
+      schoolCode:'',
+      grade:'2',
+      className:'1',
+      year:new Date().getFullYear(),
+      semester:'1',
+      apiKey:'',
+      selectedSchool:null,
+      weekRows:[],
+      fetchedWeek:'',
+      lastError:''
+    }
   };
 }
 
@@ -1263,6 +1344,15 @@ function normalizeData(raw){
     todoItems:Array.isArray(d.todoItems)?d.todoItems:[],
     todoRoutines:Array.isArray(d.todoRoutines)?d.todoRoutines:[],
     todoCelebratedDates:Array.isArray(d.todoCelebratedDates)?d.todoCelebratedDates:[],
+    schoolTimetable:{
+      ...base.schoolTimetable,
+      ...(d.schoolTimetable&&typeof d.schoolTimetable==='object'?d.schoolTimetable:{}),
+      grade:String(d.schoolTimetable?.grade||'2'),
+      className:String(d.schoolTimetable?.className||'1'),
+      year:Number(d.schoolTimetable?.year)||new Date().getFullYear(),
+      semester:String(d.schoolTimetable?.semester||'1'),
+      weekRows:Array.isArray(d.schoolTimetable?.weekRows)?d.schoolTimetable.weekRows:[]
+    },
     scheduleView:{
       start:Number(d.scheduleView?.start??DEFAULT_VIEW_START),
       end:Number(d.scheduleView?.end??DEFAULT_VIEW_END)
@@ -2527,6 +2617,181 @@ function renderCalendar(){
     (events.length?`<div class="calendar-event-list">${events.map(ev=>`<div class="calendar-event"><span class="calendar-event-time">${escapeHTML(ev.start||'')} ${ev.end?'– '+escapeHTML(ev.end):''}</span><span class="calendar-event-title">${escapeHTML(ev.title)}</span><button class="calendar-event-delete" data-calendar-delete="${escapeHTML(ev.id)}" aria-label="일정 삭제">×</button></div>`).join('')}</div>`:'<div class="calendar-empty">등록된 일정이 없어요. 날짜를 선택하고 일정을 추가해 보세요.</div>');
 }
 
+
+/* 학교 시간표: NEIS Open API. 개인 주간 플래너와 완전히 분리된 데이터 */
+const SCHOOL_API_BASE='https://open.neis.go.kr/hub/';
+const schoolWeekDays=['월','화','수','목','금'];
+const schoolDateISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function schoolWeekDates(){
+  const now=new Date();
+  const monday=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+  return schoolWeekDays.map((_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return schoolDateISO(d);});
+}
+function schoolQueryUrl(api,params){
+  const url=new URL(SCHOOL_API_BASE+api);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,String(v)));
+  url.searchParams.set('Type','json');
+  url.searchParams.set('pIndex','1');
+  url.searchParams.set('pSize','100');
+  return url.toString();
+}
+async function schoolApiRows(api,params,rowKey){
+  const response=await fetch(schoolQueryUrl(api,params));
+  if(!response.ok)throw new Error(`NEIS 요청 오류 (${response.status})`);
+  const json=await response.json();
+  if(json.RESULT&&json.RESULT.CODE!=='INFO-000')throw new Error(json.RESULT.MESSAGE||'NEIS에서 데이터를 가져오지 못했습니다.');
+  const block=json[rowKey];
+  if(!Array.isArray(block)||!block[1]||!Array.isArray(block[1].row))return [];
+  return block[1].row;
+}
+function renderSchoolSummary(){
+  const s=data.schoolTimetable||{};
+  const configured=!!(s.schoolCode&&s.officeCode&&s.schoolName);
+  $('schoolSettingSummary').textContent=configured
+    ? `${s.schoolName} · ${s.grade}학년 ${s.className}반 · ${s.year}학년도 ${s.semester}학기`
+    : '학교 정보를 등록해 주세요.';
+  $('schoolTodayLabel').textContent=configured?`${s.grade}학년 ${s.className}반`:'학교 미설정';
+  if($('schoolNameInput')){
+    $('schoolNameInput').value=s.schoolName||'';
+    $('schoolGradeInput').value=s.grade||'2';
+    $('schoolClassInput').value=s.className||'1';
+    $('schoolYearInput').value=s.year||new Date().getFullYear();
+    $('schoolSemesterInput').value=s.semester||'1';
+    $('schoolApiKeyInput').value=s.apiKey||'';
+  }
+  renderSchoolToday();
+}
+function renderSchoolToday(){
+  const s=data.schoolTimetable||{};
+  const today=schoolDateISO(new Date());
+  const dayRows=(s.weekRows||[]).filter(r=>r.ALL_TI_YMD===today).sort((a,b)=>(Number(a.PERIO)||0)-(Number(b.PERIO)||0));
+  if(!s.schoolCode){
+    $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">학교와 학급을 설정하면 오늘의 수업을 보여드려요.</div>';
+    return;
+  }
+  if(!dayRows.length){
+    $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">오늘 조회된 수업이 없어요. 주말·공휴일이거나 아직 시간표가 등록되지 않았을 수 있습니다.</div>';
+    return;
+  }
+  $('schoolTodayPreview').innerHTML='<div class="school-preview-list">'+dayRows.map(r=>`<div class="school-preview-item"><span class="school-preview-time">${escapeHTML(r.PERIO||'')}교시</span><span class="school-preview-subject">${escapeHTML(r.ITRT_CNTNT||'수업')}</span><span class="school-preview-room">${escapeHTML(r.CLAS_NM||'')}</span></div>`).join('')+'</div>';
+}
+function renderSchoolWeek(){
+  const box=$('schoolWeekView');
+  const s=data.schoolTimetable||{};
+  if(!s.schoolCode){box.hidden=false;box.innerHTML='<div class="school-preview-empty">먼저 학교·학급 정보를 설정해 주세요.</div>';return;}
+  const dates=schoolWeekDates();
+  const rows=s.weekRows||[];
+  const periods=[...new Set(rows.map(r=>Number(r.PERIO)).filter(Number.isFinite))].sort((a,b)=>a-b);
+  if(!periods.length){box.hidden=false;box.innerHTML='<div class="school-preview-empty">주간 시간표가 아직 없습니다. 인증키와 학급 정보를 확인한 뒤 새로고침해 주세요.</div>';return;}
+  let table='<table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}<br>${d.slice(5)}</th>`).join('')+'</tr></thead><tbody>';
+  periods.forEach(p=>{
+    table+=`<tr><th>${p}교시</th>`;
+    dates.forEach(date=>{
+      const r=rows.find(x=>x.ALL_TI_YMD===date&&Number(x.PERIO)===p);
+      table+=`<td class="school-week-cell">${r?`<strong>${escapeHTML(r.ITRT_CNTNT||'')}</strong><span>${escapeHTML(r.CLAS_NM||'')}</span>`:'-'}</td>`;
+    });
+    table+='</tr>';
+  });
+  box.hidden=false;box.innerHTML=table+'</tbody></table>';
+}
+async function searchNeisSchools(){
+  const s=data.schoolTimetable;
+  const key=$('schoolApiKeyInput').value.trim()||s.apiKey;
+  const name=$('schoolNameInput').value.trim();
+  const resultBox=$('schoolSearchResults');
+  if(!key){toast('먼저 NEIS 인증키를 입력해 주세요.');$('schoolApiKeyInput').focus();return;}
+  if(!name){toast('학교명을 입력해 주세요.');$('schoolNameInput').focus();return;}
+  resultBox.innerHTML='<div class="school-status">학교를 검색하고 있어요…</div>';
+  try{
+    const rows=await schoolApiRows('schoolInfo',{KEY:key,SCHUL_NM:name},'schoolInfo');
+    if(!rows.length){resultBox.innerHTML='<div class="school-status">검색 결과가 없습니다. 학교명을 확인해 주세요.</div>';return;}
+    resultBox.innerHTML=rows.map((r,i)=>`<button type="button" class="school-search-result" data-school-index="${i}">${escapeHTML(r.SCHUL_NM||'학교명 없음')}<small>${escapeHTML(r.ORG_RDNMA||r.ORG_RDNDA||'주소 정보 없음')} · ${escapeHTML(r.ATPT_OFCDC_SC_NM||'')}</small></button>`).join('');
+    resultBox._schoolRows=rows;
+  }catch(err){
+    resultBox.innerHTML=`<div class="school-status">${escapeHTML(err.message||'학교 검색에 실패했습니다.')}</div>`;
+  }
+}
+function saveSchoolSettings(){
+  const s=data.schoolTimetable;
+  s.schoolName=$('schoolNameInput').value.trim();
+  s.grade=$('schoolGradeInput').value;
+  s.className=$('schoolClassInput').value.trim();
+  s.year=Number($('schoolYearInput').value)||new Date().getFullYear();
+  s.semester=$('schoolSemesterInput').value;
+  s.apiKey=$('schoolApiKeyInput').value.trim();
+  if(!s.schoolCode||!s.officeCode){toast('학교 검색 결과에서 학교를 먼저 선택해 주세요.');return;}
+  if(!s.apiKey){toast('NEIS 인증키를 입력해 주세요.');return;}
+  if(!/^\d+$/.test(s.className)||Number(s.className)<1){toast('반은 1 이상의 숫자로 입력해 주세요.');return;}
+  save();renderSchoolSummary();toast('학교 시간표 설정을 저장했어요.');
+}
+async function fetchSchoolWeek(){
+  const s=data.schoolTimetable;
+  if(!s.schoolCode||!s.officeCode){toast('먼저 학교를 검색해 선택해 주세요.');return;}
+  if(!s.apiKey){toast('NEIS 인증키를 입력하고 설정을 저장해 주세요.');return;}
+  const dates=schoolWeekDates();
+  $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">이번 주 시간표를 불러오는 중…</div>';
+  try{
+    const all=[];
+    for(const date of dates){
+      const ymd=date.replaceAll('-','');
+      const rows=await schoolApiRows('hisTimetable',{
+        KEY:s.apiKey,ATPT_OFCDC_SC_CODE:s.officeCode,SD_SCHUL_CODE:s.schoolCode,
+        ALL_TI_YMD:ymd,GRADE:s.grade,CLASS_NM:s.className
+      },'hisTimetable');
+      all.push(...rows.map(r=>({...r,ALL_TI_YMD:String(r.ALL_TI_YMD||ymd).replace(/^(\\d{4})(\\d{2})(\\d{2})$/,'$1-$2-$3')})));
+    }
+    s.weekRows=all;
+    s.fetchedWeek=dates[0];
+    s.lastError='';
+    save();
+    renderSchoolToday();
+    if(!$('schoolWeekView').hidden)renderSchoolWeek();
+    toast('학교 시간표를 업데이트했어요.');
+  }catch(err){
+    s.lastError=err.message||'시간표 조회 실패';
+    save();
+    $('schoolTodayPreview').innerHTML=`<div class="school-preview-empty">${escapeHTML(s.lastError)}<br>인증키, 학교 코드, 학년·반을 확인해 주세요.</div>`;
+  }
+}
+function initSchoolTimetable(){
+  const yearInput=$('schoolYearInput');
+  if(yearInput&&!yearInput.value)yearInput.value=new Date().getFullYear();
+  renderSchoolSummary();
+  $('schoolSearchBtn')?.addEventListener('click',searchNeisSchools);
+  $('schoolNameInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchNeisSchools();}});
+  $('schoolSearchResults')?.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-school-index]');
+    if(!btn)return;
+    const row=$('schoolSearchResults')._schoolRows?.[Number(btn.dataset.schoolIndex)];
+    if(!row)return;
+    const s=data.schoolTimetable;
+    s.schoolName=row.SCHUL_NM||'';
+    s.officeCode=row.ATPT_OFCDC_SC_CODE||'';
+    s.schoolCode=row.SD_SCHUL_CODE||'';
+    s.selectedSchool={name:s.schoolName,officeCode:s.officeCode,schoolCode:s.schoolCode,address:row.ORG_RDNMA||row.ORG_RDNDA||''};
+    $('schoolNameInput').value=s.schoolName;
+    $('schoolSearchResults').innerHTML=`<div class="school-status">선택됨: ${escapeHTML(s.schoolName)} · ${escapeHTML(s.selectedSchool.address)}</div>`;
+    renderSchoolSummary();
+  });
+  $('schoolSaveBtn')?.addEventListener('click',saveSchoolSettings);
+  $('schoolRefreshBtn')?.addEventListener('click',async()=>{
+    saveSchoolSettings();
+    await fetchSchoolWeek();
+  });
+  $('schoolShowWeekBtn')?.addEventListener('click',()=>{
+    const box=$('schoolWeekView');
+    if(box.hidden){renderSchoolWeek();box.hidden=false;$('schoolShowWeekBtn').textContent='주간 시간표 접기';}
+    else{box.hidden=true;$('schoolShowWeekBtn').textContent='주간 시간표';}
+  });
+  $('schoolClearBtn')?.addEventListener('click',()=>{
+    if(!confirm('학교 시간표 설정을 초기화할까요? 개인 주간 플래너 일정은 변경되지 않습니다.'))return;
+    data.schoolTimetable={schoolName:'',officeCode:'',schoolCode:'',grade:'2',className:'1',year:new Date().getFullYear(),semester:'1',apiKey:'',selectedSchool:null,weekRows:[],fetchedWeek:'',lastError:''};
+    save();renderSchoolSummary();$('schoolSearchResults').innerHTML='';$('schoolWeekView').hidden=true;
+    toast('학교 시간표 설정을 초기화했어요.');
+  });
+}
+
 /* 대시보드 렌더링 */
 function render(){
   const today=todayISO();
@@ -2540,6 +2805,7 @@ function render(){
     {year:'numeric',month:'long',day:'numeric',weekday:'long'}
   );
 
+  if(typeof renderSchoolSummary==='function')renderSchoolSummary();
   $('todayHours').textContent=minsToText(todayM);
   $('weekHours').textContent=minsToText(weekM);
   $('goalPercent').textContent=
@@ -3392,6 +3658,7 @@ const authForm=document.getElementById('authForm');
     updatePhoneScheduleModeUI();
     renderSchedule();
   });
+  initSchoolTimetable();
   showLobby();
   initAuth();
 })();
