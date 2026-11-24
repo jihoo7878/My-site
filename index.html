@@ -128,7 +128,8 @@ th{color:var(--muted);font-weight:600}
 .calendar-day.selected{background:#2b3b60;border-color:var(--accent)}
 .calendar-day .day-num{font-size:11px;font-weight:700;text-align:center;align-self:center}
 .calendar-day .study-minutes{font-size:8px;color:#9fe0c5;white-space:nowrap;line-height:1.2}
-.calendar-holiday-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#4b3037;border-left:3px solid #f08a9b;color:#ffdce2;font-size:8px;line-height:1.25;box-sizing:border-box;font-weight:700}.calendar-day.holiday-day .day-num{color:#ff9aaa}.calendar-holiday-name{color:#ff9aaa;font-weight:700}\n.calendar-event-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:1.25;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
+.calendar-holiday-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#4b3037;border-left:3px solid #f08a9b;color:#ffdce2;font-size:8px;line-height:1.25;box-sizing:border-box;font-weight:700}.calendar-day.holiday-day .day-num{color:#ff9aaa}.calendar-holiday-name{color:#ff9aaa;font-weight:700}
+.calendar-event-chip{display:block;flex:0 0 auto;width:100%;max-width:100%;min-width:0;height:15px;max-height:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;word-break:keep-all;overflow-wrap:normal;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:11px;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
 .calendar-detail{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
 .calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
 .calendar-detail-head strong{font-size:11px}
@@ -138,7 +139,7 @@ th{color:var(--muted);font-weight:600}
 .calendar-event-title{flex:1;min-width:0;overflow-wrap:anywhere}
 .calendar-event-delete{border:0;background:transparent;color:var(--muted);font-size:14px;padding:0 3px}
 .calendar-empty{font-size:10px;color:var(--muted);padding:5px 1px}
-@media(max-width:560px){.calendar-day{min-height:62px;padding:3px 2px}.calendar-day .study-minutes{font-size:7px}.calendar-event-chip{font-size:7px;padding:2px 3px}.calendar-weekdays,.mini-calendar{gap:3px}}
+@media(max-width:560px){.calendar-day{min-height:62px;padding:3px 2px}.calendar-day .study-minutes{font-size:7px}.calendar-event-chip{font-size:7px;line-height:10px;height:14px;max-height:14px;padding:2px 3px;white-space:nowrap!important}.calendar-weekdays,.mini-calendar{gap:3px}}
 
 .modal-back{
   position:fixed;inset:0;background:#0009;display:none;
