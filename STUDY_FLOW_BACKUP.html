@@ -589,6 +589,36 @@ header{margin-bottom:22px}
   .school-edit-hint{font-size:9px}
 }
 
+
+/* Home study-time cards: vertically and horizontally centered */
+@media(min-width:561px){
+  .grid > .card.stat{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    min-height:100%;
+    padding-top:30px;
+    padding-bottom:30px;
+  }
+  .grid > .card.stat .stat-icon{
+    position:absolute;
+    top:20px;
+    right:20px;
+    float:none;
+  }
+  .grid > .card.stat .stat-label{font-size:14px}
+  .grid > .card.stat .stat-value{
+    font-size:40px;
+    line-height:1.2;
+    margin:12px 0 7px;
+    letter-spacing:-1.3px;
+  }
+  .grid > .card.stat .stat-foot{font-size:12px}
+}
+
 </style>
 </head>
 
@@ -786,7 +816,7 @@ header{margin-bottom:22px}
     <div class="school-setting-fields">
       <label for="schoolNameInput">학교명</label>
       <div class="school-search-row">
-        <input class="field" id="schoolNameInput" placeholder="예: 배재고등학교">
+        <input class="field" id="schoolNameInput" placeholder="예: 00고등학교">
         <button class="mini" type="button" id="schoolSearchBtn">검색</button>
       </div>
       <div id="schoolSearchResults" class="school-search-results" aria-live="polite"></div>
@@ -2743,7 +2773,7 @@ function renderSchoolWeek(){
   const periods=[...new Set(rows.map(r=>Number(r.PERIO)).filter(Number.isFinite))].sort((a,b)=>a-b);
   if(!periods.length){box.innerHTML='<div class="school-preview-empty">아직 조회된 시간표가 없습니다. 학교·학기 설정을 확인해 주세요.</div>';return;}
   const edits=s.manualEdits||{};
-  let table='<div class="school-edit-hint">수업 칸을 누르면 과목과 교실을 직접 수정할 수 있어요. 수정 내용은 자동 저장됩니다.</div><table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}<br>${d.slice(5)}</th>`).join('')+'</tr></thead><tbody>';
+  let table='<div class="school-edit-hint">수업 칸을 누르면 과목과 교실을 직접 수정할 수 있어요. 수정 내용은 자동 저장됩니다.</div><table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}</th>`).join('')+'</tr></thead><tbody>';
   periods.forEach(p=>{
     table+=`<tr><th>${p}교시</th>`;
     dates.forEach(date=>{
