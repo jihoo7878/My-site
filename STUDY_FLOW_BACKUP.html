@@ -128,7 +128,8 @@ th{color:var(--muted);font-weight:600}
 .calendar-day.selected{background:#2b3b60;border-color:var(--accent)}
 .calendar-day .day-num{font-size:11px;font-weight:700;text-align:center;align-self:center}
 .calendar-day .study-minutes{font-size:8px;color:#9fe0c5;white-space:nowrap;line-height:1.2}
-.calendar-event-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:1.25;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
+.calendar-holiday-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#4b3037;border-left:3px solid #f08a9b;color:#ffdce2;font-size:8px;line-height:1.25;box-sizing:border-box;font-weight:700}.calendar-day.holiday-day .day-num{color:#ff9aaa}.calendar-holiday-name{color:#ff9aaa;font-weight:700}
+.calendar-event-chip{display:block;flex:0 0 auto;width:100%;max-width:100%;min-width:0;height:15px;max-height:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;word-break:keep-all;overflow-wrap:normal;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:11px;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
 .calendar-detail{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
 .calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
 .calendar-detail-head strong{font-size:11px}
@@ -138,7 +139,7 @@ th{color:var(--muted);font-weight:600}
 .calendar-event-title{flex:1;min-width:0;overflow-wrap:anywhere}
 .calendar-event-delete{border:0;background:transparent;color:var(--muted);font-size:14px;padding:0 3px}
 .calendar-empty{font-size:10px;color:var(--muted);padding:5px 1px}
-@media(max-width:560px){.calendar-day{min-height:62px;padding:3px 2px}.calendar-day .study-minutes{font-size:7px}.calendar-event-chip{font-size:7px;padding:2px 3px}.calendar-weekdays,.mini-calendar{gap:3px}}
+@media(max-width:560px){.calendar-day{min-height:62px;padding:3px 2px}.calendar-day .study-minutes{font-size:7px}.calendar-event-chip{font-size:7px;line-height:10px;height:14px;max-height:14px;padding:2px 3px;white-space:nowrap!important}.calendar-weekdays,.mini-calendar{gap:3px}}
 
 .modal-back{
   position:fixed;inset:0;background:#0009;display:none;
@@ -329,8 +330,15 @@ th{color:var(--muted);font-weight:600}
   border-top:0;background:linear-gradient(to bottom,#ffffff00,#ffffff0d);
   pointer-events:none;
 }
+.schedule-block.class{background:#354b7c;border-color:#7189c855}
+.schedule-block.study{background:#354b7c;border-color:#7189c855}
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
+.block-status{position:absolute;right:4px;bottom:3px;display:flex;align-items:center;gap:3px;font-size:8px;line-height:1;opacity:.96;max-width:calc(100% - 8px)}
+.block-check{width:12px;height:12px;min-width:12px;accent-color:#8fd6ae;margin:0;cursor:pointer}
+.block-progress{white-space:nowrap;font-weight:750;font-variant-numeric:tabular-nums}
+.block-progress-track{height:3px;width:34px;background:#ffffff35;border-radius:9px;overflow:hidden}
+.block-progress-fill{height:100%;background:#9be2b6;border-radius:9px}
 .schedule-block.selected{outline:2px solid #fff !important;outline-offset:1px;border:1px solid #fff !important;box-shadow:0 0 0 2px #ffffff55,0 0 14px #ffffff75 !important;z-index:20;touch-action:none;cursor:grab}
 
 .block-title{font-weight:750;overflow-wrap:anywhere}
@@ -702,7 +710,8 @@ header{margin-bottom:22px}
     <div style="margin-top:12px">
       <label class="muted">일정 종류</label>
       <select class="field" id="scheduleType">
-        <option value="study">공부</option>
+        <option value="class">수업</option>
+        <option value="study">인강 · 자습</option>
         <option value="personal">개인 일정</option>
         <option value="other">기타</option>
       </select>
@@ -1096,7 +1105,8 @@ function normalizeData(raw){
         end,
         day:Number.isInteger(Number(b.day))?Number(b.day):1,
         repeat:b.repeat===true||b.repeat==='true',
-        type:['study','personal','other'].includes(b.type)?b.type:'study'
+        type:['class','study','personal','other'].includes(b.type)?b.type:(b.type==='lecture'?'study':'study'),
+        doneDates:b.doneDates&&typeof b.doneDates==='object'&&!Array.isArray(b.doneDates)?b.doneDates:{}
       };
     })
     .filter(b=>b.end>b.start);
@@ -1301,6 +1311,44 @@ function enableScheduleHorizontalSwipe(){
   },{passive:true});
 }
 
+function blockDateForRender(block, fallbackDate){
+  return block.repeat ? fallbackDate : (block.date||fallbackDate);
+}
+
+function getBlockProgress(block, date){
+  const targetDate=blockDateForRender(block,date);
+  const manuallyDone=!!block.doneDates?.[targetDate];
+  if(manuallyDone)return {percent:100,minutes:block.end-block.start,planned:block.end-block.start,manual:true};
+  if(block.type!=='study')return {percent:0,minutes:0,planned:block.end-block.start,manual:false};
+
+  const intervals=[];
+  data.logs.filter(log=>log.date===targetDate).forEach(log=>{
+    if(Array.isArray(log.sessions)){
+      log.sessions.forEach(seg=>{
+        if(Number.isFinite(Number(seg.startMinute))&&Number.isFinite(Number(seg.endMinute))&&Number(seg.endMinute)>Number(seg.startMinute)){
+          intervals.push([Number(seg.startMinute),Number(seg.endMinute)]);
+        }
+      });
+    }else if(Number.isFinite(Number(log.startMinute))&&Number.isFinite(Number(log.endMinute))&&Number(log.endMinute)>Number(log.startMinute)){
+      intervals.push([Number(log.startMinute),Number(log.endMinute)]);
+    }
+  });
+
+  // 겹치는 기록 구간은 합쳐 한 번만 계산
+  intervals.sort((a,b)=>a[0]-b[0]);
+  const merged=[];
+  intervals.forEach(([a,b])=>{
+    const start=Math.max(a,block.start),end=Math.min(b,block.end);
+    if(end<=start)return;
+    const last=merged[merged.length-1];
+    if(last&&start<=last[1])last[1]=Math.max(last[1],end);
+    else merged.push([start,end]);
+  });
+  const minutes=merged.reduce((sum,[a,b])=>sum+b-a,0);
+  const planned=block.end-block.start;
+  return {percent:Math.min(100,Math.round(minutes/planned*100)),minutes:Math.min(planned,minutes),planned,manual:false};
+}
+
 function renderSchedule(){
   const grid=$('scheduleGrid');
   const dates=getWeekDates();
@@ -1410,11 +1458,31 @@ function renderSchedule(){
         el.style.borderColor=block.color+'99';
       }
 
+      const progress=getBlockProgress(block,date);
+      const categoryLabel=block.type==='class'?'수업':block.type==='study'?'인강·자습':block.type==='personal'?'개인 일정':'기타';
+      const occurrenceDone=!!block.doneDates?.[date];
+      const statusMarkup=block.type==='study'
+        ? `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" data-occurrence-date="${date}" aria-label="${escapeHTML(block.title)} 완료 체크" ${occurrenceDone?'checked':''}><span class="block-progress">${progress.percent}%</span><span class="block-progress-track"><span class="block-progress-fill" style="display:block;width:${progress.percent}%"></span></span></div>`
+        : `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" data-occurrence-date="${date}" aria-label="${escapeHTML(block.title)} 완료 체크" ${occurrenceDone?'checked':''}><span class="block-progress">${occurrenceDone?'완료':categoryLabel}</span></div>`;
       el.innerHTML=`
         <div class="block-title">${escapeHTML(block.title)}</div>
         <div class="block-time">${timeText(block.start)}–${timeText(block.end)}</div>
         ${block.repeat?'<div class="block-repeat">↻ 매주 반복</div>':''}
+        ${statusMarkup}
       `;
+      const blockCheck=el.querySelector('[data-block-check]');
+      blockCheck.addEventListener('pointerdown',e=>e.stopPropagation());
+      blockCheck.addEventListener('click',e=>{
+        e.stopPropagation();
+        const target=data.scheduleBlocks.find(b=>b.id===block.id);
+        if(!target)return;
+        const occurrenceDate=blockCheck.dataset.occurrenceDate;
+        target.doneDates=target.doneDates&&typeof target.doneDates==='object'?target.doneDates:{};
+        if(blockCheck.checked)target.doneDates[occurrenceDate]=true;
+        else delete target.doneDates[occurrenceDate];
+        save();
+        toast(blockCheck.checked?'이 날짜의 일정을 완료로 표시했어요.':'이 날짜의 완료 표시를 해제했어요.');
+      });
 
       /* 일정 선택 */
       el.addEventListener('click',e=>{
@@ -1727,7 +1795,7 @@ function openScheduleModal(id=null,defaults={}){
   );
 
   $('scheduleType').value=block?.type||'study';
-  const defaultColors={study:'#354b7c',personal:'#604777',other:'#356458'};
+  const defaultColors={class:'#354b7c',study:'#354b7c',personal:'#604777',other:'#356458'};
   $('scheduleColor').value=/^#[0-9a-fA-F]{6}$/.test(block?.color||'')
     ?block.color:(defaultColors[block?.type||'study']||'#354b7c');
 
@@ -1781,6 +1849,7 @@ $('saveSchedule').onclick=()=>{
     date:repeat?null:date,
     repeat,
     type:$('scheduleType').value,
+    doneDates:editingBlockId?(data.scheduleBlocks.find(b=>b.id===editingBlockId)?.doneDates||{}):{},
     color:$('scheduleColor').value
   };
 
@@ -2112,6 +2181,24 @@ document.addEventListener('click',e=>{
 });
 
 /* 홈 미니 학습 캘린더 */
+// 대한민국 공휴일: 한국천문연구원 월력요항·달력자료 기준 (2026~2027)
+const KR_HOLIDAYS={
+"2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴",
+"2026-03-01":"삼일절","2026-03-02":"삼일절 대체공휴일","2026-05-05":"어린이날",
+"2026-05-24":"부처님오신날","2026-05-25":"부처님오신날 대체공휴일","2026-06-06":"현충일",
+"2026-08-15":"광복절","2026-08-17":"광복절 대체공휴일","2026-09-24":"추석 연휴",
+"2026-09-25":"추석","2026-09-26":"추석 연휴","2026-10-03":"개천절",
+"2026-10-05":"개천절 대체공휴일","2026-10-09":"한글날","2026-12-25":"성탄절",
+"2027-01-01":"신정","2027-02-06":"설날 연휴","2027-02-07":"설날","2027-02-08":"설날 연휴",
+"2027-02-09":"설날 대체공휴일","2027-03-01":"삼일절","2027-05-01":"노동절",
+"2027-05-03":"노동절 대체공휴일","2027-05-05":"어린이날","2027-05-13":"부처님오신날",
+"2027-06-06":"현충일","2027-07-17":"제헌절","2027-07-19":"제헌절 대체공휴일",
+"2027-08-15":"광복절","2027-08-16":"광복절 대체공휴일","2027-09-14":"추석 연휴",
+"2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-03":"개천절",
+"2027-10-04":"개천절 대체공휴일","2027-10-09":"한글날","2027-10-11":"한글날 대체공휴일",
+"2027-12-25":"성탄절","2027-12-27":"성탄절 대체공휴일"
+};
+
 function renderCalendar(){
   const year=calendarMonth.getFullYear();
   const month=calendarMonth.getMonth();
@@ -2124,18 +2211,22 @@ function renderCalendar(){
     const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const minutes=sumLogs(iso,iso);
     const dayEvents=data.calendarEvents.filter(ev=>ev.date===iso).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':''].filter(Boolean).join(' ');
+    const holiday=KR_HOLIDAYS[iso]||'';
+    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':'',holiday?'holiday-day':''].filter(Boolean).join(' ');
     const timeLabel=minutes?`${Math.floor(minutes/60)?Math.floor(minutes/60)+'h ':''}${minutes%60?minutes%60+'m':''}`:'&nbsp;';
+    const holidayLabel=holiday?`<span class="calendar-holiday-chip" title="${escapeHTML(holiday)}">${escapeHTML(holiday)}</span>`:'';
     const eventLabels=dayEvents.slice(0,2).map(ev=>`<span class="calendar-event-chip" title="${escapeHTML(ev.title)}">${escapeHTML(ev.title)}</span>`).join('');
     const moreLabel=dayEvents.length>2?`<span class="calendar-event-more">+${dayEvents.length-2}개</span>`:'';
     const eventAria=dayEvents.length?`, 일정 ${dayEvents.map(ev=>ev.title).join(', ')}`:'';
-    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분${escapeHTML(eventAria)}"><span class="day-num">${d.getDate()}</span><span class="study-minutes">${timeLabel}</span>${eventLabels}${moreLabel}</button>`);
+    const holidayAria=holiday?`, 공휴일 ${holiday}`:'';
+    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분${escapeHTML(holidayAria+eventAria)}"><span class="day-num">${d.getDate()}</span>${holidayLabel}<span class="study-minutes">${timeLabel}</span>${eventLabels}${moreLabel}</button>`);
   }
   $('miniCalendar').innerHTML=cells.join('');
   const selected=new Date(selectedCalendarDate+'T12:00:00');
   const label=`${selected.getMonth()+1}월 ${selected.getDate()}일 (${DAY_NAMES[selected.getDay()]})`;
   const events=data.calendarEvents.filter(ev=>ev.date===selectedCalendarDate).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-  $('calendarDetail').innerHTML=`<div class="calendar-detail-head"><strong>${label} 일정</strong><button class="mini" id="addCalendarEvent">＋ 일정 등록</button></div>`+
+  const selectedHoliday=KR_HOLIDAYS[selectedCalendarDate]||'';
+  $('calendarDetail').innerHTML=`<div class="calendar-detail-head"><strong>${label} ${selectedHoliday?`<span class="calendar-holiday-name">· ${escapeHTML(selectedHoliday)}</span>`:''} 일정</strong><button class="mini" id="addCalendarEvent">＋ 일정 등록</button></div>`+
     (events.length?`<div class="calendar-event-list">${events.map(ev=>`<div class="calendar-event"><span class="calendar-event-time">${escapeHTML(ev.start||'')} ${ev.end?'– '+escapeHTML(ev.end):''}</span><span class="calendar-event-title">${escapeHTML(ev.title)}</span><button class="calendar-event-delete" data-calendar-delete="${escapeHTML(ev.id)}" aria-label="일정 삭제">×</button></div>`).join('')}</div>`:'<div class="calendar-empty">등록된 일정이 없어요. 날짜를 선택하고 일정을 추가해 보세요.</div>');
 }
 
@@ -2437,6 +2528,11 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
 
   <label class="muted">공부 시간 (분)</label>
   <input class="field" id="fMinutes" type="number" min="1" max="1440" placeholder="예: 50">
+  <div class="form-row">
+    <div style="flex:1"><label class="muted">시작 시간 (선택)</label><input class="field" id="fStartTime" type="time"></div>
+    <div style="flex:1"><label class="muted">종료 시간 (선택)</label><input class="field" id="fEndTime" type="time"></div>
+  </div>
+  <div class="muted" style="font-size:11px">시간대를 입력하면 해당 시간표의 인강·자습 일정 완료율에 반영돼요.</div>
 `,()=>{
   const m=Number($('fMinutes').value);
 
@@ -2448,12 +2544,17 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
     return toast('날짜를 선택해 주세요.');
   }
 
+  const logStart=$('fStartTime').value;
+  const logEnd=$('fEndTime').value;
+  if((logStart&&!logEnd)||(!logStart&&logEnd))return toast('시작 시간과 종료 시간을 모두 입력해 주세요.');
+  if(logStart&&timeToMinutes(logEnd)<=timeToMinutes(logStart))return toast('종료 시간은 시작 시간보다 늦어야 해요.');
   data.logs.push({
     id:uid(),
     date:$('fDate').value,
     subject:$('fSubject').value,
     title:$('fTitle').value.trim(),
-    minutes:m
+    minutes:m,
+    ...(logStart&&logEnd?{startMinute:timeToMinutes(logStart),endMinute:timeToMinutes(logEnd)}:{})
   });
 
   closeModal();
@@ -2522,7 +2623,8 @@ let timer={
   started:0,
   elapsed:0,
   subject:'국어',
-  interval:null
+  interval:null,
+  sessions:[]
 };
 
 function updateTimer(){
@@ -2553,7 +2655,9 @@ $('timerStart').onclick=()=>{
 };
 
 $('timerPause').onclick=()=>{
-  timer.elapsed+=Math.floor((Date.now()-timer.started)/1000);
+  const segmentEnd=Date.now();
+  timer.elapsed+=Math.floor((segmentEnd-timer.started)/1000);
+  timer.sessions.push({start:timer.started,end:segmentEnd});
   timer.running=false;
 
   clearInterval(timer.interval);
@@ -2563,7 +2667,9 @@ $('timerPause').onclick=()=>{
 
 $('timerFinish').onclick=()=>{
   if(timer.running){
-    timer.elapsed+=Math.floor((Date.now()-timer.started)/1000);
+    const segmentEnd=Date.now();
+    timer.elapsed+=Math.floor((segmentEnd-timer.started)/1000);
+    timer.sessions.push({start:timer.started,end:segmentEnd});
     timer.running=false;
     clearInterval(timer.interval);
   }
@@ -2576,7 +2682,11 @@ $('timerFinish').onclick=()=>{
       date:todayISO(),
       subject:timer.subject,
       title:'타이머 학습',
-      minutes:m
+      minutes:m,
+      sessions:timer.sessions.map(seg=>{
+        const startDate=new Date(seg.start),endDate=new Date(seg.end);
+        return {date:todayISO(),startMinute:startDate.getHours()*60+startDate.getMinutes(),endMinute:endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0)};
+      }).filter(seg=>seg.endMinute>seg.startMinute)
     });
 
     save();
@@ -2586,6 +2696,7 @@ $('timerFinish').onclick=()=>{
   }
 
   timer.elapsed=0;
+  timer.sessions=[];
   updateTimer();
   timerButtons();
 };
