@@ -2726,6 +2726,12 @@ function renderSchoolWeek(){
     table+='</tr>';
   });
   box.innerHTML=table+'</tbody></table>';
+  const status=$('schoolTimetableStatus');
+  if(status&&!s.lastError){
+    status.textContent=s.fetchedWeek
+      ? `저장된 시간표 표시 중 · ${s.year}학년도 ${s.semester}학기`
+      : '시간표가 표시되고 있습니다.';
+  }
 }
 async function searchNeisSchools(){
   const name=$('schoolNameInput').value.trim();
@@ -2840,6 +2846,8 @@ function render(){
   );
 
   if(typeof renderSchoolSummary==='function')renderSchoolSummary();
+  // 홈 화면을 다시 표시하거나 계정 데이터를 불러온 뒤에도 저장된 학교 시간표를 복원
+  if(typeof renderSchoolWeek==='function')renderSchoolWeek();
   $('todayHours').textContent=minsToText(todayM);
   $('weekHours').textContent=minsToText(weekM);
   $('goalPercent').textContent=
@@ -3717,9 +3725,6 @@ const authForm=document.getElementById('authForm');
     renderSchedule();
   });
   initSchoolTimetable();
-  if(data.schoolTimetable?.schoolCode&&data.schoolTimetable?.officeCode){
-    fetchSchoolWeek();
-  }
   showLobby();
   initAuth();
 })();
