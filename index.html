@@ -442,6 +442,44 @@ button:disabled{opacity:.4;cursor:not-allowed}
 }
 
 
+
+/* 모바일 전용 시간표: 7일 전체 보기 + 명시적 편집 모드. 태블릿/PC 스타일은 유지 */
+#mobileScheduleModeBtn{display:none}
+@media(max-width:560px){
+  #mobileScheduleModeBtn{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+  .schedule-card-head{flex-direction:row;align-items:center;gap:8px}
+  .schedule-card-head h3{white-space:nowrap;font-size:14px}
+  .schedule-top-actions{width:auto;flex:1;justify-content:flex-end}
+  .schedule-top-actions #addEventBtn{display:none}
+  .schedule-top-actions .schedule-selected{display:none}
+  .schedule-scroll{overflow-x:hidden;overflow-y:hidden;border-radius:9px}
+  .week-grid{width:100%;min-width:0;grid-template-columns:30px repeat(7,minmax(0,1fr))}
+  .schedule-corner,.schedule-day-head{height:32px}
+  .schedule-day-head{font-size:8px;line-height:1.1;text-align:center;overflow:hidden}
+  .schedule-day-head strong{font-size:10px}
+  .time-column{width:30px}
+  .time-label{height:22px!important;font-size:8px}
+  .time-label span{padding:0 1px}
+  .day-column{min-width:0;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 21px,#293246 21px,#293246 22px)}
+  .schedule-block{left:1px;right:1px;padding:2px 1px;border-radius:3px;font-size:7px;line-height:1.12;overflow-wrap:anywhere}
+  .block-title{font-size:7px;line-height:1.1;overflow-wrap:anywhere}
+  .block-time{font-size:6px;margin-top:1px;line-height:1.05}
+  .block-repeat,.block-status{display:none!important}
+  .schedule-toolbar{margin-bottom:8px;justify-content:center}
+  .week-nav{width:100%;justify-content:space-between;gap:4px}
+  .week-label{min-width:0;flex:1;font-size:10px}
+  .schedule-settings,.schedule-help{display:none}
+  .mobile-schedule-edit .schedule-settings,.mobile-schedule-edit .schedule-help{display:flex}
+  .mobile-schedule-edit .schedule-help{display:block}
+  .mobile-schedule-edit .schedule-top-actions #addEventBtn{display:inline-flex}
+  .mobile-schedule-edit .schedule-top-actions .schedule-selected{display:flex;flex-basis:100%;justify-content:flex-start;flex-wrap:wrap}
+  .mobile-schedule-edit .schedule-card-head{flex-wrap:wrap}
+  .mobile-schedule-edit .schedule-top-actions{flex-wrap:wrap}
+  .mobile-schedule-edit .block-status{display:flex!important;transform:scale(.78);transform-origin:right bottom}
+  .mobile-schedule-edit .schedule-block{font-size:8px;padding:3px 2px}
+  .mobile-schedule-edit .block-title{font-size:8px}
+}
+
 /* APP NAVIGATION */
 .app{max-width:1600px;margin:auto;padding:22px 28px 40px}
 header{margin-bottom:22px}
@@ -584,6 +622,7 @@ header{margin-bottom:22px}
         <div class="schedule-selected" id="scheduleSelected">
           <span class="schedule-empty-hint">일정을 선택하면 편집·복사·붙여넣기·삭제할 수 있습니다.</span>
         </div>
+        <button class="mini" id="mobileScheduleModeBtn" type="button" aria-pressed="false">✎ 편집 모드</button>
         <button class="mini" id="addEventBtn">＋ 일정 추가</button>
       </div>
     </div>
@@ -1063,7 +1102,7 @@ const DEFAULT_VIEW_START=360;
 const DEFAULT_VIEW_END=1440;
 
 const HOUR=60;
-const HOUR_HEIGHT=32.4;
+let HOUR_HEIGHT=32.4;
 
 const DAY_NAMES=['일','월','화','수','목','금','토'];
 const $=id=>document.getElementById(id);
@@ -1278,6 +1317,7 @@ try{
 
 let viewedWeek=mondayOf(todayISO());
 let selectedBlockId=null;
+let scheduleEditMode=false;
 let selectedSlot=null;
 let clipboardBlock=null;
 let pasteTarget=null;
@@ -1490,7 +1530,13 @@ function getBlockProgress(block, date){
   return {percent:Math.min(100,Math.round(minutes/planned*100)),minutes:Math.min(planned,minutes),planned,manual:false};
 }
 
+function isMobileSchedule(){return window.matchMedia('(max-width:560px)').matches;}
+
 function renderSchedule(){
+  HOUR_HEIGHT=isMobileSchedule()?22:32.4;
+  document.body.classList.toggle('mobile-schedule-edit',isMobileSchedule()&&scheduleEditMode);
+  const modeButton=$('mobileScheduleModeBtn');
+  if(modeButton){modeButton.textContent=scheduleEditMode?'✓ 편집 완료':'✎ 편집 모드';modeButton.setAttribute('aria-pressed',String(scheduleEditMode));}
   const grid=$('scheduleGrid');
   const dates=getWeekDates();
   const today=todayISO();
@@ -1546,6 +1592,7 @@ function renderSchedule(){
     col.style.height=totalHeight+'px';
 
     col.addEventListener('click',e=>{
+      if(isMobileSchedule()&&!scheduleEditMode)return;
       if(e.target.closest('.schedule-block'))return;
 
       const rect=col.getBoundingClientRect();
@@ -1612,6 +1659,7 @@ function renderSchedule(){
         ${statusMarkup}
       `;
       const blockCheck=el.querySelector('[data-block-check]');
+      if(isMobileSchedule()&&!scheduleEditMode)blockCheck.disabled=true;
       blockCheck.addEventListener('pointerdown',e=>e.stopPropagation());
       blockCheck.addEventListener('click',e=>{
         e.stopPropagation();
@@ -1628,6 +1676,7 @@ function renderSchedule(){
       /* 일정 선택 */
       el.addEventListener('click',e=>{
         e.stopPropagation();
+        if(isMobileSchedule()&&!scheduleEditMode)return;
 
         selectedBlockId=block.id;
         selectedSlot=null;
@@ -1646,6 +1695,7 @@ function renderSchedule(){
       /* 첫 터치/클릭은 선택만. 흰색 테두리가 활성화된 뒤의 드래그만 조정 */
       el.addEventListener('pointerdown',e=>{
         if(e.button!==undefined&&e.button!==0)return;
+        if(isMobileSchedule()&&!scheduleEditMode)return;
 
         const alreadySelected=selectedBlockId===block.id && el.classList.contains('selected');
         selectedBlockId=block.id;
@@ -2014,6 +2064,16 @@ $('saveSchedule').onclick=()=>{
   save();
   toast('일정을 저장했어요.');
 };
+
+/* 모바일은 기본 보기 모드. 편집 버튼을 눌렀을 때만 일정 조작을 허용 */
+$('mobileScheduleModeBtn').onclick=()=>{
+  if(!isMobileSchedule())return;
+  scheduleEditMode=!scheduleEditMode;
+  selectedBlockId=null;selectedSlot=null;pasteTarget=null;
+  renderSchedule();
+  toast(scheduleEditMode?'편집 모드예요. 일정을 선택해 수정할 수 있어요.':'보기 모드예요. 전체 시간표를 확인하거나 캡처할 수 있어요.');
+};
+window.addEventListener('resize',()=>{renderSchedule();});
 
 /* 일정 추가 버튼 */
 $('addEventBtn').onclick=()=>{
