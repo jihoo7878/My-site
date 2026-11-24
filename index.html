@@ -824,6 +824,9 @@ header{margin-bottom:22px}
 #authCard input:focus{border-color:#8ba8ff}
 #authSubmit{width:100%;margin-top:18px}
 #authSwitch{width:100%;margin-top:10px;background:transparent;border:0;color:#b5c5ff;padding:9px}
+#forgotPassword{display:block;width:100%;margin-top:8px;background:transparent;border:0;color:#9eacc8;padding:8px;cursor:pointer;font-size:12px}
+#recoveryForm{display:none}
+#recoverySubmit{width:100%;margin-top:18px}
 #authMessage{min-height:20px;margin:12px 0 0;color:#f0bd78;font-size:12px;line-height:1.5}
 #authMessage.error{color:#ff8d9a}
 #accountControls{display:flex;align-items:center;gap:8px}
@@ -1022,6 +1025,14 @@ header{margin-bottom:22px}
       <label for="authPassword">비밀번호</label>
       <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="8자 이상">
       <button class="btn primary" id="authSubmit" type="submit">로그인</button>
+    </form>
+    <button id="forgotPassword" type="button">비밀번호를 잊으셨나요?</button>
+    <form id="recoveryForm">
+      <label for="newPassword">새 비밀번호</label>
+      <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="새 비밀번호 8자 이상">
+      <label for="confirmNewPassword">새 비밀번호 확인</label>
+      <input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="새 비밀번호 다시 입력">
+      <button class="btn primary" id="recoverySubmit" type="submit">비밀번호 변경</button>
     </form>
     <button id="authSwitch" type="button">계정이 없으신가요? 회원가입</button>
     <p id="authMessage" aria-live="polite"></p>
@@ -2904,6 +2915,9 @@ const authForm=document.getElementById('authForm');
   const authSwitch=document.getElementById('authSwitch');
   const authMessage=document.getElementById('authMessage');
   const authPassword=document.getElementById('authPassword');
+  const forgotPassword=document.getElementById('forgotPassword');
+  const recoveryForm=document.getElementById('recoveryForm');
+  let recoveryMode=false;
   const accountControls=document.getElementById('accountControls');
   const accountEmail=document.getElementById('accountEmail');
   const syncStatus=document.getElementById('syncStatus');
@@ -2920,6 +2934,25 @@ const authForm=document.getElementById('authForm');
   function setBusy(busy){
     authSubmit.disabled=busy;
     authSubmit.textContent=busy?'처리 중…':(isSignUp?'회원가입':'로그인');
+  }
+  function showRecoveryForm(){
+    recoveryMode=true;
+    authHeading.textContent='새 비밀번호 설정';
+    document.querySelector('.auth-sub').textContent='새롭게 사용할 비밀번호를 입력해 주세요.';
+    authForm.style.display='none';
+    recoveryForm.style.display='block';
+    authSwitch.style.display='none';
+    forgotPassword.style.display='none';
+    message('');
+  }
+  function showNormalAuth(){
+    recoveryMode=false;
+    authHeading.textContent=isSignUp?'회원가입':'로그인';
+    document.querySelector('.auth-sub').textContent='학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.';
+    authForm.style.display='block';
+    recoveryForm.style.display='none';
+    authSwitch.style.display='block';
+    forgotPassword.style.display=isSignUp?'none':'block';
   }
   function showLobby(){
     lobbyGate.style.display='block';
@@ -3028,6 +3061,7 @@ const authForm=document.getElementById('authForm');
       authSubmit.textContent=isSignUp?'회원가입':'로그인';
       authSwitch.textContent=isSignUp?'이미 계정이 있으신가요? 로그인':'계정이 없으신가요? 회원가입';
       authPassword.autocomplete=isSignUp?'new-password':'current-password';
+      showNormalAuth();
       message('');
       showGate();
     });
@@ -3040,7 +3074,51 @@ const authForm=document.getElementById('authForm');
     authSubmit.textContent=isSignUp?'회원가입':'로그인';
     authSwitch.textContent=isSignUp?'이미 계정이 있으신가요? 로그인':'계정이 없으신가요? 회원가입';
     authPassword.autocomplete=isSignUp?'new-password':'current-password';
+    showNormalAuth();
     message('');
+  });
+
+  forgotPassword.addEventListener('click',async()=>{
+    const email=document.getElementById('authEmail').value.trim();
+    if(!email){message('먼저 가입한 이메일 주소를 입력해 주세요.',true);document.getElementById('authEmail').focus();return;}
+    if(!supabaseClient){message('인증 서비스를 불러오는 중이에요. 잠시 후 다시 시도해 주세요.',true);return;}
+    forgotPassword.disabled=true;
+    try{
+      const redirectTo=window.location.origin+window.location.pathname;
+      const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+      if(error)throw error;
+      message('비밀번호 재설정 링크를 이메일로 보냈어요. 받은 편지함과 스팸함을 확인해 주세요.');
+    }catch(err){
+      console.error('ROUTEN password reset request error:',err);
+      message(err.message||'재설정 이메일을 보내지 못했어요.',true);
+    }finally{forgotPassword.disabled=false;}
+  });
+
+  recoveryForm.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const password=document.getElementById('newPassword').value;
+    const confirmation=document.getElementById('confirmNewPassword').value;
+    if(password.length<8){message('비밀번호는 8자 이상 입력해 주세요.',true);return;}
+    if(password!==confirmation){message('새 비밀번호가 서로 일치하지 않아요.',true);return;}
+    const submit=document.getElementById('recoverySubmit');
+    submit.disabled=true;submit.textContent='변경 중…';
+    try{
+      const {data:result,error}=await supabaseClient.auth.updateUser({password});
+      if(error)throw error;
+      document.getElementById('newPassword').value='';
+      document.getElementById('confirmNewPassword').value='';
+      isSignUp=false;
+      authPassword.value='';
+      // 비밀번호 변경 직후 복구 세션을 종료하고 로그인 화면으로 이동
+      const {error:signOutError}=await supabaseClient.auth.signOut({scope:'local'});
+      if(signOutError)throw signOutError;
+      showNormalAuth();
+      showGate();
+      message('비밀번호가 변경됐어요. 새 비밀번호로 로그인해 주세요.');
+    }catch(err){
+      console.error('ROUTEN password update error:',err);
+      message(err.message||'비밀번호 변경에 실패했어요. 재설정 링크가 만료됐는지 확인해 주세요.',true);
+    }finally{submit.disabled=false;submit.textContent='비밀번호 변경';}
   });
 
   authForm.addEventListener('submit',async e=>{
@@ -3092,17 +3170,28 @@ const authForm=document.getElementById('authForm');
     try{
       if(!window.supabase||!window.supabase.createClient)throw new Error('Supabase 라이브러리를 불러오지 못했어요.');
       supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-      const {data:sessionData,error}=await supabaseClient.auth.getSession();
-      if(error)throw error;
-      if(sessionData.session?.user){await loadUserData(sessionData.session.user);}
-      else{showLobby();}
+      const recoveryRedirect=window.location.hash.includes('type=recovery')||new URLSearchParams(window.location.search).get('type')==='recovery';
+      // 세션 조회 전에 인증 이벤트를 구독해야 이메일 복구 링크 이벤트를 놓치지 않음
       supabaseClient.auth.onAuthStateChange((event,session)=>{
-        if(event==='SIGNED_IN'&&session?.user){
+        if(event==='PASSWORD_RECOVERY'){
+          setTimeout(()=>{showRecoveryForm();showGate();},0);
+        }else if(event==='SIGNED_IN'&&session?.user&&!recoveryMode&&!recoveryRedirect){
           setTimeout(()=>loadUserData(session.user),0);
         }else if(event==='SIGNED_OUT'){
-          currentUser=null;showLobby();
+          currentUser=null;
+          if(!recoveryMode)showLobby();
         }
       });
+      const {data:sessionData,error}=await supabaseClient.auth.getSession();
+      if(error)throw error;
+      if(recoveryRedirect){
+        showRecoveryForm();
+        showGate();
+      }else if(sessionData.session?.user){
+        await loadUserData(sessionData.session.user);
+      }else{
+        showLobby();
+      }
     }catch(err){
       console.error('ROUTEN Supabase init error:',err);
       showLobby();
