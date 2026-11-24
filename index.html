@@ -2638,12 +2638,21 @@ function schoolQueryUrl(api,params){
 }
 async function schoolApiRows(api,params,rowKey){
   const response=await fetch(schoolQueryUrl(api,params));
-  if(!response.ok)throw new Error(`NEIS 요청 오류 (${response.status})`);
-  const json=await response.json();
-  if(json.RESULT&&json.RESULT.CODE!=='INFO-000')throw new Error(json.RESULT.MESSAGE||'NEIS에서 데이터를 가져오지 못했습니다.');
+  const raw=await response.text();
+  let json;
+  try{json=JSON.parse(raw);}catch(e){throw new Error(`NEIS 응답을 JSON으로 해석하지 못했습니다. HTTP ${response.status}`);}
+  if(!response.ok)throw new Error(`NEIS 요청 오류 (HTTP ${response.status})`);
   const block=json[rowKey];
-  if(!Array.isArray(block)||!block[1]||!Array.isArray(block[1].row))return [];
-  return block[1].row;
+  if(!Array.isArray(block)){
+    const topResult=json.RESULT;
+    if(topResult&&topResult.CODE!=='INFO-000')throw new Error(`${topResult.CODE}: ${topResult.MESSAGE}`);
+    throw new Error('NEIS 응답 형식이 예상과 다릅니다. API 이름과 인증키를 확인해 주세요.');
+  }
+  const head=block.find(part=>Array.isArray(part.head))?.head||[];
+  const result=head.find(item=>item.RESULT)?.RESULT;
+  if(result&&result.CODE!=='INFO-000')throw new Error(`${result.CODE}: ${result.MESSAGE}`);
+  const rowPart=block.find(part=>Array.isArray(part.row));
+  return rowPart?.row||[];
 }
 function renderSchoolSummary(){
   const s=data.schoolTimetable||{};
@@ -2737,9 +2746,9 @@ async function fetchSchoolWeek(){
       const ymd=date.replaceAll('-','');
       const rows=await schoolApiRows('hisTimetable',{
         KEY:s.apiKey,ATPT_OFCDC_SC_CODE:s.officeCode,SD_SCHUL_CODE:s.schoolCode,
-        ALL_TI_YMD:ymd,GRADE:s.grade,CLASS_NM:s.className
+        AY:s.year,SEM:s.semester,ALL_TI_YMD:ymd,GRADE:s.grade,CLASS_NM:s.className
       },'hisTimetable');
-      all.push(...rows.map(r=>({...r,ALL_TI_YMD:String(r.ALL_TI_YMD||ymd).replace(/^(\\d{4})(\\d{2})(\\d{2})$/,'$1-$2-$3')})));
+      all.push(...rows.map(r=>({...r,ALL_TI_YMD:String(r.ALL_TI_YMD||ymd).replace(/^(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3')})));
     }
     s.weekRows=all;
     s.fetchedWeek=dates[0];
@@ -2747,7 +2756,8 @@ async function fetchSchoolWeek(){
     save();
     renderSchoolToday();
     if(!$('schoolWeekView').hidden)renderSchoolWeek();
-    toast('학교 시간표를 업데이트했어요.');
+    if(all.length)toast(`이번 주 시간표 ${all.length}개 교시를 불러왔어요.`);
+    else toast('요청은 성공했지만 해당 학기·학급의 시간표 데이터가 없어요. 학년도·학기·학년·반을 확인해 주세요.');
   }catch(err){
     s.lastError=err.message||'시간표 조회 실패';
     save();
@@ -2776,8 +2786,12 @@ function initSchoolTimetable(){
   });
   $('schoolSaveBtn')?.addEventListener('click',saveSchoolSettings);
   $('schoolRefreshBtn')?.addEventListener('click',async()=>{
+    const before=data.schoolTimetable;
+    const valid=!!(before.schoolCode&&before.officeCode&&$('schoolApiKeyInput').value.trim()
+      &&/^\d+$/.test($('schoolClassInput').value.trim()));
+    if(!valid){saveSchoolSettings();return;}
     saveSchoolSettings();
-    await fetchSchoolWeek();
+    if(data.schoolTimetable.apiKey&&data.schoolTimetable.schoolCode)await fetchSchoolWeek();
   });
   $('schoolShowWeekBtn')?.addEventListener('click',()=>{
     const box=$('schoolWeekView');
