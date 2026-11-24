@@ -553,10 +553,10 @@ header{margin-bottom:22px}
     <div class="card stat"><div class="stat-icon">✓</div><div class="stat-label">완료한 강의</div><div class="stat-value" id="doneCount">0개</div><div class="stat-foot">인강 수강 완료 누적</div></div>
     <div class="card side">
       <div class="card-head"><h3>학습 타이머</h3><span class="tag" id="timerStatus">대기 중</span></div>
-      <select class="field" id="timerSubject"><option>국어</option><option>수학</option><option>영어</option><option>통합사회</option><option>통합과학</option></select>
+      <div style="display:flex;gap:7px;align-items:center"><select class="field" id="timerSubject" style="flex:1"></select><button class="mini" type="button" id="manageTimerSubjects">과목 관리</button></div>
       <div class="timer-display" id="timerDisplay">00:00:00</div><div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
       <div class="timer-controls"><button class="btn primary" id="timerStart">시작</button><button class="btn" id="timerPause" disabled>일시정지</button><button class="btn" id="timerFinish" disabled>완료</button></div>
-      <div class="muted" style="font-size:10px;text-align:center">타이머가 실행 중인 동안 이 페이지를 열어 두세요.</div>
+      
     </div>
     <div class="card half weekly-chart-card"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
     <div class="card half calendar-card">
@@ -1080,12 +1080,17 @@ const timeToMinutes=t=>{
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 
 function defaultTodoCategories(){
-  return [];
+  return [
+    {id:'todo-subject-korean',name:'국어',type:'subject',builtin:true},
+    {id:'todo-subject-math',name:'수학',type:'subject',builtin:true},
+    {id:'todo-subject-english',name:'영어',type:'subject',builtin:true}
+  ];
 }
 
 function defaultData(){
   return {
     goal:40,
+    timerSubjects:['국어','수학','영어','사회','과학'],
     events:[],
     scheduleBlocks:[],
     scheduleView:{
@@ -1112,6 +1117,7 @@ function normalizeData(raw){
     ...base,
     ...d,
     goal:Number(d.goal)||40,
+    timerSubjects:(Array.isArray(d.timerSubjects)?d.timerSubjects:base.timerSubjects).map(v=>String(v||'').trim()).filter((v,i,a)=>v&&a.indexOf(v)===i).map(v=>({'통합사회':'사회','통합과학':'과학'}[v]||v)),
     events:Array.isArray(d.events)?d.events:[],
     tasks:Array.isArray(d.tasks)?d.tasks:base.tasks,
     courses:Array.isArray(d.courses)?d.courses:
@@ -1207,15 +1213,16 @@ function normalizeData(raw){
     .filter(b=>b.end>b.start);
 
   const defaultCategories=defaultTodoCategories();
-  const savedCategories=Array.isArray(d.todoCategories)?d.todoCategories:defaultCategories;
+  const savedCategories=Array.isArray(d.todoCategories)?d.todoCategories:[];
   const categoryMap=new Map();
-  savedCategories.forEach(c=>{
+  [...defaultCategories,...savedCategories].forEach(c=>{
     if(!c||!String(c.name||'').trim())return;
+    const name=String(c.name).trim();
+    if([...categoryMap.values()].some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
     const id=String(c.id||uid());
-    categoryMap.set(id,{id,name:String(c.name).trim(),type:['subject','life'].includes(c.type)?c.type:'life',builtin:!!c.builtin});
+    categoryMap.set(id,{id,name,type:['subject','life'].includes(c.type)?c.type:'life',builtin:!!c.builtin});
   });
-  result.todoCategories=[...categoryMap.values()].filter(c=>!c.builtin);
-  const migratedCategoryIds=new Set([...categoryMap.values()].filter(c=>c.builtin).map(c=>c.id));
+  result.todoCategories=[...categoryMap.values()];
   const validCategoryIds=new Set(result.todoCategories.map(c=>c.id));
   result.todoItems=result.todoItems.filter(x=>x&&String(x.title||'').trim()&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')).map(x=>({
     id:String(x.id||uid()),title:String(x.title).trim(),date:x.date,
@@ -2713,6 +2720,30 @@ $('celebrateBack').addEventListener('click',e=>{
 });
 
 /* 타이머 */
+function renderTimerSubjects(selected){
+  const select=$('timerSubject'); if(!select)return;
+  const subjects=Array.isArray(data.timerSubjects)&&data.timerSubjects.length?data.timerSubjects:['국어','수학','영어','사회','과학'];
+  select.innerHTML=subjects.map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+  select.value=subjects.includes(selected)?selected:(subjects.includes(select.value)?select.value:subjects[0]);
+}
+function editTimerSubject(index=null){
+  const current=index===null?'':data.timerSubjects[index];
+  openModal(index===null?'타이머 과목 추가':'타이머 과목 수정',`<label class="muted">과목 이름</label><input class="field" id="timerSubjectName" maxlength="20" value="${escapeHTML(current)}" placeholder="예: 한국사, 물리학">`,()=>{
+    const name=$('timerSubjectName').value.trim(); if(!name)return toast('과목 이름을 입력해 주세요.');
+    if(data.timerSubjects.some((v,i)=>v.toLowerCase()===name.toLowerCase()&&i!==index))return toast('이미 등록된 과목이에요.');
+    if(index===null)data.timerSubjects.push(name); else {const old=data.timerSubjects[index];data.timerSubjects[index]=name;if(timer.subject===old)timer.subject=name;}
+    save();openTimerSubjectManager();
+  });
+}
+function openTimerSubjectManager(){
+  const show=()=>{
+    const rows=data.timerSubjects.map((v,i)=>`<div class="todo-category-manage-row"><span>${escapeHTML(v)}</span><div class="todo-inline-actions"><button class="mini" type="button" data-ts-edit="${i}">수정</button><button class="mini" type="button" data-ts-delete="${i}">삭제</button></div></div>`).join('');
+    openModal('타이머 과목 관리',`<div>${rows||'<div class="todo-empty">등록된 과목이 없습니다.</div>'}</div><button class="btn primary" type="button" id="addTimerSubject" style="width:100%;margin-top:14px">＋ 과목 추가</button>`,()=>{closeModal();renderTimerSubjects(timer.subject);});
+    $('addTimerSubject').onclick=()=>editTimerSubject();
+    document.querySelectorAll('[data-ts-edit]').forEach(b=>b.onclick=()=>editTimerSubject(Number(b.dataset.tsEdit)));
+    document.querySelectorAll('[data-ts-delete]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.tsDelete),v=data.timerSubjects[i];if(data.timerSubjects.length<=1)return toast('과목은 최소 1개 이상 필요해요.');if(timer.running&&timer.subject===v)return toast('타이머를 멈춘 뒤 삭제해 주세요.');if(!confirm(`'${v}' 과목을 삭제할까요? 기존 학습 기록은 유지됩니다.`))return;data.timerSubjects.splice(i,1);if(timer.subject===v)timer.subject=data.timerSubjects[0];save();show();renderTimerSubjects(timer.subject);});
+  }; show();
+}
 let timer={
   running:false,
   started:0,
@@ -2795,6 +2826,9 @@ $('timerFinish').onclick=()=>{
   updateTimer();
   timerButtons();
 };
+
+$('manageTimerSubjects').onclick=openTimerSubjectManager;
+renderTimerSubjects(timer.subject);
 
 $('timerSubject').onchange=e=>{
   if(timer.running){
