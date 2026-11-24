@@ -542,6 +542,30 @@ header{margin-bottom:22px}
 @media(max-width:900px){.school-home-card{grid-column:span 12}}
 @media(max-width:560px){.school-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.school-preview-item{grid-template-columns:58px 1fr auto;padding:8px}.school-home-card{grid-column:1/-1}}
 
+
+/* School timetable simplified UI */
+.school-home-card{grid-column:span 6;min-width:0}
+.school-head-actions{display:flex;align-items:center;gap:8px}
+.school-week-view{display:block!important;margin-top:4px;overflow-x:auto}
+.school-week-table{width:100%;min-width:500px;border-collapse:collapse;font-size:11px}
+.school-week-table th,.school-week-table td{border:1px solid var(--line);padding:8px 7px;white-space:normal;vertical-align:middle}
+.school-week-table th{background:#202a3c;color:var(--muted);text-align:center}
+.school-week-cell{min-width:65px;min-height:36px}
+.school-week-cell strong{display:block;color:var(--text);font-size:10px}
+.school-week-cell span{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.school-settings-modal{width:min(560px,100%)}
+.school-settings-modal .school-setting-fields{margin-top:14px}
+.school-settings-modal .school-card-actions{justify-content:flex-end}
+.school-settings-modal .school-config-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.school-home-card{grid-column:span 12}}
+@media(max-width:560px){
+ .school-head-actions{gap:6px}
+ .school-head-actions .mini{font-size:10px;padding:7px 9px}
+ .school-settings-modal .school-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .school-settings-modal .school-card-actions{justify-content:stretch}
+ .school-settings-modal .school-card-actions button{flex:1}
+}
+
 </style>
 </head>
 
@@ -585,37 +609,18 @@ header{margin-bottom:22px}
   <section class="grid">
     <div class="card stat"><div class="stat-icon">◷</div><div class="stat-label">오늘 공부 시간</div><div class="stat-value" id="todayHours">0h 00m</div><div class="stat-foot">오늘 완료한 학습 기록 기준</div></div>
     <div class="card stat"><div class="stat-icon">▥</div><div class="stat-label">이번 주 누적</div><div class="stat-value" id="weekHours">0h 00m</div><div class="stat-foot">월요일부터 오늘까지</div></div>
-    <div class="card school-home-card">
-      <div class="card-head"><h3>오늘의 학교 시간표</h3><span class="tag" id="schoolTodayLabel">학교 미설정</span></div>
-      <div id="schoolTodayPreview" class="school-preview-empty">학교와 학급을 설정하면 오늘의 수업을 보여드려요.</div>
-      <div class="school-card-actions">
-        <button class="mini primary" type="button" id="schoolShowWeekBtn">주간 시간표</button>
-        <button class="mini" type="button" id="schoolRefreshBtn">시간표 새로고침</button>
-      </div>
-      <div id="schoolWeekView" class="school-week-view" hidden></div>
-    </div>
-    <div class="card school-home-card">
-      <div class="card-head"><h3>학교·학기 설정</h3><span class="tag">NEIS</span></div>
-      <div class="school-setting-summary" id="schoolSettingSummary">학교 정보를 등록해 주세요.</div>
-      <div class="school-setting-fields">
-        <label>학교명</label>
-        <div class="school-search-row">
-          <input class="field" id="schoolNameInput" placeholder="예: 배재고등학교">
-          <button class="mini" type="button" id="schoolSearchBtn">검색</button>
-        </div>
-        <div id="schoolSearchResults" class="school-search-results" aria-live="polite"></div>
-        <div class="school-config-grid">
-          <div><label for="schoolGradeInput">학년</label><select class="field" id="schoolGradeInput"><option value="1">1학년</option><option value="2" selected>2학년</option><option value="3">3학년</option></select></div>
-          <div><label for="schoolClassInput">반</label><input class="field" id="schoolClassInput" type="number" min="1" max="30" value="1"></div>
-          <div><label for="schoolYearInput">학년도</label><input class="field" id="schoolYearInput" type="number" min="2020" max="2035"></div>
-          <div><label for="schoolSemesterInput">학기</label><select class="field" id="schoolSemesterInput"><option value="1">1학기</option><option value="2">2학기</option></select></div>
-        </div>
-        <div class="school-setting-note">NEIS 인증키는 서버에서 안전하게 관리됩니다. 이 화면에 인증키를 입력하거나 저장할 필요가 없습니다.</div>
-        <div class="school-card-actions">
-          <button class="mini primary" type="button" id="schoolSaveBtn">설정 저장</button>
-          <button class="mini" type="button" id="schoolClearBtn">학교 설정 초기화</button>
+    <div class="card school-home-card school-timetable-card">
+      <div class="card-head">
+        <h3>오늘의 학교 시간표</h3>
+        <div class="school-head-actions">
+          <span class="tag" id="schoolTodayLabel">학교 미설정</span>
+          <button class="mini primary" type="button" id="openSchoolSettingsBtn">학교 검색하기</button>
         </div>
       </div>
+      <div id="schoolWeekView" class="school-week-view">
+        <div class="school-preview-empty">학교를 설정하면 주간 시간표가 자동으로 표시됩니다.</div>
+      </div>
+      <div class="school-status" id="schoolTimetableStatus" aria-live="polite"></div>
     </div>
     <div hidden aria-hidden="true">
       <span id="goalPercent"></span><span id="goalFoot"></span><span id="doneCount"></span>
@@ -745,6 +750,37 @@ header{margin-bottom:22px}
 </div>
 <div class="footer">STUDY FLOW · PERSONAL LEARNING · YOUR DATA SYNCED TO YOUR ACCOUNT</div>
   </main>
+</div>
+
+<!-- 학교 검색 및 학기 설정 모달 -->
+<div class="modal-back" id="schoolSettingsModal">
+  <div class="modal school-settings-modal">
+    <div class="card-head">
+      <h3>학교·학기 설정</h3>
+      <span class="tag">NEIS</span>
+    </div>
+    <div class="school-setting-summary" id="schoolSettingSummary">학교 정보를 등록해 주세요.</div>
+    <div class="school-setting-fields">
+      <label for="schoolNameInput">학교명</label>
+      <div class="school-search-row">
+        <input class="field" id="schoolNameInput" placeholder="예: 배재고등학교">
+        <button class="mini" type="button" id="schoolSearchBtn">검색</button>
+      </div>
+      <div id="schoolSearchResults" class="school-search-results" aria-live="polite"></div>
+      <div class="school-config-grid">
+        <div><label for="schoolGradeInput">학년</label><select class="field" id="schoolGradeInput"><option value="1">1학년</option><option value="2" selected>2학년</option><option value="3">3학년</option></select></div>
+        <div><label for="schoolClassInput">반</label><input class="field" id="schoolClassInput" type="number" min="1" max="30" value="1"></div>
+        <div><label for="schoolYearInput">학년도</label><input class="field" id="schoolYearInput" type="number" min="2020" max="2035"></div>
+        <div><label for="schoolSemesterInput">학기</label><select class="field" id="schoolSemesterInput"><option value="1">1학기</option><option value="2">2학기</option></select></div>
+      </div>
+      <div class="school-setting-note">NEIS 인증키는 서버에서 안전하게 관리됩니다. 이 화면에 인증키를 입력하거나 저장할 필요가 없습니다.</div>
+      <div class="school-card-actions">
+        <button class="mini" type="button" id="schoolClearBtn">학교 설정 초기화</button>
+        <button class="mini" type="button" id="closeSchoolSettingsBtn">취소</button>
+        <button class="mini primary" type="button" id="schoolSaveBtn">저장하고 시간표 불러오기</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 일정 추가 및 편집 모달 -->
@@ -2663,7 +2699,7 @@ function renderSchoolSummary(){
   $('schoolSettingSummary').textContent=configured
     ? `${s.schoolName} · ${s.grade}학년 ${s.className}반 · ${s.year}학년도 ${s.semester}학기`
     : '학교 정보를 등록해 주세요.';
-  $('schoolTodayLabel').textContent=configured?`${s.grade}학년 ${s.className}반`:'학교 미설정';
+  $('schoolTodayLabel').textContent=configured?`${s.schoolName} · ${s.grade}학년 ${s.className}반`:'학교 미설정';
   if($('schoolNameInput')){
     $('schoolNameInput').value=s.schoolName||'';
     $('schoolGradeInput').value=s.grade||'2';
@@ -2671,30 +2707,15 @@ function renderSchoolSummary(){
     $('schoolYearInput').value=s.year||new Date().getFullYear();
     $('schoolSemesterInput').value=s.semester||'1';
   }
-  renderSchoolToday();
-}
-function renderSchoolToday(){
-  const s=data.schoolTimetable||{};
-  const today=schoolDateISO(new Date());
-  const dayRows=(s.weekRows||[]).filter(r=>r.ALL_TI_YMD===today).sort((a,b)=>(Number(a.PERIO)||0)-(Number(b.PERIO)||0));
-  if(!s.schoolCode){
-    $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">학교와 학급을 설정하면 오늘의 수업을 보여드려요.</div>';
-    return;
-  }
-  if(!dayRows.length){
-    $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">오늘 조회된 수업이 없어요. 주말·공휴일이거나 아직 시간표가 등록되지 않았을 수 있습니다.</div>';
-    return;
-  }
-  $('schoolTodayPreview').innerHTML='<div class="school-preview-list">'+dayRows.map(r=>`<div class="school-preview-item"><span class="school-preview-time">${escapeHTML(r.PERIO||'')}교시</span><span class="school-preview-subject">${escapeHTML(r.ITRT_CNTNT||'수업')}</span><span class="school-preview-room">${escapeHTML(r.CLAS_NM||'')}</span></div>`).join('')+'</div>';
 }
 function renderSchoolWeek(){
   const box=$('schoolWeekView');
   const s=data.schoolTimetable||{};
-  if(!s.schoolCode){box.hidden=false;box.innerHTML='<div class="school-preview-empty">먼저 학교·학급 정보를 설정해 주세요.</div>';return;}
+  if(!s.schoolCode){box.innerHTML='<div class="school-preview-empty">학교를 설정하면 주간 시간표가 여기에 표시됩니다.</div>';return;}
   const dates=schoolWeekDates();
   const rows=s.weekRows||[];
   const periods=[...new Set(rows.map(r=>Number(r.PERIO)).filter(Number.isFinite))].sort((a,b)=>a-b);
-  if(!periods.length){box.hidden=false;box.innerHTML='<div class="school-preview-empty">주간 시간표가 아직 없습니다. 인증키와 학급 정보를 확인한 뒤 새로고침해 주세요.</div>';return;}
+  if(!periods.length){box.innerHTML='<div class="school-preview-empty">아직 조회된 시간표가 없습니다. 학교·학기 설정을 확인해 주세요.</div>';return;}
   let table='<table class="school-week-table"><thead><tr><th>교시</th>'+dates.map((d,i)=>`<th>${schoolWeekDays[i]}<br>${d.slice(5)}</th>`).join('')+'</tr></thead><tbody>';
   periods.forEach(p=>{
     table+=`<tr><th>${p}교시</th>`;
@@ -2704,7 +2725,7 @@ function renderSchoolWeek(){
     });
     table+='</tr>';
   });
-  box.hidden=false;box.innerHTML=table+'</tbody></table>';
+  box.innerHTML=table+'</tbody></table>';
 }
 async function searchNeisSchools(){
   const name=$('schoolNameInput').value.trim();
@@ -2736,7 +2757,7 @@ async function fetchSchoolWeek(){
   const s=data.schoolTimetable;
   if(!s.schoolCode||!s.officeCode){toast('먼저 학교를 검색해 선택해 주세요.');return;}
   const dates=schoolWeekDates();
-  $('schoolTodayPreview').innerHTML='<div class="school-preview-empty">이번 주 시간표를 불러오는 중…</div>';
+  $('schoolTimetableStatus').textContent='시간표를 불러오는 중…';
   try{
     const all=[];
     for(const date of dates){
@@ -2751,20 +2772,30 @@ async function fetchSchoolWeek(){
     s.fetchedWeek=dates[0];
     s.lastError='';
     save();
-    renderSchoolToday();
-    if(!$('schoolWeekView').hidden)renderSchoolWeek();
+    renderSchoolWeek();
+    $('schoolTimetableStatus').textContent=all.length?`이번 주 시간표 ${all.length}개 교시를 불러왔습니다.`:'조회 요청은 성공했지만 해당 학기·학급의 시간표가 없습니다.';
     if(all.length)toast(`이번 주 시간표 ${all.length}개 교시를 불러왔어요.`);
-    else toast('요청은 성공했지만 해당 학기·학급의 시간표 데이터가 없어요. 학년도·학기·학년·반을 확인해 주세요.');
+    else toast('조회된 시간표가 없습니다. 설정 정보를 확인해 주세요.');
   }catch(err){
     s.lastError=err.message||'시간표 조회 실패';
     save();
-    $('schoolTodayPreview').innerHTML=`<div class="school-preview-empty">${escapeHTML(s.lastError)}<br>인증키, 학교 코드, 학년·반을 확인해 주세요.</div>`;
+    $('schoolTimetableStatus').textContent=s.lastError;
+    renderSchoolWeek();
   }
 }
 function initSchoolTimetable(){
   const yearInput=$('schoolYearInput');
   if(yearInput&&!yearInput.value)yearInput.value=new Date().getFullYear();
   renderSchoolSummary();
+  renderSchoolWeek();
+
+  const modal=$('schoolSettingsModal');
+  const openModal=()=>{renderSchoolSummary();modal.style.display='grid';};
+  const closeModal=()=>{modal.style.display='none';};
+  $('openSchoolSettingsBtn')?.addEventListener('click',openModal);
+  $('closeSchoolSettingsBtn')?.addEventListener('click',closeModal);
+  modal?.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+
   $('schoolSearchBtn')?.addEventListener('click',searchNeisSchools);
   $('schoolNameInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchNeisSchools();}});
   $('schoolSearchResults')?.addEventListener('click',e=>{
@@ -2781,20 +2812,16 @@ function initSchoolTimetable(){
     $('schoolSearchResults').innerHTML=`<div class="school-status">선택됨: ${escapeHTML(s.schoolName)} · ${escapeHTML(s.selectedSchool.address)}</div>`;
     renderSchoolSummary();
   });
-  $('schoolSaveBtn')?.addEventListener('click',saveSchoolSettings);
-  $('schoolRefreshBtn')?.addEventListener('click',async()=>{
+  $('schoolSaveBtn')?.addEventListener('click',async()=>{
     if(!saveSchoolSettings())return;
+    closeModal();
     await fetchSchoolWeek();
-  });
-  $('schoolShowWeekBtn')?.addEventListener('click',()=>{
-    const box=$('schoolWeekView');
-    if(box.hidden){renderSchoolWeek();box.hidden=false;$('schoolShowWeekBtn').textContent='주간 시간표 접기';}
-    else{box.hidden=true;$('schoolShowWeekBtn').textContent='주간 시간표';}
   });
   $('schoolClearBtn')?.addEventListener('click',()=>{
     if(!confirm('학교 시간표 설정을 초기화할까요? 개인 주간 플래너 일정은 변경되지 않습니다.'))return;
-    data.schoolTimetable={schoolName:'',officeCode:'',schoolCode:'',grade:'2',className:'1',year:new Date().getFullYear(),semester:'1',selectedSchool:null,weekRows:[],fetchedWeek:'',lastError:''};
-    save();renderSchoolSummary();$('schoolSearchResults').innerHTML='';$('schoolWeekView').hidden=true;
+    data.schoolTimetable={schoolName:'',officeCode:'',schoolCode:'',grade:'2',className:'1',year:new Date().getFullYear(),semester:'1',apiKey:'',selectedSchool:null,weekRows:[],fetchedWeek:'',lastError:''};
+    save();renderSchoolSummary();renderSchoolWeek();$('schoolSearchResults').innerHTML='';
+    $('schoolTimetableStatus').textContent='';
     toast('학교 시간표 설정을 초기화했어요.');
   });
 }
@@ -3690,6 +3717,9 @@ const authForm=document.getElementById('authForm');
     renderSchedule();
   });
   initSchoolTimetable();
+  if(data.schoolTimetable?.schoolCode&&data.schoolTimetable?.officeCode){
+    fetchSchoolWeek();
+  }
   showLobby();
   initAuth();
 })();
