@@ -121,14 +121,14 @@ th{color:var(--muted);font-weight:600}
 .calendar-weekdays,.mini-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .calendar-weekdays{margin-bottom:5px}
 .calendar-weekdays span{text-align:center;color:var(--muted);font-size:10px;padding:3px 0}
-.calendar-day{min-width:0;min-height:49px;border:1px solid transparent;border-radius:8px;background:#111827;color:var(--text);padding:4px 1px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px}
+.calendar-day{min-width:0;min-height:68px;border:1px solid transparent;border-radius:8px;background:#111827;color:var(--text);padding:4px 3px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:3px;overflow:hidden}
 .calendar-day:hover{border-color:#6479ad;background:#202b40}
 .calendar-day.muted-day{opacity:.35}
 .calendar-day.today{border-color:#829cff}
 .calendar-day.selected{background:#2b3b60;border-color:var(--accent)}
-.calendar-day .day-num{font-size:11px;font-weight:700}
+.calendar-day .day-num{font-size:11px;font-weight:700;text-align:center;align-self:center}
 .calendar-day .study-minutes{font-size:8px;color:#9fe0c5;white-space:nowrap;line-height:1.2}
-.calendar-day.has-events:after{content:'';width:4px;height:4px;border-radius:50%;background:var(--orange);margin-top:1px}
+.calendar-event-chip{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:2px 4px;border-radius:3px;background:#354b50;border-left:3px solid #8fdde0;color:#e5eeee;font-size:8px;line-height:1.25;box-sizing:border-box}.calendar-event-more{font-size:7px;color:var(--muted);text-align:left;padding-left:3px;line-height:1.1}
 .calendar-detail{margin-top:11px;padding-top:10px;border-top:1px solid var(--line)}
 .calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
 .calendar-detail-head strong{font-size:11px}
@@ -138,7 +138,7 @@ th{color:var(--muted);font-weight:600}
 .calendar-event-title{flex:1;min-width:0;overflow-wrap:anywhere}
 .calendar-event-delete{border:0;background:transparent;color:var(--muted);font-size:14px;padding:0 3px}
 .calendar-empty{font-size:10px;color:var(--muted);padding:5px 1px}
-@media(max-width:560px){.calendar-day{min-height:45px}.calendar-day .study-minutes{font-size:7px}.calendar-weekdays,.mini-calendar{gap:3px}}
+@media(max-width:560px){.calendar-day{min-height:62px;padding:3px 2px}.calendar-day .study-minutes{font-size:7px}.calendar-event-chip{font-size:7px;padding:2px 3px}.calendar-weekdays,.mini-calendar{gap:3px}}
 
 .modal-back{
   position:fixed;inset:0;background:#0009;display:none;
@@ -2116,10 +2116,13 @@ function renderCalendar(){
     const d=new Date(start);d.setDate(start.getDate()+i);
     const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const minutes=sumLogs(iso,iso);
-    const hasEvents=data.calendarEvents.some(ev=>ev.date===iso);
-    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':'',hasEvents?'has-events':''].filter(Boolean).join(' ');
+    const dayEvents=data.calendarEvents.filter(ev=>ev.date===iso).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+    const classes=['calendar-day',d.getMonth()!==month?'muted-day':'',iso===todayISO()?'today':'',iso===selectedCalendarDate?'selected':''].filter(Boolean).join(' ');
     const timeLabel=minutes?`${Math.floor(minutes/60)?Math.floor(minutes/60)+'h ':''}${minutes%60?minutes%60+'m':''}`:'&nbsp;';
-    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분"><span class="day-num">${d.getDate()}</span><span class="study-minutes">${timeLabel}</span></button>`);
+    const eventLabels=dayEvents.slice(0,2).map(ev=>`<span class="calendar-event-chip" title="${escapeHTML(ev.title)}">${escapeHTML(ev.title)}</span>`).join('');
+    const moreLabel=dayEvents.length>2?`<span class="calendar-event-more">+${dayEvents.length-2}개</span>`:'';
+    const eventAria=dayEvents.length?`, 일정 ${dayEvents.map(ev=>ev.title).join(', ')}`:'';
+    cells.push(`<button type="button" class="${classes}" data-calendar-date="${iso}" aria-label="${iso}, 공부 ${minutes}분${escapeHTML(eventAria)}"><span class="day-num">${d.getDate()}</span><span class="study-minutes">${timeLabel}</span>${eventLabels}${moreLabel}</button>`);
   }
   $('miniCalendar').innerHTML=cells.join('');
   const selected=new Date(selectedCalendarDate+'T12:00:00');
