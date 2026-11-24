@@ -329,8 +329,15 @@ th{color:var(--muted);font-weight:600}
   border-top:0;background:linear-gradient(to bottom,#ffffff00,#ffffff0d);
   pointer-events:none;
 }
+.schedule-block.class{background:#354b7c;border-color:#7189c855}
+.schedule-block.study{background:#354b7c;border-color:#7189c855}
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
+.block-status{position:absolute;right:4px;bottom:3px;display:flex;align-items:center;gap:3px;font-size:8px;line-height:1;opacity:.96;max-width:calc(100% - 8px)}
+.block-check{width:12px;height:12px;min-width:12px;accent-color:#8fd6ae;margin:0;cursor:pointer}
+.block-progress{white-space:nowrap;font-weight:750;font-variant-numeric:tabular-nums}
+.block-progress-track{height:3px;width:34px;background:#ffffff35;border-radius:9px;overflow:hidden}
+.block-progress-fill{height:100%;background:#9be2b6;border-radius:9px}
 .schedule-block.selected{outline:2px solid #fff !important;outline-offset:1px;border:1px solid #fff !important;box-shadow:0 0 0 2px #ffffff55,0 0 14px #ffffff75 !important;z-index:20;touch-action:none;cursor:grab}
 
 .block-title{font-weight:750;overflow-wrap:anywhere}
@@ -702,7 +709,8 @@ header{margin-bottom:22px}
     <div style="margin-top:12px">
       <label class="muted">일정 종류</label>
       <select class="field" id="scheduleType">
-        <option value="study">공부</option>
+        <option value="class">수업</option>
+        <option value="study">인강 · 자습</option>
         <option value="personal">개인 일정</option>
         <option value="other">기타</option>
       </select>
@@ -1096,7 +1104,8 @@ function normalizeData(raw){
         end,
         day:Number.isInteger(Number(b.day))?Number(b.day):1,
         repeat:b.repeat===true||b.repeat==='true',
-        type:['study','personal','other'].includes(b.type)?b.type:'study'
+        type:['class','study','personal','other'].includes(b.type)?b.type:(b.type==='lecture'?'study':'study'),
+        manualDone:!!b.manualDone
       };
     })
     .filter(b=>b.end>b.start);
@@ -1301,6 +1310,43 @@ function enableScheduleHorizontalSwipe(){
   },{passive:true});
 }
 
+function blockDateForRender(block, fallbackDate){
+  return block.repeat ? fallbackDate : (block.date||fallbackDate);
+}
+
+function getBlockProgress(block, date){
+  if(block.manualDone)return {percent:100,minutes:block.end-block.start,planned:block.end-block.start,manual:true};
+  if(block.type!=='study')return {percent:0,minutes:0,planned:block.end-block.start,manual:false};
+
+  const targetDate=blockDateForRender(block,date);
+  const intervals=[];
+  data.logs.filter(log=>log.date===targetDate).forEach(log=>{
+    if(Array.isArray(log.sessions)){
+      log.sessions.forEach(seg=>{
+        if(Number.isFinite(Number(seg.startMinute))&&Number.isFinite(Number(seg.endMinute))&&Number(seg.endMinute)>Number(seg.startMinute)){
+          intervals.push([Number(seg.startMinute),Number(seg.endMinute)]);
+        }
+      });
+    }else if(Number.isFinite(Number(log.startMinute))&&Number.isFinite(Number(log.endMinute))&&Number(log.endMinute)>Number(log.startMinute)){
+      intervals.push([Number(log.startMinute),Number(log.endMinute)]);
+    }
+  });
+
+  // 겹치는 기록 구간은 합쳐 한 번만 계산
+  intervals.sort((a,b)=>a[0]-b[0]);
+  const merged=[];
+  intervals.forEach(([a,b])=>{
+    const start=Math.max(a,block.start),end=Math.min(b,block.end);
+    if(end<=start)return;
+    const last=merged[merged.length-1];
+    if(last&&start<=last[1])last[1]=Math.max(last[1],end);
+    else merged.push([start,end]);
+  });
+  const minutes=merged.reduce((sum,[a,b])=>sum+b-a,0);
+  const planned=block.end-block.start;
+  return {percent:Math.min(100,Math.round(minutes/planned*100)),minutes:Math.min(planned,minutes),planned,manual:false};
+}
+
 function renderSchedule(){
   const grid=$('scheduleGrid');
   const dates=getWeekDates();
@@ -1410,11 +1456,27 @@ function renderSchedule(){
         el.style.borderColor=block.color+'99';
       }
 
+      const progress=getBlockProgress(block,date);
+      const categoryLabel=block.type==='class'?'수업':block.type==='study'?'인강·자습':block.type==='personal'?'개인 일정':'기타';
+      const statusMarkup=block.type==='study'
+        ? `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" aria-label="${escapeHTML(block.title)} 완료 체크" ${block.manualDone?'checked':''}><span class="block-progress">${progress.percent}%</span><span class="block-progress-track"><span class="block-progress-fill" style="display:block;width:${progress.percent}%"></span></span></div>`
+        : `<div class="block-status"><input class="block-check" type="checkbox" data-block-check="${escapeHTML(block.id)}" aria-label="${escapeHTML(block.title)} 완료 체크" ${block.manualDone?'checked':''}><span class="block-progress">${block.manualDone?'완료':categoryLabel}</span></div>`;
       el.innerHTML=`
         <div class="block-title">${escapeHTML(block.title)}</div>
         <div class="block-time">${timeText(block.start)}–${timeText(block.end)}</div>
         ${block.repeat?'<div class="block-repeat">↻ 매주 반복</div>':''}
+        ${statusMarkup}
       `;
+      const blockCheck=el.querySelector('[data-block-check]');
+      blockCheck.addEventListener('pointerdown',e=>e.stopPropagation());
+      blockCheck.addEventListener('click',e=>{
+        e.stopPropagation();
+        const target=data.scheduleBlocks.find(b=>b.id===block.id);
+        if(!target)return;
+        target.manualDone=blockCheck.checked;
+        save();
+        toast(target.manualDone?'일정을 완료로 표시했어요.':'완료 표시를 해제했어요.');
+      });
 
       /* 일정 선택 */
       el.addEventListener('click',e=>{
@@ -1727,7 +1789,7 @@ function openScheduleModal(id=null,defaults={}){
   );
 
   $('scheduleType').value=block?.type||'study';
-  const defaultColors={study:'#354b7c',personal:'#604777',other:'#356458'};
+  const defaultColors={class:'#354b7c',study:'#354b7c',personal:'#604777',other:'#356458'};
   $('scheduleColor').value=/^#[0-9a-fA-F]{6}$/.test(block?.color||'')
     ?block.color:(defaultColors[block?.type||'study']||'#354b7c');
 
@@ -1781,6 +1843,7 @@ $('saveSchedule').onclick=()=>{
     date:repeat?null:date,
     repeat,
     type:$('scheduleType').value,
+    manualDone:editingBlockId?(data.scheduleBlocks.find(b=>b.id===editingBlockId)?.manualDone||false):false,
     color:$('scheduleColor').value
   };
 
@@ -2437,6 +2500,11 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
 
   <label class="muted">공부 시간 (분)</label>
   <input class="field" id="fMinutes" type="number" min="1" max="1440" placeholder="예: 50">
+  <div class="form-row">
+    <div style="flex:1"><label class="muted">시작 시간 (선택)</label><input class="field" id="fStartTime" type="time"></div>
+    <div style="flex:1"><label class="muted">종료 시간 (선택)</label><input class="field" id="fEndTime" type="time"></div>
+  </div>
+  <div class="muted" style="font-size:11px">시간대를 입력하면 해당 시간표의 인강·자습 일정 완료율에 반영돼요.</div>
 `,()=>{
   const m=Number($('fMinutes').value);
 
@@ -2448,12 +2516,17 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
     return toast('날짜를 선택해 주세요.');
   }
 
+  const logStart=$('fStartTime').value;
+  const logEnd=$('fEndTime').value;
+  if((logStart&&!logEnd)||(!logStart&&logEnd))return toast('시작 시간과 종료 시간을 모두 입력해 주세요.');
+  if(logStart&&timeToMinutes(logEnd)<=timeToMinutes(logStart))return toast('종료 시간은 시작 시간보다 늦어야 해요.');
   data.logs.push({
     id:uid(),
     date:$('fDate').value,
     subject:$('fSubject').value,
     title:$('fTitle').value.trim(),
-    minutes:m
+    minutes:m,
+    ...(logStart&&logEnd?{startMinute:timeToMinutes(logStart),endMinute:timeToMinutes(logEnd)}:{})
   });
 
   closeModal();
@@ -2522,7 +2595,8 @@ let timer={
   started:0,
   elapsed:0,
   subject:'국어',
-  interval:null
+  interval:null,
+  sessions:[]
 };
 
 function updateTimer(){
@@ -2553,7 +2627,9 @@ $('timerStart').onclick=()=>{
 };
 
 $('timerPause').onclick=()=>{
-  timer.elapsed+=Math.floor((Date.now()-timer.started)/1000);
+  const segmentEnd=Date.now();
+  timer.elapsed+=Math.floor((segmentEnd-timer.started)/1000);
+  timer.sessions.push({start:timer.started,end:segmentEnd});
   timer.running=false;
 
   clearInterval(timer.interval);
@@ -2563,7 +2639,9 @@ $('timerPause').onclick=()=>{
 
 $('timerFinish').onclick=()=>{
   if(timer.running){
-    timer.elapsed+=Math.floor((Date.now()-timer.started)/1000);
+    const segmentEnd=Date.now();
+    timer.elapsed+=Math.floor((segmentEnd-timer.started)/1000);
+    timer.sessions.push({start:timer.started,end:segmentEnd});
     timer.running=false;
     clearInterval(timer.interval);
   }
@@ -2576,7 +2654,11 @@ $('timerFinish').onclick=()=>{
       date:todayISO(),
       subject:timer.subject,
       title:'타이머 학습',
-      minutes:m
+      minutes:m,
+      sessions:timer.sessions.map(seg=>{
+        const startDate=new Date(seg.start),endDate=new Date(seg.end);
+        return {date:todayISO(),startMinute:startDate.getHours()*60+startDate.getMinutes(),endMinute:endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0)};
+      }).filter(seg=>seg.endMinute>seg.startMinute)
     });
 
     save();
@@ -2586,6 +2668,7 @@ $('timerFinish').onclick=()=>{
   }
 
   timer.elapsed=0;
+  timer.sessions=[];
   updateTimer();
   timerButtons();
 };
