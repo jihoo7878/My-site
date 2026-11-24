@@ -757,6 +757,29 @@ header{margin-bottom:22px}
   }
 }
 
+
+/* TABLET ONLY: keep weekday columns equal despite long subject/teacher text */
+@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
+  .page-view[data-page-view="home"] .school-week-table {
+    width:100% !important;
+    min-width:0 !important;
+    table-layout:fixed !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:first-child,
+  .page-view[data-page-view="home"] .school-week-table td:first-child {
+    width:8% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:not(:first-child),
+  .page-view[data-page-view="home"] .school-week-table td:not(:first-child) {
+    width:18.4% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th,
+  .page-view[data-page-view="home"] .school-week-table td {
+    overflow-wrap:anywhere !important;
+    word-break:normal !important;
+  }
+}
+
 </style>
 </head>
 
