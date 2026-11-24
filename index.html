@@ -1421,6 +1421,59 @@ header{margin-bottom:22px}
   }
 }
 
+
+/* FINAL OVERRIDE: one single horizontal row for all five mobile navigation items */
+@media (max-width: 1200px), (pointer: coarse) {
+  .app-layout > .sidebar[aria-label="주요 메뉴"] {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    column-gap: 2px !important;
+    row-gap: 0 !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+    padding: 5px !important;
+    overflow: hidden !important;
+  }
+  .app-layout > .sidebar[aria-label="주요 메뉴"] > .sidebar-label,
+  .app-layout > .sidebar[aria-label="주요 메뉴"] > .sidebar-note {
+    display: none !important;
+  }
+  .app-layout > .sidebar[aria-label="주요 메뉴"] > .nav-item {
+    display: flex !important;
+    grid-row: 1 !important;
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 3px 0 !important;
+    flex: none !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+  .app-layout > .sidebar[aria-label="주요 메뉴"] > .nav-item .nav-icon {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    flex: none !important;
+    font-size: 13px !important;
+  }
+}
+
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
