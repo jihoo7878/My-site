@@ -319,9 +319,9 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  /* 블록을 직접 잡으면 블록 이동/길이 조절 제스처가 우선 */
-  touch-action:none;
-  cursor:grab;
+  /* 첫 터치는 선택만, 선택된 블록에서만 다음 드래그로 조정 */
+  touch-action:pan-y;
+  cursor:pointer;
 }
 .schedule-block:active{cursor:grabbing}
 .schedule-block::after{
@@ -331,7 +331,7 @@ th{color:var(--muted);font-weight:600}
 }
 .schedule-block.personal{background:#604777;border-color:#aa83cb66}
 .schedule-block.other{background:#356458;border-color:#75c8ad66}
-.schedule-block.selected{outline:2px solid #fff !important;outline-offset:1px;border:1px solid #fff !important;box-shadow:0 0 0 2px #ffffff55,0 0 14px #ffffff75 !important;z-index:20}
+.schedule-block.selected{outline:2px solid #fff !important;outline-offset:1px;border:1px solid #fff !important;box-shadow:0 0 0 2px #ffffff55,0 0 14px #ffffff75 !important;z-index:20;touch-action:none;cursor:grab}
 
 .block-title{font-weight:750;overflow-wrap:anywhere}
 .block-time{font-size:8px;opacity:.8;margin-top:2px}
@@ -1434,15 +1434,22 @@ function renderSchedule(){
         renderSelection();
       });
 
-      /* 블록 상단 65%: 이동 / 하단 35%: 길이 조절 */
+      /* 첫 터치/클릭은 선택만. 흰색 테두리가 활성화된 뒤의 드래그만 조정 */
       el.addEventListener('pointerdown',e=>{
+        if(e.button!==undefined&&e.button!==0)return;
+
+        const alreadySelected=selectedBlockId===block.id && el.classList.contains('selected');
         selectedBlockId=block.id;
         selectedSlot=null;
         pasteTarget={date,start:block.start};
         document.querySelectorAll('.schedule-block').forEach(x=>x.classList.toggle('selected',x===el));
+        document.querySelectorAll('.slot-selection').forEach(x=>x.remove());
         renderSelection();
 
-        /* 빈 공간은 페이지/시간표 스크롤, 블록을 직접 잡으면 블록 이동 */
+        /* 아직 선택되지 않은 블록은 이번 동작에서 절대 움직이지 않음 */
+        if(!alreadySelected)return;
+
+        /* 선택된 블록: 상단 65% 이동 / 하단 35% 길이 조절 */
         const rect=el.getBoundingClientRect();
         const relativeY=e.clientY-rect.top;
         const mode=relativeY>=rect.height*0.65?'resize':'move';
