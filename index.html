@@ -242,14 +242,15 @@ th{color:var(--muted);font-weight:600}
 
   -webkit-overflow-scrolling:touch;
 
-  /* 세로 제스처는 페이지, 가로 제스처는 아래 JS가 시간표에 적용 */
-  touch-action:pan-y;
+  /* 브라우저의 네이티브 가로·세로 터치 스크롤 허용 */
+  touch-action:pan-x pan-y;
 }
 
 .week-grid{
   display:grid;
   grid-template-columns:55px repeat(7,minmax(0,1fr));
-  min-width:650px;
+  min-width:760px;
+  width:760px;
 }
 
 .schedule-corner,.schedule-day-head{
@@ -261,6 +262,7 @@ th{color:var(--muted);font-weight:600}
 .schedule-day-head{
   display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:0;font-size:10px;color:var(--muted);
+  touch-action:pan-x pan-y;
 }
 .schedule-day-head strong{font-size:12px;color:var(--text)}
 .schedule-day-head.today{background:#263451}
@@ -277,9 +279,10 @@ th{color:var(--muted);font-weight:600}
   position:relative;top:-4px;background:#151c29;padding:0 2px;
 }
 
-/* 수정: 날짜 칸에서 가로·세로 제스처 허용 */
+/* 날짜 칸에서도 부모 시간표의 네이티브 가로 스크롤 허용 */
 .day-column{
   position:relative;
+  touch-action:pan-x pan-y;
   border-right:1px solid var(--line);
   background-image:repeating-linear-gradient(
     to bottom,
@@ -320,8 +323,8 @@ th{color:var(--muted);font-weight:600}
   line-height:1.25;
   user-select:none;
   -webkit-user-select:none;
-  /* 첫 터치는 선택만, 선택된 블록에서만 다음 드래그로 조정 */
-  touch-action:pan-y;
+  /* 일정 블록 위에서 시작한 가로 스와이프도 부모 시간표로 전달 */
+  touch-action:pan-x pan-y;
   cursor:pointer;
 }
 .schedule-block:active{cursor:grabbing}
