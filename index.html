@@ -584,7 +584,7 @@ header{margin-bottom:22px}
 .school-cell-edit:hover{background:#2a3650}
 .school-cell-edit strong{display:block;font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:keep-all}
 .school-cell-edit span{display:block;font-size:9px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
-.school-week-cell.is-edited{background:#25344a}
+.school-week-cell.is-edited{background:transparent}
 .school-cell-edit i{display:inline-block;margin-top:3px;font-size:8px;font-style:normal;color:#9fe0c5}
 @media(max-width:560px){
   .school-week-view{overflow-x:hidden!important;width:100%}
@@ -754,6 +754,60 @@ header{margin-bottom:22px}
   }
 }
 
+
+
+/* IPAD / TABLET HOME LAYOUT ONLY:
+   Put the two study summaries in a vertical left column and the school
+   timetable in the right column. Phone and desktop layouts stay unchanged. */
+@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
+  .page-view[data-page-view="home"] .grid {
+    display:grid !important;
+    grid-template-columns:repeat(12,minmax(0,1fr)) !important;
+    align-items:stretch !important;
+    gap:16px !important;
+  }
+  .page-view[data-page-view="home"] .grid > .stat {
+    grid-column:1 / span 5 !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .page-view[data-page-view="home"] .grid > .stat:nth-of-type(2) {
+    grid-row:2 !important;
+  }
+  .page-view[data-page-view="home"] .grid > .school-timetable-card {
+    grid-column:6 / -1 !important;
+    grid-row:1 / span 2 !important;
+    width:100% !important;
+    min-width:0 !important;
+    align-self:stretch !important;
+  }
+}
+
+
+/* TABLET ONLY: keep weekday columns equal despite long subject/teacher text */
+@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
+  .page-view[data-page-view="home"] .school-week-table {
+    width:100% !important;
+    min-width:0 !important;
+    table-layout:fixed !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:first-child,
+  .page-view[data-page-view="home"] .school-week-table td:first-child {
+    width:8% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:not(:first-child),
+  .page-view[data-page-view="home"] .school-week-table td:not(:first-child) {
+    width:18.4% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th,
+  .page-view[data-page-view="home"] .school-week-table td {
+    overflow-wrap:anywhere !important;
+    word-break:normal !important;
+  }
+}
+
+
+.school-week-cell.is-edited{background:transparent!important}
 </style>
 </head>
 
@@ -3078,7 +3132,7 @@ function renderSchoolWeek(){
       const subject=r&&!r._empty?(r.ITRT_CNTNT||''): '';
       const room=r&&!r._empty?(r.CLAS_NM||''):'';
       const shown=subject||'—';
-      table+=`<td class="school-week-cell ${edited?'is-edited':''}"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}${edited?'<i>수정</i>':''}</button></td>`;
+      table+=`<td class="school-week-cell ${edited?'is-edited':''}"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}</button></td>`;
     });
     table+='</tr>';
   });
