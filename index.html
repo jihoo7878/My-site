@@ -1986,6 +1986,13 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
     box-sizing:border-box!important;
   }
 }
+
+/* FIX: hidden 속성은 패널의 기본 display 스타일보다 우선해 모드 전환 시 하나만 표시 */
+.timer-panel[hidden],
+.timer-original-panel[hidden],
+.pomodoro-panel[hidden]{
+  display:none!important;
+}
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
