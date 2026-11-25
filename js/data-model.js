@@ -1,5 +1,6 @@
 const SUBJECTS=['국어','수학','영어','사회','과학','한국사','기타'];
 const PROFILE_GRADES=['고등학교 1학년','고등학교 2학년','고등학교 3학년','N수'];
+const PROFILE_LEGACY_GRADES=['중학교 1학년','중학교 2학년','중학교 3학년'];
 const normalizeLectureSubject=subject=>({'통합사회':'사회','통합과학':'과학'}[String(subject||'')]||String(subject||''));
 const KEY='study-flow-v1';
 
@@ -103,7 +104,7 @@ function normalizeData(raw){
     profile:{
       name:String(d.profile?.name||'').trim().slice(0,40),
       nickname:String(d.profile?.nickname||'').trim().slice(0,30),
-      grade:PROFILE_GRADES.includes(String(d.profile?.grade||'').trim())?String(d.profile.grade).trim():''
+      grade:(PROFILE_GRADES.includes(String(d.profile?.grade||'').trim())||PROFILE_LEGACY_GRADES.includes(String(d.profile?.grade||'').trim()))?String(d.profile.grade).trim():''
     },
     timerSubjects:(Array.isArray(d.timerSubjects)?d.timerSubjects:base.timerSubjects).map(v=>String(v||'').trim()).filter((v,i,a)=>v&&a.indexOf(v)===i).map(v=>({'통합사회':'사회','통합과학':'과학'}[v]||v)),
     events:Array.isArray(d.events)?d.events:[],

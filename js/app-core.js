@@ -871,7 +871,7 @@ function openMyPageProfileEditor(){
     data.profile={
       name:$('profileNameInput').value.trim().slice(0,40),
       nickname:$('profileNicknameInput').value.trim().slice(0,30),
-      grade:$('profileGradeInput').value
+      grade:$('profileGradeInput').value||(PROFILE_LEGACY_GRADES.includes(profile.grade)?profile.grade:'')
     };
     closeModal();
     save();
