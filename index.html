@@ -124,6 +124,42 @@ $('myPagePasswordBtn')?.addEventListener('click',async()=>{
   if(result?.error)toast(result.error);else toast('비밀번호를 변경했어요.');
 });
 
+
+/* 터치/펜/마우스 좌우 드래그로 페이지 전환 */
+(()=>{
+  const content=document.querySelector('.main-content');
+  if(!content)return;
+  const pages=['home','weekly','learning','analytics','settings'];
+  let startX=0,startY=0,lastX=0,lastY=0,tracking=false,dragged=false;
+  const ignored='button,a,input,textarea,select,[contenteditable="true"],.schedule-scroll,.week-grid,.school-week-table,.analytics-chart-wrap';
+  content.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(e.target.closest(ignored))return;
+    startX=lastX=e.clientX;startY=lastY=e.clientY;
+    tracking=true;dragged=false;
+  },{passive:true});
+  content.addEventListener('pointermove',e=>{
+    if(!tracking)return;
+    lastX=e.clientX;lastY=e.clientY;
+    if(Math.abs(lastX-startX)>12&&Math.abs(lastX-startX)>Math.abs(lastY-startY)*1.15)dragged=true;
+  },{passive:true});
+  content.addEventListener('pointerup',e=>{
+    if(!tracking)return;
+    tracking=false;
+    const dx=e.clientX-startX,dy=e.clientY-startY;
+    if(!dragged||Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.35)return;
+    const active=document.querySelector('.nav-item.active')?.dataset.page||'home';
+    const index=pages.indexOf(active);
+    const next=dx<0?Math.min(pages.length-1,index+1):Math.max(0,index-1);
+    if(next===index)return;
+    content.style.setProperty('--swipe-offset',dx<0?'14px':'-14px');
+    content.classList.add('swipe-transition');
+    setActivePage(pages[next]);
+    window.setTimeout(()=>content.classList.remove('swipe-transition'),220);
+  },{passive:true});
+  content.addEventListener('pointercancel',()=>{tracking=false;},{passive:true});
+})();
+
 /* 홈 미니 학습 캘린더 */
 .calendar-card{min-width:0}
 .calendar-head{margin-bottom:12px}
@@ -831,6 +867,12 @@ header{margin-bottom:22px}
     min-width:0;
   }
 }
+
+
+/* 좌우 스와이프 메뉴 전환 */
+.main-content{touch-action:pan-y}
+.main-content.swipe-transition .page-view{animation:swipePageIn .18s ease}
+@keyframes swipePageIn{from{opacity:.72;transform:translateX(var(--swipe-offset,12px))}to{opacity:1;transform:translateX(0)}}
 
 </style>
 </head>
