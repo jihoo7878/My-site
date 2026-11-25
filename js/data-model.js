@@ -1,5 +1,5 @@
 const SUBJECTS=['국어','수학','영어','사회','과학','한국사','기타'];
-const PROFILE_GRADES=['중학교 1학년','중학교 2학년','중학교 3학년','고등학교 1학년','고등학교 2학년','고등학교 3학년','N수'];
+const PROFILE_GRADES=['고등학교 1학년','고등학교 2학년','고등학교 3학년','N수'];
 const normalizeLectureSubject=subject=>({'통합사회':'사회','통합과학':'과학'}[String(subject||'')]||String(subject||''));
 const KEY='study-flow-v1';
 
