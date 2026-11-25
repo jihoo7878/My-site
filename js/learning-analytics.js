@@ -119,4 +119,3 @@ function renderLearningAnalytics(){
 
   $('weeklyBars').innerHTML=weekEntries.length?`<div class="vertical-bars">${weekEntries.map(([date,value])=>`<div class="vbar-col"><div class="vbar-value">${(value/60).toFixed(1)}h</div><div class="vbar-track"><i style="height:${Math.max(2,value/maxW*100)}%"></i></div><span>${Number(date.slice(5,7))}/${Number(date.slice(8,10))}</span></div>`).join('')}</div>`:'<div class="chart-empty">주간 기록이 아직 없습니다.</div>';
 }
-

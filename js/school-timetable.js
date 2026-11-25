@@ -207,4 +207,3 @@ function initSchoolTimetable(){
 }
 
 /* 학습 분석 및 마이페이지 */
-

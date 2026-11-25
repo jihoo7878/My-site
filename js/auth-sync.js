@@ -362,4 +362,3 @@ const authForm=document.getElementById('authForm');
   showLobby();
   initAuth();
 })();
-

@@ -249,4 +249,3 @@ try{
 }
 // 기존 버전에 저장된 NEIS 인증키가 있다면 LocalStorage에서도 즉시 제거
 try{localStorage.setItem(KEY,JSON.stringify(data));}catch{}
-

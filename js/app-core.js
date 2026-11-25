@@ -1417,4 +1417,3 @@ document.addEventListener('keydown',e=>{
 /* 초기 실행 */
 render();
 timerButtons();
-

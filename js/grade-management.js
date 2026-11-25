@@ -51,4 +51,3 @@ document.addEventListener('change',function handleGradeDocumentChange(e){
   if(pct){const r=data.gradeRecords.mock.find(x=>x.id===pct.dataset.mockPercentile);const n=pct.value===''?'':Number(pct.value);if(n!==''&&(!Number.isFinite(n)||n<0||n>100)){toast('백분위는 0~100 사이로 입력해 주세요.');renderGrades();return;}if(r){r.subjects[pct.dataset.subject].percentile=n;save();}}
 });
 
-

@@ -204,4 +204,3 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pageshow',refreshTimersAfterResume);
 window.addEventListener('focus',refreshTimersAfterResume);
-

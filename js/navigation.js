@@ -54,4 +54,3 @@
   },{capture:true,passive:true});
   document.addEventListener('pointercancel',()=>{mouseActive=false;mouseAllowed=false;},{capture:true,passive:true});
 })();
-

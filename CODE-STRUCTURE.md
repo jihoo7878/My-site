@@ -33,4 +33,3 @@ data-model → todo-management → grade-management → calendar → school-time
 3. 운영 `main` 변경은 Cloudflare Pages 배포로 이어질 수 있으므로, 별도 브랜치의 미리보기에서 검증한 뒤 병합합니다.
 4. 로컬 검토에서는 초기 화면 렌더, 스크립트 구문, 파일 경로, 중복 ID, CSS 중괄호를 확인했습니다.
 5. 로그인, Supabase 데이터 읽기·쓰기, 저장된 학교 설정을 이용한 NEIS 조회는 실행하지 않았습니다.
-

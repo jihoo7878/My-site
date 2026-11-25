@@ -92,4 +92,3 @@ document.addEventListener('click',function handleCalendarDocumentClick(e){
   }
 });
 
-
