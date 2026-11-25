@@ -1082,7 +1082,7 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
       <span id="goalPercent"></span><span id="goalFoot"></span><span id="doneCount"></span>
       <button id="editWeeklyGoal" type="button"></button>
     </div>
-    <div class="card full timer-dual-card">
+    <div class="card full timer-dual-card home-timer-order">
       <div class="timer-mode-toolbar">
         <span class="timer-mode-caption" id="timerModeCaption">일반 학습 타이머</span>
         <button class="mini" type="button" id="timerModeToggle">뽀모도로</button>
@@ -1951,6 +1951,39 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
     line-height:1.25!important;
     font-weight:800!important;
     letter-spacing:-.35px!important;
+  }
+}
+
+/* FIX: 실제 타이머 카드에 모바일 전체폭 적용 */
+@media(max-width:600px){
+  .page-view[data-page-view="home"] section.grid > .timer-dual-card.home-timer-order{
+    display:block!important;
+    grid-column:1 / -1!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    justify-self:stretch!important;
+    box-sizing:border-box!important;
+  }
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-dual-inner,
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-original-panel{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-original-panel{
+    padding:2px 0!important;
+  }
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-subject-row,
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-display,
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-sub,
+  .page-view[data-page-view="home"] .timer-dual-card.home-timer-order .timer-controls{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
   }
 }
 </style>
