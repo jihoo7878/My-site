@@ -844,14 +844,43 @@ document.addEventListener('click',function handlePageNavigationClick(e){
 
 function renderMyPage(){
   const email=window.studyFlowAccountEmail||'로그인 계정';
-  $('myPageEmail').textContent=email;
-  $('myPageAvatar').textContent=(email[0]||'S').toUpperCase();
+  const profile=data.profile||{};
+  $('myPageDisplayName').textContent=profile.nickname||email;
+  $('myPageAvatar').textContent=Array.from(profile.nickname||profile.name||email)[0]?.toUpperCase()||'S';
   $('myPageUserId').textContent=window.studyFlowAccountId?`계정 ID · ${window.studyFlowAccountId.slice(0,8)}…`:'계정 정보';
+  $('myPageNameSummary').textContent=profile.name||'미등록';
+  $('myPageNicknameSummary').textContent=profile.nickname||'미등록';
+  $('myPageGradeSummary').textContent=profile.grade||'미등록';
   const s=data.schoolTimetable||{};
   $('myPageSchoolSummary').textContent=s.schoolCode?`${s.schoolName} · ${s.grade}학년 ${s.className}반 · ${s.year}학년도 ${s.semester}학기`:'학교 정보를 등록해 주세요.';
   // 학습 환경 카드는 제거되었으므로 관련 DOM 업데이트도 수행하지 않음.
   $('myPageSyncStatus').textContent=$('syncStatus')?.textContent||'확인 중';
 }
+
+function openMyPageProfileEditor(){
+  const profile=data.profile||{};
+  const gradeOptions=PROFILE_GRADES.map(grade=>`<option value="${escapeHTML(grade)}">${escapeHTML(grade)}</option>`).join('');
+  openModal('프로필 수정',`
+    <div class="profile-modal-fields">
+      <div><label class="muted" for="profileNameInput">이름</label><input class="field" id="profileNameInput" type="text" maxlength="40" autocomplete="name" value="${escapeHTML(profile.name||'')}" placeholder="이름"></div>
+      <div><label class="muted" for="profileNicknameInput">닉네임</label><input class="field" id="profileNicknameInput" type="text" maxlength="30" value="${escapeHTML(profile.nickname||'')}" placeholder="닉네임"></div>
+      <div><label class="muted" for="profileGradeInput">학년</label><select class="field" id="profileGradeInput"><option value="">학년 선택</option>${gradeOptions}</select></div>
+    </div>
+    <p class="muted" style="font-size:11px;margin:10px 0 0">저장한 닉네임은 마이페이지에 표시됩니다.</p>
+  `,()=>{
+    data.profile={
+      name:$('profileNameInput').value.trim().slice(0,40),
+      nickname:$('profileNicknameInput').value.trim().slice(0,30),
+      grade:$('profileGradeInput').value
+    };
+    closeModal();
+    save();
+    toast('프로필 정보를 저장했어요.');
+  });
+  $('profileGradeInput').value=PROFILE_GRADES.includes(profile.grade)?profile.grade:'';
+}
+
+$('myPageProfileEditBtn')?.addEventListener('click',openMyPageProfileEditor);
 
 /* 홈 화면 목표 표시 */
 function renderHomeGoal(){
@@ -1417,3 +1446,4 @@ document.addEventListener('keydown',e=>{
 /* 초기 실행 */
 render();
 timerButtons();
+
