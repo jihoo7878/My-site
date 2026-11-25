@@ -1117,14 +1117,14 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
         </section>
       </div>
     </div>
-<div class="card half weekly-chart-card"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
-    <div class="card half calendar-card">
+<div class="card half weekly-chart-card home-weekly-chart-order"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
+    <div class="card half calendar-card home-calendar-order">
       <div class="card-head calendar-head"><h3>학습 캘린더</h3><div class="calendar-nav"><button class="mini" id="calendarPrev" aria-label="이전 달">‹</button><strong id="calendarMonth"></strong><button class="mini" id="calendarNext" aria-label="다음 달">›</button></div></div>
       <div class="calendar-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div class="mini-calendar" id="miniCalendar"></div>
       <div class="calendar-detail" id="calendarDetail"></div>
     </div>
-    <div class="card full">
+    <div class="card full home-recent-log-order">
       <div class="card-head"><h3>최근 학습 기록</h3><button class="mini" id="manualLogBtn">＋ 시간 직접 기록</button></div>
       <div class="table-wrap"><table><thead><tr><th>날짜</th><th>과목</th><th>학습 내용</th><th>시간</th><th></th></tr></thead><tbody id="logTable"></tbody></table></div>
     </div>
@@ -1889,6 +1889,38 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   .page-view[data-page-view="home"] .home-study-stat{order:2!important;grid-column:1!important}
   .page-view[data-page-view="home"] .home-week-stat{order:3!important;grid-column:1!important}
   .page-view[data-page-view="home"] .timer-dual-card{order:4!important;grid-column:1!important}
+}
+
+/* 모바일 홈 섹션의 사용자 지정 순서: 목표/디데이 → 학교 시간표 → 공부시간 → 타이머 → 캘린더 → 최근 기록 → 7일 차트 */
+@media(max-width:600px){
+  .page-view[data-page-view="home"] .mobile-goal-dday-grid{order:0}
+  .page-view[data-page-view="home"] .grid{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-auto-flow:row!important;
+    gap:14px!important;
+  }
+  .page-view[data-page-view="home"] .school-timetable-card{
+    order:1!important;grid-column:1 / -1!important;
+  }
+  .page-view[data-page-view="home"] .home-study-stat{
+    order:2!important;grid-column:1!important;
+  }
+  .page-view[data-page-view="home"] .home-week-stat{
+    order:3!important;grid-column:2!important;
+  }
+  .page-view[data-page-view="home"] .home-timer-order{
+    order:4!important;grid-column:1 / -1!important;
+  }
+  .page-view[data-page-view="home"] .home-calendar-order{
+    order:5!important;grid-column:1 / -1!important;
+  }
+  .page-view[data-page-view="home"] .home-recent-log-order{
+    order:6!important;grid-column:1 / -1!important;
+  }
+  .page-view[data-page-view="home"] .home-weekly-chart-order{
+    order:7!important;grid-column:1 / -1!important;
+  }
 }
 </style>
 <div id="lobbyGate">
