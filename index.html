@@ -1053,9 +1053,19 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
     </div>
     <p id="pageDescription">학습 시간과 최근 기록을 한눈에 확인하세요.</p>
   </div>
+  <div class="mobile-goal-dday-grid" aria-label="목표와 디데이">
+    <div class="card mobile-goal-card">
+      <div class="mobile-chip-heading">MY GOAL</div>
+      <div class="mobile-chip-slot" id="mobileGoalSlot"></div>
+    </div>
+    <div class="card mobile-dday-card">
+      <div class="mobile-chip-heading">D-DAY</div>
+      <div class="mobile-chip-slot" id="mobileDdaySlot"></div>
+    </div>
+  </div>
   <section class="grid">
-    <div class="card stat"><div class="stat-icon">◷</div><div class="stat-label">오늘 공부 시간</div><div class="stat-value" id="todayHours">0h 00m</div><div class="stat-foot">오늘 완료한 학습 기록 기준</div></div>
-    <div class="card stat"><div class="stat-icon">▥</div><div class="stat-label">이번 주 누적</div><div class="stat-value" id="weekHours">0h 00m</div><div class="stat-foot">월요일부터 오늘까지</div></div>
+    <div class="card stat home-study-stat"><div class="stat-icon">◷</div><div class="stat-label">오늘 공부 시간</div><div class="stat-value" id="todayHours">0h 00m</div><div class="stat-foot">오늘 완료한 학습 기록 기준</div></div>
+    <div class="card stat home-week-stat"><div class="stat-icon">▥</div><div class="stat-label">이번 주 누적</div><div class="stat-value" id="weekHours">0h 00m</div><div class="stat-foot">월요일부터 오늘까지</div></div>
     <div class="card school-home-card school-timetable-card">
       <div class="card-head">
         <h3>오늘의 학교 시간표</h3>
@@ -1809,6 +1819,77 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   }
 }
 
+
+/* 모바일 홈: 목표·D-day를 상단 카드로 분리하고 학습시간 카드는 시간표 아래 배치 */
+.mobile-goal-dday-grid{display:none}
+@media(max-width:600px){
+  .page-view[data-page-view="home"] .page-intro-title-row{
+    display:block!important;
+    min-width:0!important;
+  }
+  .page-view[data-page-view="home"] .page-intro-title-row h2{
+    font-size:clamp(23px,6.2vw,30px)!important;
+    line-height:1.2!important;
+    max-width:100%!important;
+    overflow-wrap:anywhere!important;
+  }
+  .page-view[data-page-view="home"] .intro-actions{
+    display:none!important;
+  }
+  .page-view[data-page-view="home"] .mobile-goal-dday-grid{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:10px!important;
+    margin:16px 0 18px!important;
+  }
+  .page-view[data-page-view="home"] .mobile-goal-dday-grid .card{
+    min-width:0!important;
+    padding:13px 12px!important;
+    border-radius:17px!important;
+    overflow:hidden!important;
+  }
+  .mobile-chip-heading{
+    font-size:10px;font-weight:800;letter-spacing:1.5px;
+    color:var(--muted);margin-bottom:9px;
+  }
+  .mobile-chip-slot{min-width:0;width:100%}
+  .mobile-chip-slot .goal-chip,
+  .mobile-chip-slot .dday-chip{
+    width:100%!important;min-width:0!important;max-width:100%!important;
+    display:flex!important;align-items:center!important;justify-content:flex-start!important;
+    padding:0!important;border:0!important;background:transparent!important;
+    box-shadow:none!important;gap:5px!important;
+    overflow:hidden!important;
+  }
+  .mobile-chip-slot .goal-chip{flex-direction:column!important;align-items:flex-start!important}
+  .mobile-chip-slot .goal-chip-label{display:none!important}
+  .mobile-chip-slot .goal-chip-text{
+    display:block!important;max-width:100%!important;width:100%!important;
+    font-size:14px!important;line-height:1.35!important;font-weight:750!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;
+  }
+  .mobile-chip-slot .dday-chip{flex-direction:column!important;align-items:flex-start!important}
+  .mobile-chip-slot .dday-count{
+    font-size:clamp(22px,6vw,29px)!important;line-height:1.05!important;
+    white-space:nowrap!important;max-width:100%!important;
+  }
+  .mobile-chip-slot .dday-meta{display:flex!important;flex-direction:column!important;gap:3px!important;min-width:0!important;width:100%!important}
+  .mobile-chip-slot .dday-name{
+    font-size:11px!important;max-width:100%!important;white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+  .mobile-chip-slot .dday-date{
+    font-size:10px!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  }
+  .page-view[data-page-view="home"] .grid{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+    gap:14px!important;
+  }
+  .page-view[data-page-view="home"] .school-timetable-card{order:1!important;grid-column:1!important}
+  .page-view[data-page-view="home"] .home-study-stat{order:2!important;grid-column:1!important}
+  .page-view[data-page-view="home"] .home-week-stat{order:3!important;grid-column:1!important}
+  .page-view[data-page-view="home"] .timer-dual-card{order:4!important;grid-column:1!important}
+}
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
@@ -4873,6 +4954,26 @@ $('pomodoroApplySettings').onclick=()=>{
   setPomodoroMode(pomodoro.mode);
   toast('뽀모도로 시간을 적용했어요.');
 };
+// 목표/D-day 버튼은 하나의 DOM 노드만 사용해 모바일 카드와 데스크톱 헤더 사이에서 이동
+function placeHomeGoalDday(){
+  const mobile=window.matchMedia('(max-width:600px)').matches;
+  const goal=document.getElementById('homeGoalButton');
+  const dday=document.getElementById('ddayButton');
+  const mobileGoal=document.getElementById('mobileGoalSlot');
+  const mobileDday=document.getElementById('mobileDdaySlot');
+  const desktopActions=document.querySelector('#pageIntro .intro-actions');
+  if(!goal||!dday||!mobileGoal||!mobileDday||!desktopActions)return;
+  if(mobile){
+    if(goal.parentElement!==mobileGoal)mobileGoal.appendChild(goal);
+    if(dday.parentElement!==mobileDday)mobileDday.appendChild(dday);
+  }else{
+    if(goal.parentElement!==desktopActions)desktopActions.insertBefore(goal,dday);
+    if(dday.parentElement!==desktopActions)desktopActions.appendChild(dday);
+  }
+}
+placeHomeGoalDday();
+window.addEventListener('resize',placeHomeGoalDday);
+
 restoreActiveTimer();
 restorePomodoroState();
 updateTimer();
