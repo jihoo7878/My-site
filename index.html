@@ -818,6 +818,20 @@ header{margin-bottom:22px}
 
 
 .school-week-cell.is-edited{background:transparent!important}
+
+/* D-day 및 태블릿 학습관리 2열 배치 */
+.dday-chip{min-width:178px;padding:12px 18px;gap:14px}
+.dday-count{font-size:25px}
+.dday-name{max-width:165px}
+@media (min-width:561px) and (max-width:1400px) and (pointer:coarse){
+  .page-view[data-page-view="learning"] .grid > .card.half,
+  .page-view[data-page-view="learning"] .grid > .card.grade-card{
+    grid-column:span 6 !important;
+    width:100%;
+    min-width:0;
+  }
+}
+
 </style>
 </head>
 
