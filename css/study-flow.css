@@ -753,6 +753,13 @@ header{margin-bottom:22px}
 .profile-main{display:flex;flex-direction:column;gap:4px;min-width:0}
 .profile-main strong{overflow-wrap:anywhere}
 .profile-main span{font-size:10px}
+.profile-editor{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.profile-editor h4{margin:0 0 6px;font-size:13px}
+.profile-editor>p{margin:0 0 14px;font-size:10px}
+.profile-editor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.profile-field{display:grid;gap:6px;min-width:0}
+.profile-field label{font-size:10px;color:var(--muted)}
+.profile-field .field{min-width:0;width:100%}
 .settings-actions{display:flex;gap:8px;flex-wrap:wrap}
 .settings-card>p{font-size:11px;line-height:1.7}
 .settings-card .school-setting-summary{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:11px;font-size:11px}
@@ -768,6 +775,8 @@ header{margin-bottom:22px}
  .analytics-grid,.settings-grid{grid-template-columns:1fr}
  .analytics-wide,.settings-wide{grid-column:auto}
  .analytics-card,.settings-card{padding:14px}
+ .profile-editor{padding:12px}
+ .profile-editor-grid{grid-template-columns:1fr}
  .pie-chart{width:145px;height:145px}
  .pie-hole{width:86px;height:86px}
  .pie-layout{gap:15px}
@@ -1530,3 +1539,4 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 }
 /* Robust mode switching: exactly one timer panel visible on all viewport sizes */
 .timer-original-panel[hidden],.pomodoro-panel[hidden]{display:none!important}
+

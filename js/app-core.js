@@ -844,14 +844,30 @@ document.addEventListener('click',function handlePageNavigationClick(e){
 
 function renderMyPage(){
   const email=window.studyFlowAccountEmail||'로그인 계정';
+  const profile=data.profile||{};
   $('myPageEmail').textContent=email;
-  $('myPageAvatar').textContent=(email[0]||'S').toUpperCase();
+  $('myPageAvatar').textContent=Array.from(profile.nickname||profile.name||email)[0]?.toUpperCase()||'S';
   $('myPageUserId').textContent=window.studyFlowAccountId?`계정 ID · ${window.studyFlowAccountId.slice(0,8)}…`:'계정 정보';
+  $('myPageNameInput').value=profile.name||'';
+  $('myPageNicknameInput').value=profile.nickname||'';
+  $('myPageGradeInput').value=profile.grade||'';
   const s=data.schoolTimetable||{};
   $('myPageSchoolSummary').textContent=s.schoolCode?`${s.schoolName} · ${s.grade}학년 ${s.className}반 · ${s.year}학년도 ${s.semester}학기`:'학교 정보를 등록해 주세요.';
   // 학습 환경 카드는 제거되었으므로 관련 DOM 업데이트도 수행하지 않음.
   $('myPageSyncStatus').textContent=$('syncStatus')?.textContent||'확인 중';
 }
+
+function saveMyPageProfile(){
+  data.profile={
+    name:$('myPageNameInput').value.trim().slice(0,40),
+    nickname:$('myPageNicknameInput').value.trim().slice(0,30),
+    grade:$('myPageGradeInput').value.trim().slice(0,30)
+  };
+  save();
+  toast('프로필 정보를 저장했어요.');
+}
+
+$('myPageProfileSaveBtn')?.addEventListener('click',saveMyPageProfile);
 
 /* 홈 화면 목표 표시 */
 function renderHomeGoal(){
@@ -1417,3 +1433,4 @@ document.addEventListener('keydown',e=>{
 /* 초기 실행 */
 render();
 timerButtons();
+

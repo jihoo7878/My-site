@@ -57,6 +57,7 @@ function defaultTodoCategories(){
 function defaultData(){
   return {
     goal:40,
+    profile:{name:'',nickname:'',grade:''},
     timerSubjects:['국어','수학','영어','사회','과학'],
     events:[],
     scheduleBlocks:[],
@@ -98,6 +99,11 @@ function normalizeData(raw){
     ...base,
     ...d,
     goal:Number(d.goal)||40,
+    profile:{
+      name:String(d.profile?.name||'').trim().slice(0,40),
+      nickname:String(d.profile?.nickname||'').trim().slice(0,30),
+      grade:String(d.profile?.grade||'').trim().slice(0,30)
+    },
     timerSubjects:(Array.isArray(d.timerSubjects)?d.timerSubjects:base.timerSubjects).map(v=>String(v||'').trim()).filter((v,i,a)=>v&&a.indexOf(v)===i).map(v=>({'통합사회':'사회','통합과학':'과학'}[v]||v)),
     events:Array.isArray(d.events)?d.events:[],
     tasks:Array.isArray(d.tasks)?d.tasks:base.tasks,
@@ -249,3 +255,4 @@ try{
 }
 // 기존 버전에 저장된 NEIS 인증키가 있다면 LocalStorage에서도 즉시 제거
 try{localStorage.setItem(KEY,JSON.stringify(data));}catch{}
+
