@@ -294,18 +294,14 @@
       <div class="card-head"><h3>마이페이지</h3><span class="tag">MY PAGE</span></div>
       <div class="profile-row">
         <div class="profile-avatar" id="myPageAvatar">S</div>
-        <div class="profile-main"><strong id="myPageEmail">로그인 정보를 불러오는 중</strong><span id="myPageUserId" class="muted">계정 정보</span></div>
+        <div class="profile-main"><strong id="myPageDisplayName">로그인 정보를 불러오는 중</strong><span id="myPageUserId" class="muted">계정 정보</span></div>
       </div>
-      <div class="profile-editor">
-        <h4>프로필 정보</h4>
-        <p class="muted">이름, 닉네임, 학년은 현재 계정의 학습 데이터와 함께 저장됩니다.</p>
-        <div class="profile-editor-grid">
-          <div class="profile-field"><label for="myPageNameInput">이름</label><input class="field" id="myPageNameInput" type="text" maxlength="40" autocomplete="name" placeholder="이름"></div>
-          <div class="profile-field"><label for="myPageNicknameInput">닉네임</label><input class="field" id="myPageNicknameInput" type="text" maxlength="30" placeholder="닉네임"></div>
-          <div class="profile-field"><label for="myPageGradeInput">학년</label><input class="field" id="myPageGradeInput" type="text" maxlength="30" placeholder="예: 고등학교 2학년"></div>
-        </div>
-        <button class="mini primary" type="button" id="myPageProfileSaveBtn">프로필 저장</button>
+      <div class="profile-summary">
+        <div><span>이름</span><strong id="myPageNameSummary">미등록</strong></div>
+        <div><span>닉네임</span><strong id="myPageNicknameSummary">미등록</strong></div>
+        <div><span>학년</span><strong id="myPageGradeSummary">미등록</strong></div>
       </div>
+      <button class="mini primary" type="button" id="myPageProfileEditBtn">프로필 수정</button>
       <div class="settings-actions">
         <button class="mini" type="button" id="myPagePasswordBtn">비밀번호 변경</button>
         <button class="mini" type="button" id="myPageLogoutBtn">로그아웃</button>
