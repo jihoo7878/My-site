@@ -125,55 +125,58 @@ $('myPagePasswordBtn')?.addEventListener('click',async()=>{
 });
 
 
-/* 안정적인 전역 좌우 스와이프 메뉴 전환 (iPad Safari 포함) */
+/* 문서 전체에서 감지하는 좌우 스와이프 메뉴 전환 (iPad Safari 안정화) */
 (()=>{
-  const root=document.querySelector('.app-layout');
-  if(!root)return;
   const pages=['home','weekly','learning','analytics','settings'];
-  const ignoreSelector='button,a,input,textarea,select,[contenteditable="true"],.schedule-scroll,.table-wrap,.calendar-nav,.modal,.modal-backdrop';
-  let sx=0,sy=0,tracking=false,eligible=false;
-  function finish(dx,dy){
-    if(!eligible||Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.2)return;
-    const current=document.querySelector('.nav-item.active')?.dataset.page||'home';
-    const i=pages.indexOf(current);
-    if(i<0)return;
-    const target=dx<0?Math.min(i+1,pages.length-1):Math.max(i-1,0);
-    if(target===i)return;
-    root.classList.add('menu-swipe-changing');
-    setActivePage(pages[target]);
-    window.setTimeout(()=>root.classList.remove('menu-swipe-changing'),240);
+  const ignoreSelector='button,a,input,textarea,select,[contenteditable="true"],.schedule-scroll,.week-grid,.school-week-table,.table-wrap,.calendar-nav,.modal,.modal-backdrop';
+  let touchX=0,touchY=0,touchActive=false,touchAllowed=false;
+  let mouseX=0,mouseY=0,mouseActive=false,mouseAllowed=false;
+
+  function switchPage(dx,dy,allowed){
+    if(!allowed||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.25)return;
+    const active=document.querySelector('.nav-item.active');
+    const current=active?.dataset.page||'home';
+    const idx=pages.indexOf(current);
+    if(idx<0)return;
+    const next=dx<0?Math.min(idx+1,pages.length-1):Math.max(idx-1,0);
+    if(next===idx)return;
+    const shell=document.querySelector('.app-layout')||document.querySelector('.app');
+    shell?.classList.add('menu-swipe-changing');
+    setActivePage(pages[next]);
+    window.setTimeout(()=>shell?.classList.remove('menu-swipe-changing'),220);
   }
-  root.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1){tracking=false;return;}
-    tracking=true;eligible=!e.target.closest(ignoreSelector);
-    sx=e.touches[0].clientX;sy=e.touches[0].clientY;
-  },{passive:true,capture:true});
-  root.addEventListener('touchend',e=>{
-    if(!tracking)return;
-    tracking=false;
-    const t=e.changedTouches[0];
-    finish(t.clientX-sx,t.clientY-sy);
-  },{passive:true,capture:true});
-  root.addEventListener('touchcancel',()=>{tracking=false;eligible=false;},{passive:true,capture:true});
-  /* Desktop pointer drag */
-  let psx=0,psy=0,ptr=false,ptrEligible=false;
-  root.addEventListener('pointerdown',e=>{
+
+  /* Capture at document level: also works when a swipe begins outside main-content */
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){touchActive=false;return;}
+    const target=e.target instanceof Element?e.target:null;
+    touchAllowed=!!target&&!target.closest(ignoreSelector);
+    touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;
+    touchActive=true;
+  },{capture:true,passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!touchActive)return;
+    touchActive=false;
+    const t=e.changedTouches&&e.changedTouches[0];
+    if(t)switchPage(t.clientX-touchX,t.clientY-touchY,touchAllowed);
+    touchAllowed=false;
+  },{capture:true,passive:true});
+  document.addEventListener('touchcancel',()=>{touchActive=false;touchAllowed=false;},{capture:true,passive:true});
+
+  /* Desktop mouse drag */
+  document.addEventListener('pointerdown',e=>{
     if(e.pointerType==='touch'||e.button!==0)return;
-    ptr=true;ptrEligible=!e.target.closest(ignoreSelector);psx=e.clientX;psy=e.clientY;
-  },{passive:true,capture:true});
-  root.addEventListener('pointerup',e=>{
-    if(!ptr)return;ptr=false;
-    finishDesktop(e.clientX-psx,e.clientY-psy,ptrEligible);
-  },{passive:true,capture:true});
-  function finishDesktop(dx,dy,ok){
-    if(!ok||Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.2)return;
-    const current=document.querySelector('.nav-item.active')?.dataset.page||'home';
-    const i=pages.indexOf(current),target=dx<0?Math.min(i+1,pages.length-1):Math.max(i-1,0);
-    if(i<0||target===i)return;
-    root.classList.add('menu-swipe-changing');setActivePage(pages[target]);
-    window.setTimeout(()=>root.classList.remove('menu-swipe-changing'),240);
-  }
-  root.addEventListener('pointercancel',()=>{ptr=false;},{passive:true,capture:true});
+    const target=e.target instanceof Element?e.target:null;
+    mouseAllowed=!!target&&!target.closest(ignoreSelector);
+    mouseX=e.clientX;mouseY=e.clientY;mouseActive=true;
+  },{capture:true,passive:true});
+  document.addEventListener('pointerup',e=>{
+    if(!mouseActive)return;
+    mouseActive=false;
+    switchPage(e.clientX-mouseX,e.clientY-mouseY,mouseAllowed);
+    mouseAllowed=false;
+  },{capture:true,passive:true});
+  document.addEventListener('pointercancel',()=>{mouseActive=false;mouseAllowed=false;},{capture:true,passive:true});
 })();
 /* 홈 미니 학습 캘린더 */
 .calendar-card{min-width:0}
@@ -885,7 +888,7 @@ header{margin-bottom:22px}
 
 
 /* 좌우 스와이프 메뉴 전환 */
-.app-layout{touch-action:pan-y;overscroll-behavior-x:contain}
+.app,.app-layout,.main-content{touch-action:pan-y;overscroll-behavior-x:contain}
 .app-layout.menu-swipe-changing .page-view.active{animation:swipePageIn .2s ease}
 @keyframes swipePageIn{from{opacity:.78;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
 
