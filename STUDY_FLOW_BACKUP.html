@@ -894,6 +894,57 @@ header{margin-bottom:22px}
 .app-layout.menu-swipe-backward .page-view.active{--menu-slide-start:-36px}
 @keyframes menuSlideIn{from{opacity:.96;transform:translate3d(var(--menu-slide-start,36px),0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 
+
+/* STUDY FLOW button polish: replace browser-default white mini buttons */
+button.mini{
+  appearance:none;
+  -webkit-appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:36px;
+  padding:9px 14px;
+  border:1px solid #34415b;
+  border-radius:11px;
+  background:linear-gradient(180deg,#242f46 0%,#1b2538 100%);
+  color:#dce5ff;
+  font:inherit;
+  font-size:12px;
+  font-weight:650;
+  line-height:1.2;
+  letter-spacing:-.15px;
+  box-shadow:0 2px 5px #05091430,inset 0 1px 0 #ffffff08;
+  transition:background .18s,border-color .18s,color .18s,transform .15s,box-shadow .18s;
+}
+button.mini:hover{
+  background:linear-gradient(180deg,#303e5b 0%,#222f48 100%);
+  border-color:#657fb9;
+  color:#fff;
+  filter:none;
+  box-shadow:0 3px 9px #05091445,inset 0 1px 0 #ffffff0d;
+}
+button.mini:active{transform:translateY(1px);box-shadow:none}
+button.mini:focus-visible{outline:2px solid #91aaff;outline-offset:2px}
+button.mini.primary{
+  background:linear-gradient(135deg,#91aaff 0%,#7189ed 100%);
+  border-color:transparent;
+  color:#10172a;
+  font-weight:750;
+  box-shadow:0 3px 9px #7189ed30,inset 0 1px 0 #ffffff55;
+}
+button.mini.primary:hover{
+  background:linear-gradient(135deg,#a6b8ff 0%,#8298ff 100%);
+  color:#10172a;
+}
+button.mini.active,
+.pomodoro-mode-switch .mini.active{
+  background:linear-gradient(135deg,#3a4d78 0%,#2b3c61 100%);
+  border-color:#819bdf;
+  color:#fff;
+}
+button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
+
 </style>
 </head>
 
@@ -1758,7 +1809,7 @@ header{margin-bottom:22px}
 
 <div id="authGate" role="dialog" aria-modal="true" aria-labelledby="authHeading">
   <div id="authCard">
-    <div class="eyebrow">STUDY FLOW · PERSONAL LEARNING</div>
+    <div class="eyebrow">ROUTEN · PERSONAL LEARNING</div>
     <h2 id="authHeading">로그인</h2>
     <p class="auth-sub">학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.</p>
     <form id="authForm">
