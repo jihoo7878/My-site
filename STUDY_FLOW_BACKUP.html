@@ -475,6 +475,12 @@ header{margin-bottom:22px}
 .page-intro{margin:8px 0 23px}
 .page-intro-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .page-intro-title-row h2{min-width:0}
+.intro-actions{display:flex;align-items:stretch;justify-content:flex-end;gap:9px;min-width:0}
+.goal-chip{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;max-width:300px;min-width:205px;min-height:68px;padding:13px 18px;border:1px solid #34415c;border-radius:14px;background:linear-gradient(135deg,#1c2638,#151b28);color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s}
+.goal-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.goal-chip-label{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
+.goal-chip-text{max-width:100%;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){.intro-actions{gap:6px;max-width:100%;flex:1}.goal-chip{min-width:0;max-width:none;flex:1;min-height:62px;padding:9px 11px}.goal-chip-text{max-width:100%;font-size:13px}.goal-chip-label{font-size:9px}}
 .dday-chip{display:flex;align-items:center;gap:11px;border:1px solid #34415c;background:linear-gradient(135deg,#202b43,#171e2c);color:var(--text);border-radius:14px;padding:10px 15px;cursor:pointer;text-align:left;min-width:145px;transition:border-color .18s,transform .18s}
 .dday-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
 .dday-count{font-size:23px;font-weight:850;letter-spacing:-.6px;color:var(--accent2);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -882,10 +888,16 @@ header{margin-bottom:22px}
     <div class="eyebrow">YOUR STUDY, YOUR FLOW</div>
     <div class="page-intro-title-row">
       <h2 id="pageTitle">오늘의 공부를 쌓아가자.</h2>
-      <button class="dday-chip" id="ddayButton" type="button" aria-label="D-day 설정">
+      <div class="intro-actions">
+        <button class="goal-chip" id="homeGoalButton" type="button" aria-label="목표 설정">
+          <span class="goal-chip-label">MY GOAL</span>
+          <span class="goal-chip-text" id="homeGoalText">목표를 입력하세요 +</span>
+        </button>
+        <button class="dday-chip" id="ddayButton" type="button" aria-label="D-day 설정">
         <span class="dday-count" id="ddayCount">D-day</span>
         <span class="dday-meta"><span class="dday-name" id="ddayName">D-day 설정 +</span><span class="dday-date" id="ddayDateLabel">날짜를 등록하세요</span></span>
       </button>
+      </div>
     </div>
     <p id="pageDescription">학습 시간과 최근 기록을 한눈에 확인하세요.</p>
   </div>
@@ -1091,7 +1103,7 @@ header{margin-bottom:22px}
         <button class="mini" type="button" id="myPageLogoutBtn">로그아웃</button>
       </div>
     </div>
-    <div class="card settings-card">
+    <div class="card settings-card settings-wide">
       <div class="card-head"><h3>학교 설정</h3><span class="tag">NEIS</span></div>
       <p class="muted">학교·학년·반·학년도·학기를 설정하고 학교 시간표를 연동합니다.</p>
       <div class="school-setting-summary" id="myPageSchoolSummary">학교 정보를 등록해 주세요.</div>
@@ -3438,6 +3450,16 @@ function escapeDdayInput(value){
   return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
+/* 홈 화면 목표 표시 */
+function renderHomeGoal(){
+  const text=String(data.homeGoal||'').trim();
+  const el=$('homeGoalText');
+  const button=$('homeGoalButton');
+  if(!el||!button)return;
+  el.textContent=text||'목표를 입력하세요 +';
+  button.setAttribute('aria-label',text?`목표: ${text}, 목표 수정`:'목표 설정');
+}
+
 /* 홈 화면 D-day 표시 */
 function renderDday(){
   const item=data.dday&&typeof data.dday==='object'?data.dday:null;
@@ -3473,6 +3495,7 @@ function render(){
     'ko-KR',
     {year:'numeric',month:'long',day:'numeric',weekday:'long'}
   );
+  renderHomeGoal();
   renderDday();
 
   if(typeof renderSchoolSummary==='function')renderSchoolSummary();
@@ -3687,6 +3710,24 @@ $('cancelModal').onclick=closeModal;
 $('saveModal').onclick=()=>{
   if(modalAction)modalAction();
 };
+
+/* 홈 화면 목표 등록 및 수정 */
+$('homeGoalButton')?.addEventListener('click',()=>{
+  const current=String(data.homeGoal||'');
+  openModal('나의 목표 설정',`
+    <label class="muted" for="homeGoalInput">홈 화면에 표시할 목표</label>
+    <input class="field" id="homeGoalInput" type="text" maxlength="100" placeholder="예: 서울대 의예과, 수학 1등급, 순공 10시간 등" value="${escapeDdayInput(current)}">
+    <p class="muted" style="font-size:11px;margin:9px 0 0">목표는 D-day 왼쪽에 표시되며, 언제든 수정할 수 있습니다.</p>
+    ${current.trim()?'<button class="mini" type="button" id="homeGoalClearBtn" style="margin-top:12px">목표 지우기</button>':''}
+  `,()=>{
+    data.homeGoal=String($('homeGoalInput')?.value||'').trim();
+    closeModal();save();toast(data.homeGoal?'목표를 저장했어요.':'목표를 지웠어요.');
+  });
+  const clear=$('homeGoalClearBtn');
+  if(clear)clear.addEventListener('click',()=>{
+    data.homeGoal='';closeModal();save();toast('목표를 지웠어요.');
+  });
+});
 
 /* 홈 화면 D-day 등록 및 수정 */
 $('ddayButton')?.addEventListener('click',()=>{
