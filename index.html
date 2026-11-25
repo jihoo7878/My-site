@@ -584,6 +584,8 @@ header{margin-bottom:22px}
 .school-cell-edit:hover{background:#2a3650}
 .school-cell-edit strong{display:block;font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:keep-all}
 .school-cell-edit span{display:block;font-size:9px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.school-week-cell.is-edited{background:#25344a}
+.school-cell-edit i{display:inline-block;margin-top:3px;font-size:8px;font-style:normal;color:#9fe0c5}
 @media(max-width:560px){
   .school-week-view{overflow-x:hidden!important;width:100%}
   .school-week-table{width:100%!important;min-width:0!important;max-width:100%;table-layout:fixed;font-size:8px}
@@ -594,6 +596,7 @@ header{margin-bottom:22px}
   .school-cell-edit{min-height:38px;padding:3px 1px;text-align:center}
   .school-cell-edit strong{font-size:7px;line-height:1.2;word-break:break-all}
   .school-cell-edit span{font-size:6px;line-height:1.15;margin-top:2px;word-break:break-all}
+  .school-cell-edit i{font-size:6px;margin-top:1px}
   .school-edit-hint{font-size:9px}
 }
 
@@ -629,6 +632,28 @@ header{margin-bottom:22px}
 
 
 /* Analytics and My Page */
+/* 학습 메타인지 */
+.meta-reflection-card{margin-top:14px;padding:18px}
+.meta-reflection-list{display:grid;gap:10px;margin-top:12px}
+.meta-reflection-item{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2)}
+.meta-reflection-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.meta-reflection-name{font-weight:700;font-size:13px}
+.meta-reflection-meta{color:var(--muted);font-size:11px;margin-top:4px}
+.meta-reflection-score{font-size:12px;color:var(--accent,#f0bd78);white-space:nowrap}
+.meta-reflection-text{font-size:12px;line-height:1.75;margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.meta-rating-row{display:flex;align-items:center;gap:3px;margin:14px 0 5px}
+.meta-star-pair{position:relative;width:35px;height:38px;display:inline-block}
+.meta-star-base,.meta-star-half{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;line-height:1;pointer-events:none}
+.meta-star-base{color:var(--muted);opacity:.35}
+.meta-star-half{color:#f0bd78;clip-path:inset(0 50% 0 0)}
+.meta-star-half.right{clip-path:inset(0 0 0 50%)}
+.meta-star-hit{position:absolute;top:0;bottom:0;width:50%;padding:0;border:0;background:transparent;cursor:pointer;z-index:2}
+.meta-star-hit.left{left:0}.meta-star-hit.right{right:0}
+.meta-rating-value{font-size:12px;color:var(--muted);margin-left:9px;min-width:54px}
+.meta-rating-zero{border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--muted);padding:5px 7px;font-size:10px;cursor:pointer;margin-left:5px}
+.meta-feedback{min-height:110px;resize:vertical;line-height:1.65}
+.meta-reflection-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+@media(max-width:560px){.meta-reflection-card{padding:14px}.meta-star-pair{width:32px}}
 .analytics-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;padding:16px 18px}
 .analytics-toolbar strong,.analytics-toolbar span{display:block}
 .analytics-toolbar .muted{font-size:11px;margin-top:3px}
@@ -726,57 +751,6 @@ header{margin-bottom:22px}
     height:21px !important;
     flex:none !important;
     font-size:14px !important;
-  }
-}
-
-
-/* IPAD / TABLET HOME LAYOUT ONLY:
-   Put the two study summaries in a vertical left column and the school
-   timetable in the right column. Phone and desktop layouts stay unchanged. */
-@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
-  .page-view[data-page-view="home"] .grid {
-    display:grid !important;
-    grid-template-columns:repeat(12,minmax(0,1fr)) !important;
-    align-items:stretch !important;
-    gap:16px !important;
-  }
-  .page-view[data-page-view="home"] .grid > .stat {
-    grid-column:1 / span 5 !important;
-    width:100% !important;
-    min-width:0 !important;
-  }
-  .page-view[data-page-view="home"] .grid > .stat:nth-of-type(2) {
-    grid-row:2 !important;
-  }
-  .page-view[data-page-view="home"] .grid > .school-timetable-card {
-    grid-column:6 / -1 !important;
-    grid-row:1 / span 2 !important;
-    width:100% !important;
-    min-width:0 !important;
-    align-self:stretch !important;
-  }
-}
-
-
-/* TABLET ONLY: keep weekday columns equal despite long subject/teacher text */
-@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
-  .page-view[data-page-view="home"] .school-week-table {
-    width:100% !important;
-    min-width:0 !important;
-    table-layout:fixed !important;
-  }
-  .page-view[data-page-view="home"] .school-week-table th:first-child,
-  .page-view[data-page-view="home"] .school-week-table td:first-child {
-    width:8% !important;
-  }
-  .page-view[data-page-view="home"] .school-week-table th:not(:first-child),
-  .page-view[data-page-view="home"] .school-week-table td:not(:first-child) {
-    width:18.4% !important;
-  }
-  .page-view[data-page-view="home"] .school-week-table th,
-  .page-view[data-page-view="home"] .school-week-table td {
-    overflow-wrap:anywhere !important;
-    word-break:normal !important;
   }
 }
 
@@ -998,6 +972,11 @@ header{margin-bottom:22px}
       <div id="weeklyBars" class="chart-area"></div>
     </div>
   </section>
+  <section class="card meta-reflection-card">
+    <div class="card-head"><h3>학습 메타인지</h3><span class="tag">학습 성찰</span></div>
+    <p class="muted" style="font-size:11px;margin:0">선택한 분석 기간의 별점과 공부 피드백을 모아 확인합니다.</p>
+    <div id="metaReflectionList" class="meta-reflection-list"></div>
+  </section>
   <p class="analytics-footnote">※ 공부 시간은 학습 기록에 저장된 시간을 기준으로 계산합니다. 기록이 없는 날짜와 과목은 그래프에 표시되지 않을 수 있습니다.</p>
 </div>
 
@@ -1147,6 +1126,22 @@ header{margin-bottom:22px}
     <div class="modal-actions">
       <button class="btn" id="cancelModal">취소</button>
       <button class="btn primary" id="saveModal">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 학습 메타인지 입력 모달 -->
+<div class="modal-back" id="metaReflectionBack" style="display:none" role="dialog" aria-modal="true" aria-labelledby="metaReflectionTitle">
+  <div class="modal" style="width:min(520px,100%)">
+    <h3 id="metaReflectionTitle">학습 메타인지</h3>
+    <p class="muted" id="metaReflectionContext" style="font-size:11px;margin:0">오늘 공부는 어땠나요?</p>
+    <div class="meta-rating-row" id="metaRatingStars" role="group" aria-label="5점 만점 학습 평가"></div>
+    <div class="meta-rating-value" id="metaRatingValue" aria-live="polite">선택 전 · 5점 만점</div>
+    <label class="muted" for="metaReflectionInput" style="display:block;margin-top:16px">공부에 대한 평가와 성찰 (선택)</label>
+    <textarea class="field meta-feedback" id="metaReflectionInput" maxlength="1500" placeholder="오늘 집중이 잘된 이유, 어려웠던 부분, 다음 공부에서 개선할 점 등을 적어보세요."></textarea>
+    <div class="meta-reflection-actions">
+      <button class="btn" id="metaReflectionLater" type="button">나중에</button>
+      <button class="btn primary" id="metaReflectionSave" type="button">성찰 저장</button>
     </div>
   </div>
 </div>
@@ -3083,7 +3078,7 @@ function renderSchoolWeek(){
       const subject=r&&!r._empty?(r.ITRT_CNTNT||''): '';
       const room=r&&!r._empty?(r.CLAS_NM||''):'';
       const shown=subject||'—';
-      table+=`<td class="school-week-cell"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}</button></td>`;
+      table+=`<td class="school-week-cell ${edited?'is-edited':''}"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}${edited?'<i>수정</i>':''}</button></td>`;
     });
     table+='</tr>';
   });
@@ -3224,11 +3219,77 @@ function initSchoolTimetable(){
 const ANALYTICS_COLORS=['#8ba8ff','#79d6b0','#f0bd78','#c59cff','#ff8d9a','#72c9df','#c7d17a','#b2b9ca'];
 function analyticsDateOffset(date,offset){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+offset);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function formatHours(minutes){return `${(minutes/60).toFixed(1)}시간`;}
+let metaReflectionLogId=null;
+let metaReflectionRating=0;
+function showMetaReflection(logId){
+  const log=data.logs.find(item=>String(item.id)===String(logId));
+  if(!log)return;
+  metaReflectionLogId=log.id;
+  metaReflectionRating=log.metaReviewed&&log.metaRating!==null&&log.metaRating!==undefined?Number(log.metaRating):null;
+  $('metaReflectionContext').textContent=`${log.subject||'기타'} · ${log.title||'학습 기록'} · ${Number(log.minutes)||0}분`;
+  $('metaReflectionInput').value=String(log.metaReflection||'');
+  const stars=$('metaRatingStars');
+  stars.innerHTML=Array.from({length:5},(_,i)=>{
+    const n=i+1,half=n-.5;
+    return `<span class="meta-star-pair"><span class="meta-star-base">★</span><span class="meta-star-half" data-half-star="${half}">★</span><span class="meta-star-half right" data-half-star="${n}">★</span><button class="meta-star-hit left" type="button" data-meta-rating="${half}" aria-label="${half}점"></button><button class="meta-star-hit right" type="button" data-meta-rating="${n}" aria-label="${n}점"></button></span>`;
+  }).join('')+`<button class="meta-rating-zero" type="button" data-meta-rating="0" aria-label="0점">0점</button>`;
+  updateMetaRatingDisplay();
+  $('metaReflectionBack').style.display='grid';
+  setTimeout(()=>$('metaReflectionInput').focus(),60);
+}
+function updateMetaRatingDisplay(){
+  $('metaRatingStars').querySelectorAll('[data-half-star]').forEach(el=>{
+    el.style.opacity=Number(el.dataset.halfStar)<=metaReflectionRating?'1':'0';
+  });
+  $('metaRatingValue').textContent=metaReflectionRating!==null?`${Number(metaReflectionRating).toFixed(1).replace(/\.0$/,'')} / 5점`:'별점을 선택해 주세요 · 0.5점 단위';
+}
+$('metaRatingStars').addEventListener('click',e=>{
+  const button=e.target.closest('[data-meta-rating]');
+  if(!button)return;
+  metaReflectionRating=Number(button.dataset.metaRating);
+  updateMetaRatingDisplay();
+});
+function closeMetaReflection(){
+  $('metaReflectionBack').style.display='none';
+  metaReflectionLogId=null;
+}
+$('metaReflectionList').addEventListener('click',e=>{
+  const button=e.target.closest('[data-meta-reflection-edit]');
+  if(button)showMetaReflection(button.dataset.metaReflectionEdit);
+});
+$('metaReflectionLater').onclick=closeMetaReflection;
+$('metaReflectionBack').addEventListener('click',e=>{if(e.target===$('metaReflectionBack'))closeMetaReflection();});
+$('metaReflectionSave').onclick=()=>{
+  const log=data.logs.find(item=>String(item.id)===String(metaReflectionLogId));
+  if(!log)return closeMetaReflection();
+  log.metaReviewed=true;
+  log.metaPending=false;
+  log.metaRating=metaReflectionRating===null?null:Number(metaReflectionRating);
+  log.metaReflection=$('metaReflectionInput').value.trim();
+  closeMetaReflection();
+  save();
+  toast('학습 메타인지 기록을 저장했어요.');
+  if(document.querySelector('[data-page-view="analytics"].active'))renderLearningAnalytics();
+};
+function renderMetaReflections(logs){
+  const target=$('metaReflectionList');
+  const entries=logs.filter(log=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  if(!entries.length){target.innerHTML='<div class="chart-empty">아직 학습 성찰이 없습니다. 타이머 완료 또는 공부 기록 추가 후 성찰을 남겨보세요.</div>';return;}
+  target.innerHTML=entries.map(log=>{
+    const score=log.metaReviewed?(log.metaRating===null||log.metaRating===undefined?'별점 미입력':`${Number(log.metaRating).toFixed(1).replace(/\.0$/,'')} / 5점`):'성찰 미작성';
+    const feedback=String(log.metaReflection||'').trim();
+    return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${escapeHTML(score)}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}${!log.metaReviewed?`<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">성찰 작성</button>`:''}</article>`;
+  }).join('');
+}
+
+
 function renderLearningAnalytics(){
   const range=Number($('analyticsRange')?.value)||14;
   const end=todayISO();
   const start=analyticsDateOffset(end,-(range-1));
   const logs=(data.logs||[]).filter(l=>l.date>=start&&l.date<=end);
+  renderMetaReflections(logs);
   const total=logs.reduce((sum,l)=>sum+(Number(l.minutes)||0),0);
   const activeDays=new Set(logs.filter(l=>Number(l.minutes)>0).map(l=>l.date)).size;
   const avg=total/range;
@@ -3603,17 +3664,20 @@ $('manualLogBtn').onclick=()=>openModal('학습 시간 직접 기록',`
   const logEnd=$('fEndTime').value;
   if((logStart&&!logEnd)||(!logStart&&logEnd))return toast('시작 시간과 종료 시간을 모두 입력해 주세요.');
   if(logStart&&timeToMinutes(logEnd)<=timeToMinutes(logStart))return toast('종료 시간은 시작 시간보다 늦어야 해요.');
+  const newLogId=uid();
   data.logs.push({
-    id:uid(),
+    id:newLogId,
     date:$('fDate').value,
     subject:$('fSubject').value,
     title:$('fTitle').value.trim(),
     minutes:m,
+    metaPending:true,
     ...(logStart&&logEnd?{startMinute:timeToMinutes(logStart),endMinute:timeToMinutes(logEnd)}:{})
   });
 
   closeModal();
   save();
+  showMetaReflection(newLogId);
 });
 
 /* 학습 항목 및 기록 삭제 */
@@ -3755,13 +3819,16 @@ $('timerFinish').onclick=()=>{
 
   const m=Math.floor(timer.elapsed/60);
 
+  let completedLogId=null;
   if(m>0){
+    completedLogId=uid();
     data.logs.push({
-      id:uid(),
+      id:completedLogId,
       date:todayISO(),
       subject:timer.subject,
       title:'타이머 학습',
       minutes:m,
+      metaPending:true,
       sessions:timer.sessions.map(seg=>{
         const startDate=new Date(seg.start),endDate=new Date(seg.end);
         return {date:todayISO(),startMinute:startDate.getHours()*60+startDate.getMinutes(),endMinute:endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0)};
@@ -3778,6 +3845,7 @@ $('timerFinish').onclick=()=>{
   timer.sessions=[];
   updateTimer();
   timerButtons();
+  if(completedLogId)showMetaReflection(completedLogId);
 };
 
 $('manageTimerSubjects').onclick=openTimerSubjectManager;
@@ -3813,6 +3881,7 @@ document.addEventListener('keydown',e=>{
   }
 
   if(e.key==='Escape'){
+    if($('metaReflectionBack').style.display==='grid')closeMetaReflection();
     closeModal();
     closeScheduleModal();
   }
