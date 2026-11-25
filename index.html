@@ -1922,6 +1922,37 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
     order:7!important;grid-column:1 / -1!important;
   }
 }
+
+/* 요청 반영: 모바일 일반 학습 타이머는 홈 카드 폭 전체, 목표 텍스트는 카드 크기에 맞게 확대 */
+@media(max-width:600px){
+  .page-view[data-page-view="home"] .home-timer-order{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    max-width:none!important;
+    justify-self:stretch!important;
+  }
+  .page-view[data-page-view="home"] .home-timer-order .timer-original-panel{
+    width:100%!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  .page-view[data-page-view="home"] .home-timer-order .timer-subject-row,
+  .page-view[data-page-view="home"] .home-timer-order .timer-display,
+  .page-view[data-page-view="home"] .home-timer-order .timer-sub,
+  .page-view[data-page-view="home"] .home-timer-order .timer-controls{
+    width:100%!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+  }
+  .page-view[data-page-view="home"] .mobile-goal-card .mobile-chip-slot .goal-chip-text{
+    font-size:clamp(18px,5.1vw,22px)!important;
+    line-height:1.25!important;
+    font-weight:800!important;
+    letter-spacing:-.35px!important;
+  }
+}
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
