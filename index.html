@@ -1993,6 +1993,8 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 .pomodoro-panel[hidden]{
   display:none!important;
 }
+/* Robust mode switching: exactly one timer panel visible on all viewport sizes */
+.timer-original-panel[hidden],.pomodoro-panel[hidden]{display:none!important}
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
@@ -5035,13 +5037,23 @@ $('pomodoroFocusMode').onclick=()=>setPomodoroMode('focus');
 $('pomodoroBreakMode').onclick=()=>setPomodoroMode('break');
 
 let timerDisplayMode='normal';
-$('timerModeToggle').onclick=()=>{
-  timerDisplayMode=timerDisplayMode==='normal'?'pomodoro':'normal';
-  $('originalTimerPanel').hidden=timerDisplayMode!=='normal';
-  $('pomodoroPanel').hidden=timerDisplayMode!=='pomodoro';
+function applyTimerDisplayMode(mode){
+  timerDisplayMode=mode==='pomodoro'?'pomodoro':'normal';
+  const normalPanel=$('originalTimerPanel');
+  const pomodoroPanelEl=$('pomodoroPanel');
+  // hidden 속성 외에 inline !important display도 직접 제어해 모바일 CSS 간섭을 차단
+  normalPanel.hidden=timerDisplayMode!=='normal';
+  pomodoroPanelEl.hidden=timerDisplayMode!=='pomodoro';
+  normalPanel.style.setProperty('display',timerDisplayMode==='normal'?'block':'none','important');
+  pomodoroPanelEl.style.setProperty('display',timerDisplayMode==='pomodoro'?'block':'none','important');
   $('timerModeCaption').textContent=timerDisplayMode==='normal'?'일반 학습 타이머':'원형 뽀모도로 타이머';
   $('timerModeToggle').textContent=timerDisplayMode==='normal'?'뽀모도로':'일반타이머';
+}
+$('timerModeToggle').onclick=()=>{
+  applyTimerDisplayMode(timerDisplayMode==='normal'?'pomodoro':'normal');
 };
+// 최초 로딩 시에도 현재 모드를 명시적으로 하나만 표시
+applyTimerDisplayMode('normal');
 
 $('pomodoroApplySettings').onclick=()=>{
   const focus=Number($('pomodoroFocusMinutes').value);
