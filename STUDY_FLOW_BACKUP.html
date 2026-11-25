@@ -584,8 +584,6 @@ header{margin-bottom:22px}
 .school-cell-edit:hover{background:#2a3650}
 .school-cell-edit strong{display:block;font-size:10px;line-height:1.35;overflow-wrap:anywhere;word-break:keep-all}
 .school-cell-edit span{display:block;font-size:9px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
-.school-week-cell.is-edited{background:#25344a}
-.school-cell-edit i{display:inline-block;margin-top:3px;font-size:8px;font-style:normal;color:#9fe0c5}
 @media(max-width:560px){
   .school-week-view{overflow-x:hidden!important;width:100%}
   .school-week-table{width:100%!important;min-width:0!important;max-width:100%;table-layout:fixed;font-size:8px}
@@ -596,7 +594,6 @@ header{margin-bottom:22px}
   .school-cell-edit{min-height:38px;padding:3px 1px;text-align:center}
   .school-cell-edit strong{font-size:7px;line-height:1.2;word-break:break-all}
   .school-cell-edit span{font-size:6px;line-height:1.15;margin-top:2px;word-break:break-all}
-  .school-cell-edit i{font-size:6px;margin-top:1px}
   .school-edit-hint{font-size:9px}
 }
 
@@ -729,6 +726,57 @@ header{margin-bottom:22px}
     height:21px !important;
     flex:none !important;
     font-size:14px !important;
+  }
+}
+
+
+/* IPAD / TABLET HOME LAYOUT ONLY:
+   Put the two study summaries in a vertical left column and the school
+   timetable in the right column. Phone and desktop layouts stay unchanged. */
+@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
+  .page-view[data-page-view="home"] .grid {
+    display:grid !important;
+    grid-template-columns:repeat(12,minmax(0,1fr)) !important;
+    align-items:stretch !important;
+    gap:16px !important;
+  }
+  .page-view[data-page-view="home"] .grid > .stat {
+    grid-column:1 / span 5 !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .page-view[data-page-view="home"] .grid > .stat:nth-of-type(2) {
+    grid-row:2 !important;
+  }
+  .page-view[data-page-view="home"] .grid > .school-timetable-card {
+    grid-column:6 / -1 !important;
+    grid-row:1 / span 2 !important;
+    width:100% !important;
+    min-width:0 !important;
+    align-self:stretch !important;
+  }
+}
+
+
+/* TABLET ONLY: keep weekday columns equal despite long subject/teacher text */
+@media (min-width:561px) and (max-width:1200px) and (pointer:coarse) {
+  .page-view[data-page-view="home"] .school-week-table {
+    width:100% !important;
+    min-width:0 !important;
+    table-layout:fixed !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:first-child,
+  .page-view[data-page-view="home"] .school-week-table td:first-child {
+    width:8% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th:not(:first-child),
+  .page-view[data-page-view="home"] .school-week-table td:not(:first-child) {
+    width:18.4% !important;
+  }
+  .page-view[data-page-view="home"] .school-week-table th,
+  .page-view[data-page-view="home"] .school-week-table td {
+    overflow-wrap:anywhere !important;
+    word-break:normal !important;
   }
 }
 
@@ -957,7 +1005,7 @@ header{margin-bottom:22px}
   <div class="page-intro">
     <div class="eyebrow">YOUR ACCOUNT & PREFERENCES</div>
     <h2>설정</h2>
-    <p>계정과 학교 정보, 학습 환경을 관리하세요.</p>
+    <p>계정과 학교 정보를 관리하세요.</p>
   </div>
   <section class="settings-grid">
     <div class="card settings-card settings-wide">
@@ -976,12 +1024,6 @@ header{margin-bottom:22px}
       <p class="muted">학교·학년·반·학년도·학기를 설정하고 학교 시간표를 연동합니다.</p>
       <div class="school-setting-summary" id="myPageSchoolSummary">학교 정보를 등록해 주세요.</div>
       <button class="mini primary" type="button" id="myPageSchoolBtn">학교 검색 및 설정</button>
-    </div>
-    <div class="card settings-card">
-      <div class="card-head"><h3>학습 환경</h3><span class="tag">STUDY</span></div>
-      <p class="muted">현재 설정된 주간 공부 목표와 기본 학습 과목을 확인합니다.</p>
-      <div class="settings-info-row"><span>주간 목표</span><strong id="settingsWeeklyGoal">-</strong></div>
-      <div class="settings-info-row"><span>기본 학습 과목</span><strong id="settingsSubjects">-</strong></div>
     </div>
     <div class="card settings-card settings-wide">
       <div class="card-head"><h3>서비스 정보</h3><span class="tag">STUDY FLOW</span></div>
@@ -1474,6 +1516,19 @@ header{margin-bottom:22px}
   }
 }
 
+
+/* Final requested refinements */
+@media (max-width:560px) {
+  /* In phone overview, the timetable axis already communicates the time. */
+  .phone-schedule-overview .schedule-block .block-time,
+  .phone-schedule-overview .schedule-block .block-repeat {
+    display:none !important;
+  }
+  .phone-schedule-overview .schedule-block .block-title {
+    margin:0 !important;
+  }
+}
+
 </style>
 <div id="lobbyGate">
   <div class="lobby-wrap">
@@ -1934,7 +1989,7 @@ function updatePhoneScheduleModeUI(){
   $('scheduleEditModeBtn').style.display=phone&&!schedulePhoneEditMode?'':'none';
   $('scheduleFinishEditBtn').style.display=phone&&schedulePhoneEditMode?'':'none';
 
-  HOUR_HEIGHT=phone&&!schedulePhoneEditMode?14.4:32.4;
+  HOUR_HEIGHT=phone&&!schedulePhoneEditMode?16:32.4;
 }
 
 $('scheduleEditModeBtn').addEventListener('click',()=>{
@@ -3028,7 +3083,7 @@ function renderSchoolWeek(){
       const subject=r&&!r._empty?(r.ITRT_CNTNT||''): '';
       const room=r&&!r._empty?(r.CLAS_NM||''):'';
       const shown=subject||'—';
-      table+=`<td class="school-week-cell ${edited?'is-edited':''}"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}${edited?'<i>수정</i>':''}</button></td>`;
+      table+=`<td class="school-week-cell"><button type="button" class="school-cell-edit" data-school-date="${date}" data-school-period="${p}" aria-label="${date} ${p}교시 수정"><strong>${escapeHTML(shown)}</strong>${room?`<span>${escapeHTML(room)}</span>`:''}</button></td>`;
     });
     table+='</tr>';
   });
@@ -3221,8 +3276,7 @@ function renderMyPage(){
   $('myPageUserId').textContent=window.studyFlowAccountId?`계정 ID · ${window.studyFlowAccountId.slice(0,8)}…`:'계정 정보';
   const s=data.schoolTimetable||{};
   $('myPageSchoolSummary').textContent=s.schoolCode?`${s.schoolName} · ${s.grade}학년 ${s.className}반 · ${s.year}학년도 ${s.semester}학기`:'학교 정보를 등록해 주세요.';
-  $('settingsWeeklyGoal').textContent=`주 ${data.goal}시간`;
-  $('settingsSubjects').textContent=(data.timerSubjects||[]).join(' · ')||'미설정';
+  // 학습 환경 카드는 제거되었으므로 관련 DOM 업데이트도 수행하지 않음.
   $('myPageSyncStatus').textContent=$('syncStatus')?.textContent||'확인 중';
 }
 
