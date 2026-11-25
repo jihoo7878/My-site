@@ -969,7 +969,7 @@ header{margin-bottom:22px}
     <div class="card full timer-dual-card">
       <div class="timer-mode-toolbar">
         <span class="timer-mode-caption" id="timerModeCaption">일반 학습 타이머</span>
-        <button class="mini" type="button" id="timerModeToggle">뽀모도로로 전환</button>
+        <button class="mini" type="button" id="timerModeToggle">뽀모도로</button>
       </div>
       <div class="timer-dual-inner">
         <section class="timer-panel timer-original-panel" id="originalTimerPanel">
@@ -4578,7 +4578,7 @@ const authForm=document.getElementById('authForm');
 
 
 // 독립형 뽀모도로: 집중 25분 / 휴식 5분
-const pomodoro={mode:'focus',focusMinutes:25,breakMinutes:5,total:1500,remaining:1500,running:false,startedAt:0,interval:null};
+const pomodoro={mode:'focus',focusMinutes:25,breakMinutes:5,total:1500,remaining:1500,running:false,startedAt:0,remainingAtStart:1500,interval:null};
 const POMO_CIRCUMFERENCE=2*Math.PI*82;
 function renderPomodoro(){
   const remaining=Math.max(0,pomodoro.remaining),mins=Math.floor(remaining/60),secs=remaining%60;
@@ -4611,14 +4611,14 @@ function savePomodoroFocusLog(startMs,endMs){
 }
 $('pomodoroStart').onclick=()=>{
   if(pomodoro.running){
-    pomodoro.remaining=Math.max(0,pomodoro.remaining-Math.floor((Date.now()-pomodoro.startedAt)/1000));
+    pomodoro.remaining=Math.max(0,pomodoro.remainingAtStart-Math.floor((Date.now()-pomodoro.startedAt)/1000));
     pomodoro.running=false;clearInterval(pomodoro.interval);pomodoro.interval=null;renderPomodoro();return;
   }
   if(pomodoro.remaining<=0)pomodoro.remaining=pomodoro.total;
-  pomodoro.startedAt=Date.now();pomodoro.running=true;
+  pomodoro.startedAt=Date.now();pomodoro.remainingAtStart=pomodoro.remaining;pomodoro.running=true;
   pomodoro.interval=setInterval(()=>{
     const elapsed=Math.floor((Date.now()-pomodoro.startedAt)/1000);
-    const nextRemaining=Math.max(0,pomodoro.remaining-elapsed);
+    const nextRemaining=Math.max(0,pomodoro.remainingAtStart-elapsed);
     if(nextRemaining<=0){
       const mode=pomodoro.mode,startMs=pomodoro.startedAt,endMs=Date.now();
       pomodoro.remaining=0;pomodoro.running=false;clearInterval(pomodoro.interval);pomodoro.interval=null;renderPomodoro();
@@ -4644,7 +4644,7 @@ $('timerModeToggle').onclick=()=>{
   $('originalTimerPanel').hidden=timerDisplayMode!=='normal';
   $('pomodoroPanel').hidden=timerDisplayMode!=='pomodoro';
   $('timerModeCaption').textContent=timerDisplayMode==='normal'?'일반 학습 타이머':'원형 뽀모도로 타이머';
-  $('timerModeToggle').textContent=timerDisplayMode==='normal'?'뽀모도로로 전환':'일반 타이머로 돌아가기';
+  $('timerModeToggle').textContent=timerDisplayMode==='normal'?'뽀모도로':'일반타이머';
 };
 
 $('pomodoroApplySettings').onclick=()=>{
