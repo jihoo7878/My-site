@@ -84,6 +84,34 @@ header{display:flex;justify-content:space-between;align-items:center;gap:18px;ma
 .subject-top span{color:var(--muted)}
 .subject-actions{display:flex;gap:6px}
 
+
+/* 타이머 좌우 분할 및 원형 뽀모도로 */
+.timer-dual-card{grid-column:span 12}
+.timer-dual-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(14px,2.2vw,28px)}
+.timer-panel{min-width:0;padding:2px 4px}
+.timer-original-panel{border-right:1px solid var(--line);padding-right:clamp(12px,2vw,24px)}
+.timer-subject-row{display:flex;gap:7px;align-items:center}
+.timer-original-panel .timer-display{font-size:clamp(30px,4vw,43px)}
+.pomodoro-mode-switch{display:flex;justify-content:center;gap:7px;margin:4px 0 0}
+.pomodoro-mode-switch .mini{flex:1;max-width:130px}
+.pomodoro-mode-switch .mini.active{background:#33466d;border-color:#647fbd;color:#fff}
+.pomodoro-circle{position:relative;width:min(100%,210px);aspect-ratio:1;margin:12px auto 8px}
+.pomodoro-circle svg{display:block;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.pomodoro-track,.pomodoro-progress{fill:none;stroke-width:10}
+.pomodoro-track{stroke:var(--line)}
+.pomodoro-progress{stroke:#8da8ff;stroke-linecap:round;stroke-dasharray:515.22;stroke-dashoffset:0;transition:stroke-dashoffset .25s linear}
+.pomodoro-circle-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.pomodoro-circle-content strong{font-size:clamp(28px,3.4vw,39px);font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.pomodoro-circle-content span{font-size:12px;color:var(--muted)}
+.pomodoro-controls{display:flex;justify-content:center;gap:8px;margin:12px 0 8px}
+.pomodoro-controls .btn{min-width:88px}
+@media(max-width:620px){
+  .timer-dual-inner{grid-template-columns:minmax(0,1fr);gap:18px}
+  .timer-original-panel{border-right:0;border-bottom:1px solid var(--line);padding:0 0 18px}
+  .pomodoro-circle{width:min(100%,190px)}
+  .timer-original-panel .timer-display{font-size:38px}
+}
+
 .timer-display{
   font-size:43px;font-weight:800;letter-spacing:1px;
   text-align:center;margin:12px 0 4px;font-variant-numeric:tabular-nums;
@@ -920,14 +948,33 @@ header{margin-bottom:22px}
       <span id="goalPercent"></span><span id="goalFoot"></span><span id="doneCount"></span>
       <button id="editWeeklyGoal" type="button"></button>
     </div>
-    <div class="card side">
-      <div class="card-head"><h3>학습 타이머</h3><span class="tag" id="timerStatus">대기 중</span></div>
-      <div style="display:flex;gap:7px;align-items:center"><select class="field" id="timerSubject" style="flex:1"></select><button class="mini" type="button" id="manageTimerSubjects">과목 관리</button></div>
-      <div class="timer-display" id="timerDisplay">00:00:00</div><div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
-      <div class="timer-controls"><button class="btn primary" id="timerStart">시작</button><button class="btn" id="timerPause" disabled>일시정지</button><button class="btn" id="timerFinish" disabled>완료</button></div>
-      
+    <div class="card full timer-dual-card">
+      <div class="timer-dual-inner">
+        <section class="timer-panel timer-original-panel">
+          <div class="card-head"><h3>학습 타이머</h3><span class="tag" id="timerStatus">대기 중</span></div>
+          <div class="timer-subject-row"><select class="field" id="timerSubject" style="flex:1"></select><button class="mini" type="button" id="manageTimerSubjects">과목 관리</button></div>
+          <div class="timer-display" id="timerDisplay">00:00:00</div><div class="timer-sub">시작하면 공부 시간이 자동으로 기록돼요.</div>
+          <div class="timer-controls"><button class="btn primary" id="timerStart">시작</button><button class="btn" id="timerPause" disabled>일시정지</button><button class="btn" id="timerFinish" disabled>완료</button></div>
+        </section>
+        <section class="timer-panel pomodoro-panel">
+          <div class="card-head"><h3>뽀모도로</h3><span class="tag" id="pomodoroModeTag">집중</span></div>
+          <div class="pomodoro-mode-switch">
+            <button class="mini active" type="button" id="pomodoroFocusMode">집중 25분</button>
+            <button class="mini" type="button" id="pomodoroBreakMode">휴식 5분</button>
+          </div>
+          <div class="pomodoro-circle" id="pomodoroCircle" role="timer" aria-label="뽀모도로 남은 시간">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="pomodoro-track" cx="100" cy="100" r="82"></circle>
+              <circle class="pomodoro-progress" id="pomodoroProgress" cx="100" cy="100" r="82"></circle>
+            </svg>
+            <div class="pomodoro-circle-content"><strong id="pomodoroTime">25:00</strong><span id="pomodoroHint">집중할 시간</span></div>
+          </div>
+          <div class="pomodoro-controls"><button class="btn primary" type="button" id="pomodoroStart">시작</button><button class="btn" type="button" id="pomodoroReset">초기화</button></div>
+          <div class="timer-sub" id="pomodoroStatus">25분 집중 · 5분 휴식</div>
+        </section>
+      </div>
     </div>
-    <div class="card half weekly-chart-card"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
+<div class="card half weekly-chart-card"><div class="card-head"><h3>최근 7일 학습 시간</h3><span class="tag">시간</span></div><div class="bar-chart" id="weeklyChart"></div></div>
     <div class="card half calendar-card">
       <div class="card-head calendar-head"><h3>학습 캘린더</h3><div class="calendar-nav"><button class="mini" id="calendarPrev" aria-label="이전 달">‹</button><strong id="calendarMonth"></strong><button class="mini" id="calendarNext" aria-label="다음 달">›</button></div></div>
       <div class="calendar-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
@@ -1103,7 +1150,7 @@ header{margin-bottom:22px}
         <button class="mini" type="button" id="myPageLogoutBtn">로그아웃</button>
       </div>
     </div>
-    <div class="card settings-card settings-wide">
+    <div class="card settings-card">
       <div class="card-head"><h3>학교 설정</h3><span class="tag">NEIS</span></div>
       <p class="muted">학교·학년·반·학년도·학기를 설정하고 학교 시간표를 연동합니다.</p>
       <div class="school-setting-summary" id="myPageSchoolSummary">학교 정보를 등록해 주세요.</div>
@@ -4500,6 +4547,70 @@ const authForm=document.getElementById('authForm');
   },{capture:true,passive:true});
   document.addEventListener('pointercancel',()=>{mouseActive=false;mouseAllowed=false;},{capture:true,passive:true});
 })();
+
+
+
+// 독립형 뽀모도로: 집중 25분 / 휴식 5분
+const pomodoro={mode:'focus',total:1500,remaining:1500,running:false,startedAt:0,interval:null};
+const POMO_CIRCUMFERENCE=2*Math.PI*82;
+function renderPomodoro(){
+  const remaining=Math.max(0,pomodoro.remaining),mins=Math.floor(remaining/60),secs=remaining%60;
+  $('pomodoroTime').textContent=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  $('pomodoroHint').textContent=pomodoro.mode==='focus'?'집중할 시간':'잠깐 쉬어가세요';
+  $('pomodoroModeTag').textContent=pomodoro.mode==='focus'?'집중':'휴식';
+  $('pomodoroStatus').textContent=pomodoro.running?(pomodoro.mode==='focus'?'집중 중…':'휴식 중…'):(pomodoro.mode==='focus'?'25분 집중 · 5분 휴식':'5분 휴식 · 다음은 집중');
+  $('pomodoroStart').textContent=pomodoro.running?'일시정지':'시작';
+  $('pomodoroFocusMode').classList.toggle('active',pomodoro.mode==='focus');
+  $('pomodoroBreakMode').classList.toggle('active',pomodoro.mode==='break');
+  const progress=1-remaining/pomodoro.total;
+  $('pomodoroProgress').style.strokeDasharray=String(POMO_CIRCUMFERENCE);
+  $('pomodoroProgress').style.strokeDashoffset=String(POMO_CIRCUMFERENCE*progress);
+  $('pomodoroCircle').setAttribute('aria-label',`남은 시간 ${mins}분 ${secs}초`);
+}
+function setPomodoroMode(mode){
+  if(pomodoro.interval)clearInterval(pomodoro.interval);
+  pomodoro.interval=null;pomodoro.running=false;
+  pomodoro.mode=mode;pomodoro.total=mode==='focus'?1500:300;
+  pomodoro.remaining=pomodoro.total;renderPomodoro();
+}
+function savePomodoroFocusLog(startMs,endMs){
+  const minutes=Math.max(1,Math.round((endMs-startMs)/60000));
+  const startDate=new Date(startMs),endDate=new Date(endMs);
+  const startMinute=startDate.getHours()*60+startDate.getMinutes();
+  const endMinute=endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0);
+  const logId=uid();
+  data.logs.push({id:logId,date:todayISO(),subject:$('timerSubject').value||'국어',title:'뽀모도로 집중 학습',minutes,metaPending:true,sessions:[{date:todayISO(),startMinute,endMinute}]});
+  save();toast(`${minutes}분 집중 학습을 기록했어요.`);showMetaReflection(logId);
+}
+$('pomodoroStart').onclick=()=>{
+  if(pomodoro.running){
+    pomodoro.remaining=Math.max(0,pomodoro.remaining-Math.floor((Date.now()-pomodoro.startedAt)/1000));
+    pomodoro.running=false;clearInterval(pomodoro.interval);pomodoro.interval=null;renderPomodoro();return;
+  }
+  if(pomodoro.remaining<=0)pomodoro.remaining=pomodoro.total;
+  pomodoro.startedAt=Date.now();pomodoro.running=true;
+  pomodoro.interval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-pomodoro.startedAt)/1000);
+    const nextRemaining=Math.max(0,pomodoro.remaining-elapsed);
+    if(nextRemaining<=0){
+      const mode=pomodoro.mode,startMs=pomodoro.startedAt,endMs=Date.now();
+      pomodoro.remaining=0;pomodoro.running=false;clearInterval(pomodoro.interval);pomodoro.interval=null;renderPomodoro();
+      if(mode==='focus'){
+        savePomodoroFocusLog(startMs,endMs);toast('집중 시간이 끝났어요. 이제 휴식 시간이에요.');setPomodoroMode('break');
+      }else{toast('휴식 시간이 끝났어요. 다시 집중해 볼까요?');setPomodoroMode('focus');}
+      return;
+    }
+    pomodoro.remaining=nextRemaining;renderPomodoro();
+  },250);
+  renderPomodoro();
+};
+$('pomodoroReset').onclick=()=>{
+  if(pomodoro.interval)clearInterval(pomodoro.interval);
+  pomodoro.interval=null;pomodoro.running=false;pomodoro.remaining=pomodoro.total;renderPomodoro();
+};
+$('pomodoroFocusMode').onclick=()=>setPomodoroMode('focus');
+$('pomodoroBreakMode').onclick=()=>setPomodoroMode('break');
+renderPomodoro();
 
 </script>
 
