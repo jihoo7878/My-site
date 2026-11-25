@@ -476,11 +476,11 @@ header{margin-bottom:22px}
 .page-intro-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .page-intro-title-row h2{min-width:0}
 .intro-actions{display:flex;align-items:stretch;justify-content:flex-end;gap:9px;min-width:0}
-.goal-chip{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;max-width:230px;min-width:155px;padding:10px 14px;border:1px solid #34415c;border-radius:14px;background:linear-gradient(135deg,#1c2638,#151b28);color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s}
+.goal-chip{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;max-width:300px;min-width:205px;min-height:68px;padding:13px 18px;border:1px solid #34415c;border-radius:14px;background:linear-gradient(135deg,#1c2638,#151b28);color:var(--text);text-align:left;cursor:pointer;transition:border-color .18s,transform .18s}
 .goal-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
-.goal-chip-label{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
-.goal-chip-text{max-width:100%;font-size:12px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(max-width:560px){.intro-actions{gap:6px;max-width:100%;flex:1}.goal-chip{min-width:0;max-width:none;flex:1;padding:8px 10px}.goal-chip-text{max-width:100%;font-size:11px}.goal-chip-label{font-size:8px}}
+.goal-chip-label{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--accent2)}
+.goal-chip-text{max-width:100%;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){.intro-actions{gap:6px;max-width:100%;flex:1}.goal-chip{min-width:0;max-width:none;flex:1;min-height:62px;padding:9px 11px}.goal-chip-text{max-width:100%;font-size:13px}.goal-chip-label{font-size:9px}}
 .dday-chip{display:flex;align-items:center;gap:11px;border:1px solid #34415c;background:linear-gradient(135deg,#202b43,#171e2c);color:var(--text);border-radius:14px;padding:10px 15px;cursor:pointer;text-align:left;min-width:145px;transition:border-color .18s,transform .18s}
 .dday-chip:hover{border-color:var(--accent);transform:translateY(-1px)}
 .dday-count{font-size:23px;font-weight:850;letter-spacing:-.6px;color:var(--accent2);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -3716,7 +3716,7 @@ $('homeGoalButton')?.addEventListener('click',()=>{
   const current=String(data.homeGoal||'');
   openModal('나의 목표 설정',`
     <label class="muted" for="homeGoalInput">홈 화면에 표시할 목표</label>
-    <input class="field" id="homeGoalInput" type="text" maxlength="70" placeholder="예: 이번 시험 수학 1등급" value="${escapeDdayInput(current)}">
+    <input class="field" id="homeGoalInput" type="text" maxlength="100" placeholder="예: 서울대 의예과, 수학 1등급, 순공 10시간 등" value="${escapeDdayInput(current)}">
     <p class="muted" style="font-size:11px;margin:9px 0 0">목표는 D-day 왼쪽에 표시되며, 언제든 수정할 수 있습니다.</p>
     ${current.trim()?'<button class="mini" type="button" id="homeGoalClearBtn" style="margin-top:12px">목표 지우기</button>':''}
   `,()=>{
