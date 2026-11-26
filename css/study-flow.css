@@ -1691,3 +1691,56 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   .meta-average-details{justify-items:center;text-align:center}
   .meta-average-range{min-width:112px}
 }
+
+
+/* Daily average study-rating chart */
+.daily-rating-chart-card{
+  margin-bottom:16px;
+}
+.daily-rating-chart-caption{
+  margin:0 0 8px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+.daily-rating-line-area{
+  min-height:0;
+  padding:4px 0 0;
+}
+.daily-rating-line-area svg{
+  width:100%;
+  height:auto;
+  display:block;
+}
+.daily-rating-line-area svg text{
+  font-size:10px;
+  fill:var(--muted);
+}
+.daily-rating-grid{
+  stroke:var(--line);
+  stroke-width:1;
+  opacity:.9;
+}
+.daily-rating-line{
+  fill:none;
+  stroke:var(--accent);
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.daily-rating-point{
+  fill:var(--accent);
+  stroke:var(--panel);
+  stroke-width:2;
+  cursor:help;
+}
+.daily-rating-chart-summary{
+  margin:0 0 8px;
+  color:var(--muted);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:600px){
+  .daily-rating-chart-card{padding:14px}
+  .daily-rating-line-area svg text{font-size:9px}
+}
