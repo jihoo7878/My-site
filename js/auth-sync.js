@@ -31,6 +31,10 @@ const authForm=document.getElementById('authForm');
   const authSwitch=document.getElementById('authSwitch');
   const authMessage=document.getElementById('authMessage');
   const authPassword=document.getElementById('authPassword');
+  const authName=document.getElementById('authName');
+  const authNickname=document.getElementById('authNickname');
+  const authGrade=document.getElementById('authGrade');
+  const authSignupFields=document.getElementById('authSignupFields');
   const forgotPassword=document.getElementById('forgotPassword');
   const recoveryForm=document.getElementById('recoveryForm');
   let recoveryMode=false;
@@ -61,6 +65,17 @@ const authForm=document.getElementById('authForm');
     forgotPassword.style.display='none';
     message('');
   }
+  function syncSignupFields(){
+    if(authSignupFields)authSignupFields.hidden=!isSignUp;
+    [authName,authNickname,authGrade].forEach(field=>{
+      if(!field)return;
+      field.disabled=!isSignUp;
+      field.required=isSignUp;
+    });
+    if(authGrade&&authGrade.options.length===1){
+      authGrade.innerHTML='<option value="">학년 선택</option>'+PROFILE_GRADES.map(grade=>'<option value="'+escapeHTML(grade)+'">'+escapeHTML(grade)+'</option>').join('');
+    }
+  }
   function showNormalAuth(){
     recoveryMode=false;
     authHeading.textContent=isSignUp?'회원가입':'로그인';
@@ -69,6 +84,7 @@ const authForm=document.getElementById('authForm');
     recoveryForm.style.display='none';
     authSwitch.style.display='block';
     forgotPassword.style.display=isSignUp?'none':'block';
+    syncSignupFields();
   }
   function showLobby(){
     lobbyGate.style.display='block';
@@ -175,7 +191,10 @@ const authForm=document.getElementById('authForm');
          profileValue(fetchedProfile?.grade)!==candidate.grade){
         const {error:syncError}=await supabaseClient.from('profiles')
           .upsert(candidate,{onConflict:'id'});
-        if(syncError)console.warn('STUDY FLOW existing profile auto-link:',syncError);
+        if(syncError){
+          console.warn('STUDY FLOW existing profile auto-link:',syncError);
+          if(syncError.code==='23505'&&profilePrompt)profilePrompt.style.display='flex';
+        }
       }
     }else{
       loadedProfile=fetchedProfile;
@@ -406,12 +425,23 @@ const authForm=document.getElementById('authForm');
     if(!supabaseClient)return message('인증 서비스를 불러오는 중이에요. 잠시 후 다시 시도해 주세요.',true);
     const email=document.getElementById('authEmail').value.trim();
     const password=authPassword.value;
+    const name=authName?.value.trim()||'';
+    const nickname=authNickname?.value.trim()||'';
+    const grade=authGrade?.value||'';
     if(password.length<8)return message('비밀번호는 8자 이상 입력해 주세요.',true);
+    if(isSignUp){
+      if(!name||name.length>40)return message('이름을 1~40자로 입력해 주세요.',true);
+      if(nickname.length<2||nickname.length>24)return message('닉네임은 2~24자로 입력해 주세요.',true);
+      if(!PROFILE_GRADES.includes(grade))return message('학년을 선택해 주세요.',true);
+    }
     setBusy(true);message('');
     try{
       if(isSignUp){
         const {data:result,error}=await supabaseClient.auth.signUp({
-          email,password,options:{emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev')}
+          email,password,options:{
+            emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev'),
+            data:{name,nickname,grade}
+          }
         });
         if(error)throw error;
         if(result.session){
@@ -419,9 +449,7 @@ const authForm=document.getElementById('authForm');
         }else{
           message('가입 요청이 완료됐어요. 이메일 인증 링크를 확인한 뒤 로그인해 주세요.');
           isSignUp=false;
-          authHeading.textContent='로그인';
-          authSubmit.textContent='로그인';
-          authSwitch.textContent='계정이 없으신가요? 회원가입';
+          showNormalAuth();
           authPassword.value='';
         }
       }else{

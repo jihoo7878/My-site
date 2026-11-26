@@ -552,6 +552,14 @@
     <form id="authForm">
       <label for="authEmail">이메일</label>
       <input id="authEmail" type="email" autocomplete="email" required placeholder="name@example.com">
+      <div id="authSignupFields" hidden>
+        <label for="authName">이름</label>
+        <input id="authName" type="text" maxlength="40" autocomplete="name" disabled>
+        <label for="authNickname">닉네임</label>
+        <input id="authNickname" type="text" maxlength="24" autocomplete="nickname" disabled>
+        <label for="authGrade">학년</label>
+        <select id="authGrade" disabled><option value="">학년 선택</option></select>
+      </div>
       <label for="authPassword">비밀번호</label>
       <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="8자 이상">
       <button class="btn primary" id="authSubmit" type="submit">로그인</button>
