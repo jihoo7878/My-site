@@ -1053,10 +1053,6 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 #authCard label{display:block;margin:13px 0 6px;color:#b8c4d9;font-size:12px}
 #authCard input{width:100%;background:#101622;border:1px solid #35415a;color:#edf1fa;border-radius:10px;padding:12px;outline:none}
 #authCard input:focus{border-color:#8ba8ff}
-#authCard select{width:100%;background:#101622;border:1px solid #35415a;color:#edf1fa;border-radius:10px;padding:12px;outline:none}
-#authCard select:focus{border-color:#8ba8ff}
-#authCard .auth-field-message{margin:6px 0 2px;color:#91a0bc;font-size:11px;line-height:1.45}
-#authCard .auth-field-message.error{color:#ff8d9a}
 #authSubmit{width:100%;margin-top:18px}
 #authSwitch{width:100%;margin-top:10px;background:transparent;border:0;color:#b5c5ff;padding:9px}
 #forgotPassword{display:block;width:100%;margin-top:8px;background:transparent;border:0;color:#9eacc8;padding:8px;cursor:pointer;font-size:12px}
@@ -1544,3 +1540,139 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 /* Robust mode switching: exactly one timer panel visible on all viewport sizes */
 .timer-original-panel[hidden],.pomodoro-panel[hidden]{display:none!important}
 
+
+
+
+/* Average learning rating panel — restore compact, card-based styling */
+.meta-average-panel{
+  margin:14px 0 16px;
+  padding:16px 18px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(145deg,#1c2435 0%,#151b29 100%);
+}
+.meta-average-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.meta-average-title{
+  display:block;
+  color:var(--text);
+  font-size:13px;
+  font-weight:750;
+}
+.meta-average-range{
+  width:auto!important;
+  min-width:128px;
+  max-width:100%;
+  padding:8px 10px;
+  font-size:11px;
+}
+.meta-average-content{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);
+  align-items:center;
+  gap:14px 24px;
+  padding-top:15px;
+}
+.meta-average-main{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:7px;
+  min-width:0;
+}
+.meta-average-stars{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  max-width:100%;
+  white-space:nowrap;
+  line-height:1;
+}
+.meta-average-star{
+  display:inline-block;
+  font-size:clamp(19px,2.3vw,25px);
+  line-height:1;
+  color:transparent;
+  background:linear-gradient(90deg,#f3c56d var(--star-fill),#68758d var(--star-fill));
+  -webkit-background-clip:text;
+  background-clip:text;
+}
+.meta-average-score{
+  color:var(--text);
+  font-size:27px;
+  font-weight:800;
+  line-height:1.1;
+  letter-spacing:-.6px;
+  font-variant-numeric:tabular-nums;
+}
+.meta-average-score span{
+  margin-left:5px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0;
+}
+.meta-average-details{
+  display:grid;
+  gap:7px;
+  min-width:0;
+}
+.meta-average-count{
+  color:var(--muted);
+  font-size:11px;
+}
+.meta-average-count strong{
+  color:var(--text);
+  font-weight:700;
+}
+.meta-average-trend{
+  justify-self:start;
+  padding:4px 9px;
+  border:1px solid #426b61;
+  border-radius:20px;
+  background:#203a35;
+  color:#9fe0c5;
+  font-size:11px;
+  font-weight:700;
+}
+.meta-average-message{
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.65;
+  overflow-wrap:anywhere;
+}
+.meta-average-empty{
+  display:grid;
+  justify-items:center;
+  gap:6px;
+  padding:17px 8px 5px;
+  text-align:center;
+}
+.meta-average-empty-icon{
+  color:var(--accent);
+  font-size:27px;
+  line-height:1;
+}
+.meta-average-empty strong{
+  font-size:13px;
+}
+.meta-average-empty p{
+  max-width:420px;
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.6;
+}
+@media(max-width:600px){
+  .meta-average-panel{padding:14px}
+  .meta-average-content{grid-template-columns:1fr;gap:13px}
+  .meta-average-main{align-items:center}
+  .meta-average-details{justify-items:center;text-align:center}
+  .meta-average-range{min-width:112px}
+}
