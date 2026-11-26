@@ -1695,6 +1695,7 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 
 /* Daily average study-rating chart */
 .daily-rating-chart-card{
+  margin-top:16px;
   margin-bottom:16px;
 }
 .daily-rating-chart-caption{
