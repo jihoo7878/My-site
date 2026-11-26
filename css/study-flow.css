@@ -1619,7 +1619,7 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 }
 .meta-average-details{
   display:grid;
-  gap:7px;
+  gap:10px;
   min-width:0;
 }
 .meta-average-count{
@@ -1632,13 +1632,15 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 }
 .meta-average-trend{
   justify-self:start;
-  padding:4px 9px;
+  padding:8px 15px;
   border:1px solid #426b61;
-  border-radius:20px;
+  border-radius:24px;
   background:#203a35;
   color:#9fe0c5;
-  font-size:11px;
-  font-weight:700;
+  font-size:16px;
+  line-height:1.35;
+  font-weight:800;
+  letter-spacing:-.2px;
 }
 .meta-average-message{
   margin:0;
