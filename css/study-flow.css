@@ -1695,6 +1695,16 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   font-weight:800;
   letter-spacing:-.2px;
 }
+.meta-average-trend.caution{
+  border-color:#796a3f;
+  background:#3a3322;
+  color:#f2d27c;
+}
+.meta-average-trend.negative{
+  border-color:#754750;
+  background:#3d252c;
+  color:#ff9ba7;
+}
 .meta-average-message{
   margin:0;
   color:var(--text);
