@@ -110,6 +110,13 @@ function restorePomodoroState(){
 }
 
 /* 뽀모도로 과목 선택: 일반 타이머의 과목 목록을 공유 */
+/* 뽀모도로의 과목 관리 버튼은 기존 과목 관리 창을 재사용 */
+$('managePomodoroSubjects')?.addEventListener('click',()=>{
+  const existing=$('manageTimerSubjects');
+  if(existing)existing.click();
+  else toast('일반 타이머의 과목 관리 버튼을 찾을 수 없어요.');
+});
+
 function syncPomodoroSubjects(){
   const source=$('timerSubject'),target=$('pomodoroSubject');
   if(!source||!target)return;
