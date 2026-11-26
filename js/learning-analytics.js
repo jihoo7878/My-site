@@ -54,6 +54,87 @@ $('metaReflectionSave').onclick=()=>{
   if(document.querySelector('[data-page-view="analytics"].active'))renderLearningAnalytics();
 };
 
+
+function renderDailyRatingChart(range,end){
+  const target=$('dailyRatingLine');
+  if(!target)return;
+
+  const days=Math.max(1,Number(range)||14);
+  const start=analyticsDateOffset(end,-(days-1));
+  const ratingByDate=new Map();
+
+  (data.logs||[]).forEach(log=>{
+    const date=String(log.date||'');
+    const raw=log.metaRating;
+    const rating=Number(raw);
+    if(date<start||date>end||log.metaReviewed!==true||
+      raw===null||raw===undefined||raw===''||
+      !Number.isFinite(rating)||rating<0||rating>5)return;
+
+    const bucket=ratingByDate.get(date)||{sum:0,count:0};
+    bucket.sum+=rating;
+    bucket.count++;
+    ratingByDate.set(date,bucket);
+  });
+
+  const daily=Array.from({length:days},(_,i)=>{
+    const date=analyticsDateOffset(start,i);
+    const bucket=ratingByDate.get(date);
+    return bucket?{date,average:bucket.sum/bucket.count,count:bucket.count}:null;
+  });
+  const ratedDays=daily.filter(Boolean);
+  if(!ratedDays.length){
+    target.innerHTML='<div class="chart-empty">선택한 기간에 등록된 별점이 없습니다.</div>';
+    return;
+  }
+
+  const width=760,height=270;
+  const left=48,right=18,top=20,bottom=38;
+  const plotWidth=width-left-right;
+  const plotHeight=height-top-bottom;
+  const xAt=i=>left+(days===1?plotWidth/2:i*plotWidth/(days-1));
+  const yAt=value=>top+(5-value)*plotHeight/5;
+
+  const grid=Array.from({length:6},(_,score)=>{
+    const y=yAt(score);
+    return `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" class="daily-rating-grid"/>
+      <text x="${left-10}" y="${y+4}" text-anchor="end">${score}</text>`;
+  }).join('');
+
+  const tickStep=Math.max(1,Math.ceil(days/6));
+  const tickIndices=[];
+  for(let i=0;i<days;i+=tickStep)tickIndices.push(i);
+  if(tickIndices[tickIndices.length-1]!==days-1)tickIndices.push(days-1);
+  const xLabels=tickIndices.map(i=>{
+    const date=analyticsDateOffset(start,i);
+    return `<text x="${xAt(i)}" y="${height-10}" text-anchor="middle">${Number(date.slice(5,7))}/${Number(date.slice(8,10))}</text>`;
+  }).join('');
+
+  const points=ratedDays.map(item=>{
+    const index=Math.round((new Date(item.date+'T12:00:00')-new Date(start+'T12:00:00'))/86400000);
+    return {...item,index,x:xAt(index),y:yAt(item.average)};
+  });
+  const path=points.length>1
+    ?`<polyline points="${points.map(p=>`${p.x},${p.y}`).join(' ')}" class="daily-rating-line"/>`
+    :'';
+  const circles=points.map(p=>{
+    const avg=p.average.toFixed(2).replace(/\.?0+$/,'');
+    return `<circle cx="${p.x}" cy="${p.y}" r="4.5" class="daily-rating-point">
+      <title>${p.date} · 평균 ${avg}점 · ${p.count}건</title>
+    </circle>`;
+  }).join('');
+
+  const mean=ratedDays.reduce((sum,item)=>sum+item.average,0)/ratedDays.length;
+  const periodText=`기록된 날짜 ${ratedDays.length}일 · 일별 평균의 기간 평균 ${mean.toFixed(1)} / 5.0`;
+  target.innerHTML=`<div class="daily-rating-chart-summary">${periodText}</div>
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="최근 ${days}일 일별 공부 평점 평균 꺾은선 그래프, 0점부터 5점까지">
+      ${grid}
+      ${path}
+      ${circles}
+      ${xLabels}
+    </svg>`;
+}
+
 function renderMetaAverage(){
   const target=$('metaAverageContent');
   const rangeSelect=$('metaAverageRange');
@@ -84,16 +165,16 @@ function renderMetaAverage(){
 
   const average=rated.reduce((sum,log)=>sum+Number(log.metaRating),0)/rated.length;
   const rounded=Math.round(average*10)/10;
-  const trend=rounded>=4.2?'좋은 학습 흐름!':
-    rounded>=3.5?'꾸준한 성장 중':
-    rounded>=2.8?'개선할 점 발견':
-    rounded>=2.0?'잠시 재정비':'다시 시작하는 시간';
+  const trend=rounded>=4.2?'매우 만족':
+    rounded>=3.5?'만족':
+    rounded>=2.8?'보통':
+    rounded>=2.0?'아쉬움':'재정비';
   const message=rounded>=4.2
     ?'오늘의 학습이 좋은 흐름으로 이어지고 있어요. 지금의 집중과 성취를 다음 공부에도 이어가 봐요!'
     :rounded>=3.5
     ?'꾸준히 좋은 학습을 이어가고 있어요. 작은 성취들이 쌓여 더 큰 발전을 만들고 있어요.'
     :rounded>=2.8
-    ?'만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견할 수 있어요. 럭키비키. 다음 공부에서 하나씩 바꿔 봐요.'
+    ?'만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견했어요. 다음 공부에서 하나씩 바꿔 봐요.'
     :rounded>=2.0
     ?'오늘 공부가 기대만큼 잘되지 않았을 수 있어요. 괜찮아요. 원인을 하나만 찾아 다음 공부에서 다시 시도해 봐요.'
     :'힘든 학습이었을 수도 있어요. 점수보다 중요한 건 다시 시작하는 거예요. 잠시 쉬고, 부담 없는 목표부터 시작해 봐요.';
@@ -155,6 +236,7 @@ function renderLearningAnalytics(){
   const range=Number($('analyticsRange')?.value)||14;
   const end=todayISO();
   const {logs,total,activeDays,avg,subjects,weekdayAvg,maxWeek,daily,maxDaily,weekEntries,maxW}=buildLearningAnalyticsModel(data.logs||[],range,end);
+  renderDailyRatingChart(range,end);
   renderMetaAverage();
   renderMetaReflections(logs);
   $('analyticsKpis').innerHTML=[
