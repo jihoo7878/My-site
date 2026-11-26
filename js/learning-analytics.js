@@ -53,90 +53,70 @@ $('metaReflectionSave').onclick=()=>{
   toast('학습 메타인지 기록을 저장했어요.');
   if(document.querySelector('[data-page-view="analytics"].active'))renderLearningAnalytics();
 };
-function renderMetaRatingStars(value){
-  const rating=Math.max(0,Math.min(5,Number(value)||0));
-  const stars=Array.from({length:5},(_,i)=>{
-    const fill=Math.max(0,Math.min(100,(rating-i)*100));
-    return `<span class="meta-display-star" aria-hidden="true"><span style="width:${fill}%">★</span>☆</span>`;
-  }).join('');
-  return `<span class="meta-display-stars" role="img" aria-label="${rating.toFixed(1).replace(/\\.0$/,'')}점 / 5점">${stars}</span>`;
-}
 
-function getMetaAverageStats(allLogs, period){
-  // 어제는 전일 1일. 최근 일주일은 오늘을 포함한 최근 7일.
-  const today=todayISO();
-  const end=period==='week'?today:analyticsDateOffset(today,-1);
-  const start=period==='week'?analyticsDateOffset(today,-6):end;
-  const rated=(allLogs||[]).filter(log=>{
-    if(!log.metaReviewed || log.metaRating===null || log.metaRating===undefined)return false;
-    const rating=Number(log.metaRating);
-    return log.date>=start && log.date<=end && Number.isFinite(rating) && rating>=0 && rating<=5;
-  });
-  const average=rated.length? rated.reduce((sum,log)=>sum+Number(log.metaRating),0)/rated.length:null;
-  return {average,count:rated.length,start,end};
-}
 function renderMetaAverage(){
   const target=$('metaAverageContent');
-  const selector=$('metaAverageRange');
-  if(!target||!selector)return;
-  const period=selector.value==='week'?'week':'yesterday';
-  const stats=getMetaAverageStats(data.logs||[],period);
-  const periodLabel=period==='week'?'최근 일주일':'어제';
-  if(stats.average===null){
-    target.innerHTML=`<div class="meta-average-empty">${periodLabel} 등록된 별점이 없습니다.</div>`;
+  const rangeSelect=$('metaAverageRange');
+  if(!target||!rangeSelect)return;
+
+  const mode=rangeSelect.value||'yesterday';
+  const today=todayISO();
+  const start=mode==='week'?analyticsDateOffset(today,-6):analyticsDateOffset(today,-1);
+  const end=mode==='week'?today:start;
+  const rated=(data.logs||[]).filter(log=>{
+    const date=String(log.date||'');
+    const rating=Number(log.metaRating);
+    return date>=start&&date<=end&&log.metaReviewed===true&&
+      log.metaRating!==null&&log.metaRating!==undefined&&
+      Number.isFinite(rating)&&rating>=0&&rating<=5;
+  });
+  const rangeLabel=mode==='week'?'최근 7일':'어제';
+
+  if(!rated.length){
+    target.innerHTML=`
+      <div class="meta-average-empty">
+        <span class="meta-average-empty-icon">☆</span>
+        <strong>아직 별점 기록이 없어요</strong>
+        <p>${rangeLabel} 학습 기록에 별점을 남기면 평균과 변화 흐름을 확인할 수 있어요.</p>
+      </div>`;
     return;
   }
-  const average=Math.round(stats.average*10)/10;
-  let messageTitle,messageText,messageClass;
-  if(average>=4.2){
-    messageTitle='좋은 학습 흐름!';
-    messageText='오늘의 학습이 좋은 흐름으로 이어지고 있어요. 지금의 집중과 성취를 다음 공부에도 이어가 봐요!';
-    messageClass='excellent';
-  }else if(average>=3.5){
-    messageTitle='꾸준한 성장 중';
-    messageText='꾸준히 좋은 학습을 이어가고 있어요. 작은 성취들이 쌓여 더 큰 발전을 만들고 있어요.';
-    messageClass='good';
-  }else if(average>=2.8){
-    messageTitle='개선할 점 발견';
-    messageText='만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견할 수 있어요. 럭키비키. 다음 공부에서 하나씩 바꿔 봐요.';
-    messageClass='steady';
-  }else if(average>=2.0){
-    messageTitle='잠시 재정비';
-    messageText='오늘 공부가 기대만큼 잘되지 않았을 수 있어요. 괜찮아요. 원인을 하나만 찾아 다음 공부에서 다시 시도해 봐요.';
-    messageClass='reset';
-  }else{
-    messageTitle='다시 시작하는 시간';
-    messageText='힘든 학습이었을 수도 있어요. 점수보다 중요한 건 다시 시작하는 거예요. 잠시 쉬고, 부담 없는 목표부터 시작해 봐요.';
-    messageClass='restart';
-  }
-  target.innerHTML=`<div class="meta-average-visual">${renderMetaRatingStars(average)}</div>
-    <div class="meta-average-number">${average.toFixed(1)}<span>/ 5.0</span></div>
-    <div class="meta-average-caption">${periodLabel} · 별점 등록 ${stats.count}건</div>
-    <div class="meta-average-message ${messageClass}">
-      <div class="meta-average-message-title">${messageTitle}</div>
-      <div class="meta-average-message-text">${messageText}</div>
+
+  const average=rated.reduce((sum,log)=>sum+Number(log.metaRating),0)/rated.length;
+  const rounded=Math.round(average*10)/10;
+  const trend=rounded>=4.5?'아주 좋은 학습 흐름':
+    rounded>=4?'꾸준한 성장 중':
+    rounded>=3?'안정적으로 이어가는 중':'개선점을 찾아가는 중';
+  const message=rounded>=4
+    ?'꾸준히 좋은 학습을 이어가고 있어요. 작은 성취들이 쌓여 더 큰 발전을 만들고 있어요.'
+    :'평가를 돌아보며 다음 학습에서 개선할 점을 찾아보세요.';
+
+  const stars=Array.from({length:5},(_,i)=>{
+    const fill=Math.max(0,Math.min(100,(average-i)*100));
+    return `<span class="meta-average-star" style="--star-fill:${fill}%">★</span>`;
+  }).join('');
+
+  target.innerHTML=`
+    <div class="meta-average-main">
+      <div class="meta-average-stars" aria-label="5점 만점 평균 ${rounded}점">${stars}</div>
+      <div class="meta-average-score">${rounded.toFixed(1)}<span>/ 5.0</span></div>
+    </div>
+    <div class="meta-average-details">
+      <span class="meta-average-count">${rangeLabel} · 별점 등록 <strong>${rated.length}건</strong></span>
+      <span class="meta-average-trend">${trend}</span>
+      <p class="meta-average-message">${message}</p>
     </div>`;
 }
-$('metaAverageRange')?.addEventListener('change',renderMetaAverage);
 
 function renderMetaReflections(logs){
   const target=$('metaReflectionList');
-  // 날짜 최신순. 같은 날짜라면 logs 배열 뒤쪽에 추가된 기록(최근 기록)을 먼저 표시.
-  const entries=logs
-    .map((log,index)=>({log,index}))
-    .filter(({log})=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
-    .sort((a,b)=>{
-      const dateOrder=String(b.log.date||'').localeCompare(String(a.log.date||''));
-      return dateOrder || b.index-a.index;
-    })
-    .map(({log})=>log);
+  const entries=logs.filter(log=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   if(!entries.length){target.innerHTML='<div class="chart-empty">아직 학습 성찰이 없습니다. 타이머 완료 또는 공부 기록 추가 후 성찰을 남겨보세요.</div>';return;}
   target.innerHTML=entries.map(log=>{
-    const score=log.metaReviewed
-      ?(log.metaRating===null||log.metaRating===undefined?'<span class="meta-rating-empty">별점 미입력</span>':renderMetaRatingStars(log.metaRating))
-      :'<span class="meta-rating-empty">성찰 미작성</span>';
+    const score=log.metaReviewed?(log.metaRating===null||log.metaRating===undefined?'별점 미입력':`${Number(log.metaRating).toFixed(1).replace(/\.0$/,'')} / 5점`):'성찰 미작성';
     const feedback=String(log.metaReflection||'').trim();
-    return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${score}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}${!log.metaReviewed?`<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">성찰 작성</button>`:''}</article>`;
+    return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${escapeHTML(score)}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}${!log.metaReviewed?`<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">성찰 작성</button>`:''}</article>`;
   }).join('');
 }
 
@@ -195,3 +175,6 @@ function renderLearningAnalytics(){
 
   $('weeklyBars').innerHTML=weekEntries.length?`<div class="vertical-bars">${weekEntries.map(([date,value])=>`<div class="vbar-col"><div class="vbar-value">${(value/60).toFixed(1)}h</div><div class="vbar-track"><i style="height:${Math.max(2,value/maxW*100)}%"></i></div><span>${Number(date.slice(5,7))}/${Number(date.slice(8,10))}</span></div>`).join('')}</div>`:'<div class="chart-empty">주간 기록이 아직 없습니다.</div>';
 }
+
+
+$('metaAverageRange')?.addEventListener('change',renderMetaAverage);
