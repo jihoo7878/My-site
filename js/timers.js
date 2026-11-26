@@ -1,12 +1,12 @@
 // 뽀모도로: 화면/탭이 백그라운드에서 제한되어도 실제 시각 기준으로 복구
 const POMO_STORAGE_KEY='studyflow_active_pomodoro_v1';
-const pomodoro={mode:'focus',focusMinutes:25,breakMinutes:5,total:1500,remaining:1500,running:false,startedAt:0,remainingAtStart:1500,interval:null};
+const pomodoro={mode:'focus',focusMinutes:25,breakMinutes:5,total:1500,remaining:1500,running:false,startedAt:0,remainingAtStart:1500,subject:'국어',interval:null};
 const POMO_CIRCUMFERENCE=2*Math.PI*82;
 
 function persistPomodoroState(){
   try{
     localStorage.setItem(POMO_STORAGE_KEY,JSON.stringify({
-      mode:pomodoro.mode,focusMinutes:pomodoro.focusMinutes,breakMinutes:pomodoro.breakMinutes,
+      mode:pomodoro.mode,focusMinutes:pomodoro.focusMinutes,breakMinutes:pomodoro.breakMinutes,subject:pomodoro.subject,
       total:pomodoro.total,remaining:pomodoro.remaining,running:pomodoro.running,
       startedAt:pomodoro.startedAt,remainingAtStart:pomodoro.remainingAtStart
     }));
@@ -44,7 +44,7 @@ function savePomodoroFocusLog(startMs,endMs,showReflection=true,showNotice=true)
   const startMinute=startDate.getHours()*60+startDate.getMinutes();
   const endMinute=endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0);
   const logId=uid();
-  data.logs.push({id:logId,date:todayISO(),subject:$('timerSubject').value||'국어',title:'뽀모도로 집중 학습',minutes,metaPending:true,sessions:[{date:todayISO(),startMinute,endMinute}]});
+  data.logs.push({id:logId,date:todayISO(),subject:pomodoro.subject||$('pomodoroSubject')?.value||$('timerSubject').value||'국어',title:'뽀모도로 집중 학습',minutes,metaPending:true,sessions:[{date:todayISO(),startMinute,endMinute}]});
   save();
   if(showNotice)toast(`${minutes}분 집중 학습을 기록했어요.`);
   if(showReflection)showMetaReflection(logId);
@@ -91,6 +91,7 @@ function restorePomodoroState(){
     const saved=JSON.parse(localStorage.getItem(POMO_STORAGE_KEY)||'null');
     if(!saved||typeof saved!=='object')return;
     if(saved.mode==='focus'||saved.mode==='break')pomodoro.mode=saved.mode;
+    if(saved.subject)pomodoro.subject=String(saved.subject);
     pomodoro.focusMinutes=Math.min(180,Math.max(1,Number(saved.focusMinutes)||25));
     pomodoro.breakMinutes=Math.min(60,Math.max(1,Number(saved.breakMinutes)||5));
     pomodoro.total=(pomodoro.mode==='focus'?pomodoro.focusMinutes:pomodoro.breakMinutes)*60;
@@ -107,6 +108,36 @@ function restorePomodoroState(){
     clearPersistedPomodoro();
   }
 }
+
+/* 뽀모도로 과목 선택: 일반 타이머의 과목 목록을 공유 */
+function syncPomodoroSubjects(){
+  const source=$('timerSubject'),target=$('pomodoroSubject');
+  if(!source||!target)return;
+  const preferred=target.value||pomodoro.subject||source.value||'국어';
+  target.innerHTML=source.innerHTML;
+  target.value=[...source.options].some(option=>option.value===preferred)?preferred:source.value;
+  pomodoro.subject=target.value||source.value||'국어';
+}
+syncPomodoroSubjects();
+if($('timerSubject')){
+  const subjectObserver=new MutationObserver(syncPomodoroSubjects);
+  subjectObserver.observe($('timerSubject'),{childList:true});
+  $('timerSubject').addEventListener('change',()=>{
+    if($('pomodoroSubject'))$('pomodoroSubject').value=$('timerSubject').value;
+    if(!pomodoro.running)pomodoro.subject=$('timerSubject').value;
+  });
+}
+$('pomodoroSubject')?.addEventListener('change',e=>{
+  if(pomodoro.running&&pomodoro.mode==='focus'){
+    toast('집중 세션 중에는 과목을 변경할 수 없어요.');
+    e.target.value=pomodoro.subject;
+    return;
+  }
+  pomodoro.subject=e.target.value;
+  if($('timerSubject'))$('timerSubject').value=e.target.value;
+  persistPomodoroState();
+});
+
 $('pomodoroStart').onclick=()=>{
   if(pomodoro.running){
     updatePomodoroFromClock(false);
@@ -118,6 +149,7 @@ $('pomodoroStart').onclick=()=>{
     persistPomodoroState();renderPomodoro();return;
   }
   if(pomodoro.remaining<=0)pomodoro.remaining=pomodoro.total;
+  if(pomodoro.mode==='focus')pomodoro.subject=$('pomodoroSubject')?.value||$('timerSubject').value||'국어';
   pomodoro.startedAt=Date.now();
   pomodoro.remainingAtStart=pomodoro.remaining;
   pomodoro.running=true;
