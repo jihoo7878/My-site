@@ -437,6 +437,13 @@ const authForm=document.getElementById('authForm');
     setBusy(true);message('');
     try{
       if(isSignUp){
+        const {data:available,error:checkError}=await supabaseClient.rpc('is_nickname_available',{candidate_nickname:nickname});
+        if(checkError){
+          console.warn('STUDY FLOW signup nickname precheck:',checkError);
+        }else if(available!==true){
+          message('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.',true);
+          return;
+        }
         const {data:result,error}=await supabaseClient.auth.signUp({
           email,password,options:{
             emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev'),
