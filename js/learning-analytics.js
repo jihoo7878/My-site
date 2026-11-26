@@ -62,6 +62,36 @@ function renderMetaRatingStars(value){
   return `<span class="meta-display-stars" role="img" aria-label="${rating.toFixed(1).replace(/\\.0$/,'')}점 / 5점">${stars}</span>`;
 }
 
+function getMetaAverageStats(allLogs, period){
+  // 어제는 전일 1일, 최근 일주일은 어제를 끝점으로 한 7일(오늘의 미완성 기록 제외)
+  const end=analyticsDateOffset(todayISO(),-1);
+  const start=period==='week'?analyticsDateOffset(end,-6):end;
+  const rated=(allLogs||[]).filter(log=>{
+    if(!log.metaReviewed || log.metaRating===null || log.metaRating===undefined)return false;
+    const rating=Number(log.metaRating);
+    return log.date>=start && log.date<=end && Number.isFinite(rating) && rating>=0 && rating<=5;
+  });
+  const average=rated.length? rated.reduce((sum,log)=>sum+Number(log.metaRating),0)/rated.length:null;
+  return {average,count:rated.length,start,end};
+}
+function renderMetaAverage(){
+  const target=$('metaAverageContent');
+  const selector=$('metaAverageRange');
+  if(!target||!selector)return;
+  const period=selector.value==='week'?'week':'yesterday';
+  const stats=getMetaAverageStats(data.logs||[],period);
+  const periodLabel=period==='week'?'최근 일주일':'어제';
+  if(stats.average===null){
+    target.innerHTML=`<div class="meta-average-empty">${periodLabel} 등록된 별점이 없습니다.</div>`;
+    return;
+  }
+  const average=Math.round(stats.average*10)/10;
+  target.innerHTML=`<div class="meta-average-visual">${renderMetaRatingStars(average)}</div>
+    <div class="meta-average-number">${average.toFixed(1)}<span>/ 5.0</span></div>
+    <div class="meta-average-caption">${periodLabel} · 별점 등록 ${stats.count}건</div>`;
+}
+$('metaAverageRange')?.addEventListener('change',renderMetaAverage);
+
 function renderMetaReflections(logs){
   const target=$('metaReflectionList');
   // 날짜 최신순. 같은 날짜라면 logs 배열 뒤쪽에 추가된 기록(최근 기록)을 먼저 표시.
@@ -110,6 +140,7 @@ function renderLearningAnalytics(){
   const range=Number($('analyticsRange')?.value)||14;
   const end=todayISO();
   const {logs,total,activeDays,avg,subjects,weekdayAvg,maxWeek,daily,maxDaily,weekEntries,maxW}=buildLearningAnalyticsModel(data.logs||[],range,end);
+  renderMetaAverage();
   renderMetaReflections(logs);
   $('analyticsKpis').innerHTML=[
     ['총 공부 시간',formatHours(total)],['하루 평균',formatHours(avg)],['공부한 날',`${activeDays}일`],['기록 수',`${logs.length}건`]
