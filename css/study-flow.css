@@ -691,6 +691,8 @@ header{margin-bottom:22px}
 .meta-reflection-name{font-weight:700;font-size:13px}
 .meta-reflection-meta{color:var(--muted);font-size:11px;margin-top:4px}
 .meta-reflection-score{font-size:12px;color:var(--accent,#f0bd78);white-space:nowrap}
+.meta-reflection-stars{display:inline-flex;align-items:center;gap:1px;white-space:nowrap;line-height:1}
+.meta-reflection-star{font-size:17px;color:transparent;background:linear-gradient(90deg,#cbb979 var(--star-fill),#667187 var(--star-fill));-webkit-background-clip:text;background-clip:text}
 .meta-reflection-text{font-size:12px;line-height:1.75;margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .meta-rating-row{display:flex;align-items:center;gap:3px;margin:14px 0 5px}
 .meta-star-pair{position:relative;width:35px;height:38px;display:inline-block}
