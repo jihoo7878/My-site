@@ -131,8 +131,37 @@ const authForm=document.getElementById('authForm');
     if(!currentUser||!supabaseClient)return;
     ensureProfileUI();
     const {data:row,error}=await supabaseClient.from('profiles').select('id,name,nickname,nickname_lower,grade').eq('id',currentUser.id).maybeSingle();
-    if(error){console.warn('STUDY FLOW profile fetch:',error);loadedProfile=null;}
-    else loadedProfile=row||null;
+    if(error){
+      console.warn('STUDY FLOW profile fetch:',error);
+      loadedProfile=null;
+    }else{
+      loadedProfile=row||null;
+    }
+
+    // 기존 회원의 이름·닉네임·학년은 user_data.data.profile에 이미 저장되어 있을 수 있습니다.
+    // profiles 행이 없거나 일부 값이 비어 있으면 기존 값과 Auth metadata를 합쳐 자동 등록합니다.
+    // 프로필 정보만 profiles에 기록하며 user_data의 학습 데이터는 변경하지 않습니다.
+    if(!error&&!profileIsComplete(loadedProfile)){
+      const legacy=data?.profile||{};
+      const metadata=currentUser.user_metadata||{};
+      const candidate={
+        id:currentUser.id,
+        name:profileValue(loadedProfile?.name)||profileValue(legacy.name)||profileValue(metadata.name),
+        nickname:profileValue(loadedProfile?.nickname)||profileValue(legacy.nickname)||profileValue(metadata.nickname),
+        grade:profileValue(loadedProfile?.grade)||profileValue(legacy.grade)||profileValue(metadata.grade)
+      };
+      if(profileIsComplete(candidate)){
+        candidate.nickname_lower=candidate.nickname.toLowerCase();
+        const {error:syncError}=await supabaseClient.from('profiles').upsert(candidate,{onConflict:'id'});
+        if(syncError){
+          console.warn('STUDY FLOW existing profile auto-link:',syncError);
+          // DB 저장에 실패해도 이미 보유한 프로필 값을 다시 입력하라고 요구하지 않습니다.
+          loadedProfile=candidate;
+        }else{
+          loadedProfile=candidate;
+        }
+      }
+    }
     const prompt=document.getElementById('studyFlowProfilePrompt');
     if(prompt)prompt.style.display=profileIsComplete(loadedProfile)?'none':'flex';
     if(typeof renderMyPage==='function')renderMyPage();
