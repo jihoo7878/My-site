@@ -130,8 +130,9 @@ if($('timerSubject')){
   const subjectObserver=new MutationObserver(syncPomodoroSubjects);
   subjectObserver.observe($('timerSubject'),{childList:true});
   $('timerSubject').addEventListener('change',()=>{
-    if($('pomodoroSubject'))$('pomodoroSubject').value=$('timerSubject').value;
-    if(!pomodoro.running)pomodoro.subject=$('timerSubject').value;
+    const focusLocked=pomodoro.running&&pomodoro.mode==='focus';
+    if($('pomodoroSubject'))$('pomodoroSubject').value=focusLocked?pomodoro.subject:$('timerSubject').value;
+    if(!focusLocked)pomodoro.subject=$('timerSubject').value;
   });
 }
 $('pomodoroSubject')?.addEventListener('change',e=>{

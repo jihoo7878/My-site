@@ -880,7 +880,7 @@ function openMyPageProfileEditor(){
   $('profileGradeInput').value=PROFILE_GRADES.includes(profile.grade)?profile.grade:'';
 }
 
-$('myPageProfileEditBtn')?.addEventListener('click',openMyPageProfileEditor);
+// Profile editing is bound by auth-sync.js to the Supabase-backed editor.
 
 /* 홈 화면 목표 표시 */
 function renderHomeGoal(){

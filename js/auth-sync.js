@@ -115,7 +115,8 @@ const authForm=document.getElementById('authForm');
       profileModal=document.createElement('div');
       profileModal.className='sf-profile-overlay';
       profileModal.id='sfProfileOverlay';
-      profileModal.innerHTML='<section class="sf-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="sfProfileTitle"><h3 id="sfProfileTitle">프로필 등록</h3><p>프로필 정보만 저장합니다. 기존 학습 기록과 계정 데이터는 그대로 유지됩니다.</p><form id="sfProfileForm"><label for="sfProfileName">이름</label><input id="sfProfileName" maxlength="40" autocomplete="name" required><label for="sfProfileNickname">닉네임</label><input id="sfProfileNickname" maxlength="24" autocomplete="nickname" required><label for="sfProfileGrade">학년</label><select id="sfProfileGrade" required><option value="">학년 선택</option><option>중학교 1학년</option><option>중학교 2학년</option><option>중학교 3학년</option><option>고등학교 1학년</option><option>고등학교 2학년</option><option>고등학교 3학년</option><option>N수생</option><option>대학생</option><option>직장인</option><option>기타</option></select><div class="sf-profile-status" id="sfProfileStatus" aria-live="polite"></div><div class="sf-profile-actions"><button type="button" class="mini" id="sfProfileCancel">취소</button><button type="submit" class="mini primary" id="sfProfileSave">저장</button></div></form></section>';
+      const profileGradeOptions=PROFILE_GRADES.map(grade=>'<option value="'+escapeHTML(grade)+'">'+escapeHTML(grade)+'</option>').join('');
+      profileModal.innerHTML='<section class="sf-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="sfProfileTitle"><h3 id="sfProfileTitle">프로필 등록</h3><p>프로필 정보만 저장합니다. 기존 학습 기록과 계정 데이터는 그대로 유지됩니다.</p><form id="sfProfileForm"><label for="sfProfileName">이름</label><input id="sfProfileName" maxlength="40" autocomplete="name" required><label for="sfProfileNickname">닉네임</label><input id="sfProfileNickname" maxlength="24" autocomplete="nickname" required><label for="sfProfileGrade">학년</label><select id="sfProfileGrade" required><option value="">학년 선택</option>'+profileGradeOptions+'</select><div class="sf-profile-status" id="sfProfileStatus" aria-live="polite"></div><div class="sf-profile-actions"><button type="button" class="mini" id="sfProfileCancel">취소</button><button type="submit" class="mini primary" id="sfProfileSave">저장</button></div></form></section>';
       document.body.appendChild(profileModal);
       profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileEditor();});
       profileModal.querySelector('#sfProfileCancel').addEventListener('click',closeProfileEditor);
@@ -157,6 +158,12 @@ const authForm=document.getElementById('authForm');
       candidate.nickname_lower=candidate.nickname.toLowerCase();
       // UI 상태는 DB 조회 성공 여부가 아니라 실제로 보유한 프로필 정보로 판단합니다.
       loadedProfile=candidate;
+      const previousProfile=data?.profile||{};
+      const profileCacheChanged=profileValue(previousProfile.name)!==candidate.name||
+        profileValue(previousProfile.nickname)!==candidate.nickname||
+        profileValue(previousProfile.grade)!==candidate.grade;
+      data.profile={...previousProfile,name:candidate.name,nickname:candidate.nickname,grade:candidate.grade};
+      if(profileCacheChanged)save();
       const prompt=document.getElementById('studyFlowProfilePrompt');
       if(prompt)prompt.style.display='none';
 
@@ -220,8 +227,13 @@ const authForm=document.getElementById('authForm');
       loadedProfile=profileRecord;
       // user_data.data.profile은 화면/기존 앱 호환을 위한 캐시. 다른 학습 데이터는 보존.
       data.profile={...(data.profile||{}),name,nickname,grade};
-      await saveToCloud();
       localStorage.setItem(userStorageKey(currentUser.id),JSON.stringify(data));
+      const cloudSaved=await saveToCloud();
+      if(!cloudSaved){
+        status.textContent='프로필은 저장됐지만 계정 데이터 동기화에 실패했습니다. 연결을 확인한 뒤 다시 시도해 주세요.';
+        if(typeof renderMyPage==='function')renderMyPage();
+        return;
+      }
       const prompt=document.getElementById('studyFlowProfilePrompt');
       if(prompt)prompt.style.display='none';
       closeProfileEditor();
@@ -283,20 +295,23 @@ const authForm=document.getElementById('authForm');
   }
 
   async function saveToCloud(){
-    if(!currentUser)return;
+    if(!currentUser)return false;
     const user=currentUser;
     syncStatus.textContent='저장 중…';
-    const snapshot=JSON.parse(JSON.stringify(data));
-    if(snapshot.schoolTimetable)delete snapshot.schoolTimetable.apiKey;
-    const {error}=await supabaseClient.from('user_data').upsert({
-      user_id:user.id,data:snapshot,updated_at:new Date().toISOString()
-    },{onConflict:'user_id'});
-    if(error){
+    try{
+      const snapshot=JSON.parse(JSON.stringify(data));
+      if(snapshot.schoolTimetable)delete snapshot.schoolTimetable.apiKey;
+      const {error}=await supabaseClient.from('user_data').upsert({
+        user_id:user.id,data:snapshot,updated_at:new Date().toISOString()
+      },{onConflict:'user_id'});
+      if(error)throw error;
+      if(currentUser&&currentUser.id===user.id)syncStatus.textContent='동기화됨';
+      return true;
+    }catch(error){
       console.error('ROUTEN cloud save error:',error);
       if(currentUser&&currentUser.id===user.id)syncStatus.textContent='저장 오류';
       toast('클라우드 저장에 실패했어요. 인터넷 연결을 확인해 주세요.');
-    }else if(currentUser&&currentUser.id===user.id){
-      syncStatus.textContent='동기화됨';
+      return false;
     }
   }
 
