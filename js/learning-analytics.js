@@ -64,15 +64,15 @@ function renderMetaRatingStars(value){
 
 function renderMetaReflections(logs){
   const target=$('metaReflectionList');
-  const entries=logs.filter(log=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
+  // 날짜 최신순. 같은 날짜라면 logs 배열 뒤쪽에 추가된 기록(최근 기록)을 먼저 표시.
+  const entries=logs
+    .map((log,index)=>({log,index}))
+    .filter(({log})=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
     .sort((a,b)=>{
-      // 날짜 최신순, 같은 날짜는 생성 시각/ID가 큰 기록을 먼저 표시
-      const dateOrder=String(b.date||'').localeCompare(String(a.date||''));
-      if(dateOrder)return dateOrder;
-      const timeA=Number(a.createdAt||a.timestamp||a.id)||0;
-      const timeB=Number(b.createdAt||b.timestamp||b.id)||0;
-      return timeB-timeA;
-    });
+      const dateOrder=String(b.log.date||'').localeCompare(String(a.log.date||''));
+      return dateOrder || b.index-a.index;
+    })
+    .map(({log})=>log);
   if(!entries.length){target.innerHTML='<div class="chart-empty">아직 학습 성찰이 없습니다. 타이머 완료 또는 공부 기록 추가 후 성찰을 남겨보세요.</div>';return;}
   target.innerHTML=entries.map(log=>{
     const score=log.metaReviewed
