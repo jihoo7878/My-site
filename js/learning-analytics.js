@@ -98,7 +98,7 @@ function renderMetaAverage(){
     messageClass='good';
   }else if(average>=2.8){
     messageTitle='개선할 점 발견';
-    messageText='만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견했어요. 다음 공부에서 하나씩 바꿔 봐요.';
+    messageText='만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견할 수 있어요. 럭키비키. 다음 공부에서 하나씩 바꿔 봐요.';
     messageClass='steady';
   }else if(average>=2.0){
     messageTitle='잠시 재정비';
