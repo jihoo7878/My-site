@@ -1540,3 +1540,10 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 /* Robust mode switching: exactly one timer panel visible on all viewport sizes */
 .timer-original-panel[hidden],.pomodoro-panel[hidden]{display:none!important}
 
+
+
+/* 학습 메타인지 목록의 별점 표시 */
+.meta-display-stars{display:inline-flex;align-items:center;gap:1px;white-space:nowrap;line-height:1}
+.meta-display-star{position:relative;display:inline-block;font-size:17px;color:var(--muted);opacity:.45}
+.meta-display-star>span{position:absolute;left:0;top:0;height:100%;overflow:hidden;color:#9ba8ff;opacity:1;white-space:nowrap}
+.meta-rating-empty{font-size:11px;color:var(--muted)}
