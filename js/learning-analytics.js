@@ -169,6 +169,7 @@ function renderMetaAverage(){
     average>=3.5?'꾸준한 성장 중':
     average>=2.8?'개선할 점 발견':
     average>=2.0?'잠시 재정비':'다시 시작하는 시간';
+  const trendTone=average>=3.5?'positive':average>=2.0?'caution':'negative';
   const message=average>=4.2
     ?'오늘의 학습이 좋은 흐름으로 이어지고 있어요. 지금의 집중과 성취를 다음 공부에도 이어가 봐요!'
     :average>=3.5
@@ -191,7 +192,7 @@ function renderMetaAverage(){
     </div>
     <div class="meta-average-details">
       <div class="meta-average-feedback">
-        <span class="meta-average-trend">${trend}</span>
+        <span class="meta-average-trend ${trendTone}">${trend}</span>
         <p class="meta-average-message">${message}</p>
       </div>
     </div>`;
