@@ -538,6 +538,21 @@
     <h2 id="authHeading">로그인</h2>
     <p class="auth-sub">학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.</p>
     <form id="authForm">
+      <div id="signupFields" style="display:none">
+        <label for="signupName">이름</label>
+        <input id="signupName" type="text" autocomplete="name" maxlength="40" placeholder="이름">
+        <label for="signupNickname">닉네임</label>
+        <input id="signupNickname" type="text" autocomplete="nickname" minlength="2" maxlength="30" placeholder="사용할 닉네임">
+        <p id="nicknameCheckMessage" class="auth-field-message" aria-live="polite">닉네임은 가입 시 중복 확인합니다.</p>
+        <label for="signupGrade">학년</label>
+        <select id="signupGrade" autocomplete="off">
+          <option value="">학년 선택</option>
+          <option value="고등학교 1학년">고등학교 1학년</option>
+          <option value="고등학교 2학년">고등학교 2학년</option>
+          <option value="고등학교 3학년">고등학교 3학년</option>
+          <option value="N수">N수</option>
+        </select>
+      </div>
       <label for="authEmail">이메일</label>
       <input id="authEmail" type="email" autocomplete="email" required placeholder="name@example.com">
       <label for="authPassword">비밀번호</label>
