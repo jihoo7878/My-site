@@ -228,15 +228,11 @@ const authForm=document.getElementById('authForm');
     const saveButton=document.getElementById('sfProfileSave');
     if(!name||!nickname||!grade){status.textContent='이름, 닉네임, 학년을 모두 입력해 주세요.';return;}
     if(nickname.length<2||nickname.length>24){status.textContent='닉네임은 2~24자로 입력해 주세요.';return;}
-    saveButton.disabled=true;saveButton.textContent='저장 중…';status.textContent='닉네임을 확인하고 프로필을 저장합니다.';
+    saveButton.disabled=true;saveButton.textContent='저장 중…';status.textContent='프로필 정보를 저장합니다.';
     try{
       const nicknameLower=nickname.toLowerCase();
-      const currentNickname=profileValue(loadedProfile?.nickname).toLowerCase();
-      if(nicknameLower!==currentNickname){
-        const {data:available,error:checkError}=await supabaseClient.rpc('is_nickname_available',{candidate_nickname:nickname});
-        if(checkError)throw new Error('닉네임 중복 확인에 실패했습니다. SQL 함수 설정을 확인해 주세요.');
-        if(available!==true){status.textContent='이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.';return;}
-      }
+      // 닉네임 중복은 profiles.nickname_lower의 DB 고유 제약으로 검사합니다.
+      // Data API에서 조회 함수를 공개할 필요 없이, DB가 최종적으로 중복 저장을 차단합니다.
       const profileRecord={id:currentUser.id,name,nickname,nickname_lower:nicknameLower,grade};
       const {error}=await supabaseClient.from('profiles').upsert(profileRecord,{onConflict:'id'});
       if(error){
