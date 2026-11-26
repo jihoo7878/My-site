@@ -102,7 +102,6 @@ function renderMetaAverage(){
       <div class="meta-average-score">${rounded.toFixed(1)}<span>/ 5.0</span></div>
     </div>
     <div class="meta-average-details">
-      <span class="meta-average-count">${rangeLabel} · 별점 등록 <strong>${rated.length}건</strong></span>
       <span class="meta-average-trend">${trend}</span>
       <p class="meta-average-message">${message}</p>
     </div>`;
