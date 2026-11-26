@@ -1562,3 +1562,14 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 .meta-average-caption{font-size:11px;color:var(--muted)}
 .meta-average-empty{font-size:12px;color:var(--muted);padding:18px 0}
 @media(max-width:520px){.meta-average-panel{padding:12px}.meta-average-visual .meta-display-star{font-size:25px}.meta-average-number{font-size:24px}}
+
+
+/* 평균 별점 구간별 응원 메시지 */
+.meta-average-message{width:100%;max-width:620px;margin-top:10px;padding:11px 14px;border-radius:12px;text-align:left;background:rgba(155,168,255,.07);border:1px solid rgba(155,168,255,.14)}
+.meta-average-message-title{font-size:12px;font-weight:750;margin-bottom:4px;color:var(--text)}
+.meta-average-message-text{font-size:11px;line-height:1.65;color:var(--muted)}
+.meta-average-message.excellent .meta-average-message-title{color:#a7b2ff}
+.meta-average-message.good .meta-average-message-title{color:#a7b2ff}
+.meta-average-message.steady .meta-average-message-title{color:var(--text)}
+.meta-average-message.reset .meta-average-message-title{color:var(--text)}
+.meta-average-message.restart .meta-average-message-title{color:var(--text)}
