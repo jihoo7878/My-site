@@ -31,13 +31,6 @@ const authForm=document.getElementById('authForm');
   const authSwitch=document.getElementById('authSwitch');
   const authMessage=document.getElementById('authMessage');
   const authPassword=document.getElementById('authPassword');
-  const signupFields=document.getElementById('signupFields');
-  const signupName=document.getElementById('signupName');
-  const signupNickname=document.getElementById('signupNickname');
-  const signupGrade=document.getElementById('signupGrade');
-  const nicknameCheckMessage=document.getElementById('nicknameCheckMessage');
-  let nicknameCheckToken=0;
-  let nicknameAvailable=null;
   const forgotPassword=document.getElementById('forgotPassword');
   const recoveryForm=document.getElementById('recoveryForm');
   let recoveryMode=false;
@@ -71,57 +64,12 @@ const authForm=document.getElementById('authForm');
   function showNormalAuth(){
     recoveryMode=false;
     authHeading.textContent=isSignUp?'회원가입':'로그인';
-    document.querySelector('.auth-sub').textContent=isSignUp
-      ?'이름, 닉네임, 학년을 입력해 계정을 만들어 주세요.'
-      :'학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.';
+    document.querySelector('.auth-sub').textContent='학습 데이터를 안전하게 저장하고 여러 기기에서 이어서 사용하세요.';
     authForm.style.display='block';
     recoveryForm.style.display='none';
     authSwitch.style.display='block';
     forgotPassword.style.display=isSignUp?'none':'block';
-    signupFields.style.display=isSignUp?'block':'none';
-    [signupName,signupNickname,signupGrade].forEach(field=>field.required=isSignUp);
-    if(!isSignUp){nicknameAvailable=null;nicknameCheckMessage.textContent='';nicknameCheckMessage.classList.remove('error');}
   }
-
-  function normalizedNickname(value){return String(value||'').trim().toLocaleLowerCase('ko-KR');}
-
-  async function checkNicknameAvailability(showMessage=true){
-    const nickname=String(signupNickname.value||'').trim();
-    const normalized=normalizedNickname(nickname);
-    const token=++nicknameCheckToken;
-    nicknameAvailable=null;
-    if(nickname.length<2||nickname.length>30){
-      if(showMessage){nicknameCheckMessage.textContent='닉네임은 2~30자로 입력해 주세요.';nicknameCheckMessage.classList.add('error');}
-      return false;
-    }
-    if(!supabaseClient){
-      if(showMessage){nicknameCheckMessage.textContent='인증 연결 후 닉네임을 확인할 수 있어요.';nicknameCheckMessage.classList.add('error');}
-      return false;
-    }
-    if(showMessage){nicknameCheckMessage.textContent='닉네임 중복 확인 중…';nicknameCheckMessage.classList.remove('error');}
-    const {data,error}=await supabaseClient.rpc('is_nickname_available',{candidate_nickname:normalized});
-    if(token!==nicknameCheckToken)return false;
-    if(error){
-      console.error('ROUTEN nickname check error:',error);
-      if(showMessage){nicknameCheckMessage.textContent='닉네임 확인 기능을 연결하지 못했어요. 잠시 후 다시 시도해 주세요.';nicknameCheckMessage.classList.add('error');}
-      return false;
-    }
-    nicknameAvailable=data===true;
-    if(showMessage){
-      nicknameCheckMessage.textContent=nicknameAvailable?'사용할 수 있는 닉네임이에요.':'이미 사용 중인 닉네임이에요.';
-      nicknameCheckMessage.classList.toggle('error',!nicknameAvailable);
-    }
-    return nicknameAvailable;
-  }
-  signupNickname.addEventListener('blur',()=>{
-    if(isSignUp&&signupNickname.value.trim())checkNicknameAvailability();
-  });
-  signupNickname.addEventListener('input',()=>{
-    nicknameCheckToken++;
-    nicknameAvailable=null;
-    nicknameCheckMessage.textContent='입력한 닉네임은 가입 시 다시 확인합니다.';
-    nicknameCheckMessage.classList.remove('error');
-  });
   function showLobby(){
     lobbyGate.style.display='block';
     authGate.style.display='none';
@@ -142,38 +90,107 @@ const authForm=document.getElementById('authForm');
   }
   function userStorageKey(userId){return `${KEY}:user:${userId}`;}
 
-  // profiles가 계정 프로필의 기준 테이블입니다. user_data의 기존 학습 데이터는 유지합니다.
-  async function syncProfileRecord(user){
-    const legacyProfile=data?.profile||{};
-    try{
-      const {data:profile,error}=await supabaseClient
-        .from('profiles')
-        .select('name,nickname,nickname_lower,grade')
-        .eq('id',user.id)
-        .maybeSingle();
-      if(error)throw error;
-      if(profile){
-        data.profile={
-          name:String(profile.name||'').trim(),
-          nickname:String(profile.nickname||'').trim(),
-          grade:String(profile.grade||'').trim()
-        };
-        return;
-      }
-      // 마이그레이션 전 계정에만 남아 있는 기존 프로필을 profiles로 옮깁니다.
-      const name=String(legacyProfile.name||'').trim();
-      const nickname=String(legacyProfile.nickname||'').trim();
-      const grade=String(legacyProfile.grade||'').trim();
-      if(name&&nickname&&grade){
-        const {error:insertError}=await supabaseClient.from('profiles').upsert({
-          id:user.id,name,nickname,nickname_lower:normalizedNickname(nickname),grade
-        },{onConflict:'id'});
-        if(insertError)throw insertError;
-      }
-    }catch(err){
-      // 프로필 테이블 오류가 기존 user_data 로그인/동기화를 중단시키지 않도록 합니다.
-      console.warn('STUDY FLOW profile sync skipped:',err);
+  // 기존 회원용 프로필 등록/수정 UI. user_data의 학습 데이터는 변경하지 않고 profile 객체만 갱신합니다.
+  let loadedProfile=null;
+  let profilePrompt=null;
+  let profileModal=null;
+  function profileValue(value){return typeof value==='string'?value.trim():'';}
+  function profileIsComplete(profile){
+    return !!(profileValue(profile?.name)&&profileValue(profile?.nickname)&&profileValue(profile?.grade));
+  }
+  function ensureProfileUI(){
+    if(!profilePrompt){
+      profilePrompt=document.createElement('div');
+      profilePrompt.id='studyFlowProfilePrompt';
+      profilePrompt.className='sf-profile-prompt';
+      profilePrompt.innerHTML='<div><strong>프로필을 등록해 주세요.</strong><p>이름과 닉네임, 학년을 등록하면 계정 프로필 기능을 이용할 수 있습니다.</p></div><button type="button" class="mini primary" id="sfProfilePromptOpen">프로필 등록</button>';
+      const summary=document.querySelector('.profile-summary');
+      if(summary)summary.insertAdjacentElement('afterend',profilePrompt);
+      profilePrompt.querySelector('#sfProfilePromptOpen')?.addEventListener('click',()=>openProfileEditor());
     }
+    if(!profileModal){
+      const style=document.createElement('style');
+      style.textContent='.sf-profile-prompt{display:none;align-items:center;justify-content:space-between;gap:14px;margin:14px 0;padding:14px 16px;border:1px solid var(--line,#293246);border-radius:14px;background:var(--panel2,#1b2231)}.sf-profile-prompt p{margin:5px 0 0;color:var(--muted,#9aa5ba);font-size:12px;line-height:1.5}.sf-profile-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(5,8,14,.76);backdrop-filter:blur(6px)}.sf-profile-dialog{width:min(100%,440px);padding:22px;border:1px solid var(--line,#293246);border-radius:18px;background:var(--panel,#151a26);color:var(--text,#f3f5fa);box-shadow:0 24px 80px #0008}.sf-profile-dialog h3{margin:0 0 8px}.sf-profile-dialog p{font-size:12px;color:var(--muted,#9aa5ba);line-height:1.6}.sf-profile-dialog label{display:block;margin:13px 0 6px;font-size:12px}.sf-profile-dialog input,.sf-profile-dialog select{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--line,#293246);border-radius:10px;background:var(--bg,#0d1018);color:inherit;font:inherit}.sf-profile-actions{display:flex;gap:8px;margin-top:18px}.sf-profile-actions button{flex:1}.sf-profile-status{min-height:18px;margin-top:10px;font-size:12px;color:var(--muted,#9aa5ba)}@media(max-width:560px){.sf-profile-prompt{align-items:flex-start;flex-direction:column}.sf-profile-prompt button{width:100%}}';
+      document.head.appendChild(style);
+      profileModal=document.createElement('div');
+      profileModal.className='sf-profile-overlay';
+      profileModal.id='sfProfileOverlay';
+      profileModal.innerHTML='<section class="sf-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="sfProfileTitle"><h3 id="sfProfileTitle">프로필 등록</h3><p>프로필 정보만 저장합니다. 기존 학습 기록과 계정 데이터는 그대로 유지됩니다.</p><form id="sfProfileForm"><label for="sfProfileName">이름</label><input id="sfProfileName" maxlength="40" autocomplete="name" required><label for="sfProfileNickname">닉네임</label><input id="sfProfileNickname" maxlength="24" autocomplete="nickname" required><label for="sfProfileGrade">학년</label><select id="sfProfileGrade" required><option value="">학년 선택</option><option>중학교 1학년</option><option>중학교 2학년</option><option>중학교 3학년</option><option>고등학교 1학년</option><option>고등학교 2학년</option><option>고등학교 3학년</option><option>N수생</option><option>대학생</option><option>직장인</option><option>기타</option></select><div class="sf-profile-status" id="sfProfileStatus" aria-live="polite"></div><div class="sf-profile-actions"><button type="button" class="mini" id="sfProfileCancel">취소</button><button type="submit" class="mini primary" id="sfProfileSave">저장</button></div></form></section>';
+      document.body.appendChild(profileModal);
+      profileModal.addEventListener('click',e=>{if(e.target===profileModal)closeProfileEditor();});
+      profileModal.querySelector('#sfProfileCancel').addEventListener('click',closeProfileEditor);
+      profileModal.querySelector('#sfProfileForm').addEventListener('submit',saveProfileForm);
+    }
+    const editButton=document.getElementById('myPageProfileEditBtn');
+    if(editButton&&!editButton.dataset.sfProfileBound){
+      editButton.dataset.sfProfileBound='1';
+      editButton.addEventListener('click',()=>openProfileEditor());
+    }
+  }
+  async function refreshProfile(){
+    if(!currentUser||!supabaseClient)return;
+    ensureProfileUI();
+    const {data:row,error}=await supabaseClient.from('profiles').select('id,name,nickname,nickname_lower,grade').eq('id',currentUser.id).maybeSingle();
+    if(error){console.warn('STUDY FLOW profile fetch:',error);loadedProfile=null;}
+    else loadedProfile=row||null;
+    const prompt=document.getElementById('studyFlowProfilePrompt');
+    if(prompt)prompt.style.display=profileIsComplete(loadedProfile)?'none':'flex';
+    if(typeof renderMyPage==='function')renderMyPage();
+  }
+  function openProfileEditor(){
+    if(!currentUser){toast('프로필을 등록하려면 먼저 로그인해 주세요.');return;}
+    ensureProfileUI();
+    const legacy=data?.profile||{};
+    const profile=loadedProfile||{};
+    const metadata=currentUser.user_metadata||{};
+    document.getElementById('sfProfileName').value=profileValue(profile.name)||profileValue(legacy.name)||profileValue(metadata.name);
+    document.getElementById('sfProfileNickname').value=profileValue(profile.nickname)||profileValue(legacy.nickname)||profileValue(metadata.nickname);
+    document.getElementById('sfProfileGrade').value=profileValue(profile.grade)||profileValue(legacy.grade)||profileValue(metadata.grade);
+    document.getElementById('sfProfileStatus').textContent='';
+    document.getElementById('sfProfileTitle').textContent=profileIsComplete(profile)?'프로필 수정':'프로필 등록';
+    profileModal.style.display='flex';
+    document.getElementById('sfProfileName').focus();
+  }
+  function closeProfileEditor(){if(profileModal)profileModal.style.display='none';}
+  async function saveProfileForm(event){
+    event.preventDefault();
+    if(!currentUser||!supabaseClient)return;
+    const name=profileValue(document.getElementById('sfProfileName').value);
+    const nickname=profileValue(document.getElementById('sfProfileNickname').value);
+    const grade=profileValue(document.getElementById('sfProfileGrade').value);
+    const status=document.getElementById('sfProfileStatus');
+    const saveButton=document.getElementById('sfProfileSave');
+    if(!name||!nickname||!grade){status.textContent='이름, 닉네임, 학년을 모두 입력해 주세요.';return;}
+    if(nickname.length<2||nickname.length>24){status.textContent='닉네임은 2~24자로 입력해 주세요.';return;}
+    saveButton.disabled=true;saveButton.textContent='저장 중…';status.textContent='닉네임을 확인하고 프로필을 저장합니다.';
+    try{
+      const nicknameLower=nickname.toLowerCase();
+      const currentNickname=profileValue(loadedProfile?.nickname).toLowerCase();
+      if(nicknameLower!==currentNickname){
+        const {data:available,error:checkError}=await supabaseClient.rpc('is_nickname_available',{candidate_nickname:nickname});
+        if(checkError)throw new Error('닉네임 중복 확인에 실패했습니다. SQL 함수 설정을 확인해 주세요.');
+        if(available!==true){status.textContent='이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.';return;}
+      }
+      const profileRecord={id:currentUser.id,name,nickname,nickname_lower:nicknameLower,grade};
+      const {error}=await supabaseClient.from('profiles').upsert(profileRecord,{onConflict:'id'});
+      if(error){
+        if(error.code==='23505')throw new Error('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.');
+        throw error;
+      }
+      loadedProfile=profileRecord;
+      // user_data.data.profile은 화면/기존 앱 호환을 위한 캐시. 다른 학습 데이터는 보존.
+      data.profile={...(data.profile||{}),name,nickname,grade};
+      await saveToCloud();
+      localStorage.setItem(userStorageKey(currentUser.id),JSON.stringify(data));
+      const prompt=document.getElementById('studyFlowProfilePrompt');
+      if(prompt)prompt.style.display='none';
+      closeProfileEditor();
+      if(typeof renderMyPage==='function')renderMyPage();
+      toast('프로필을 저장했어요.');
+    }catch(err){
+      console.error('STUDY FLOW profile save:',err);
+      status.textContent=err.message||'프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+    }finally{saveButton.disabled=false;saveButton.textContent='저장';}
   }
 
   async function loadUserData(user){
@@ -207,8 +224,6 @@ const authForm=document.getElementById('authForm');
       currentUser=user;
       window.studyFlowAccountEmail=user.email||'로그인 계정';
       window.studyFlowAccountId=user.id||'';
-      await syncProfileRecord(user);
-      // 기존 user_data의 구조와 저장 경로는 유지하고, 프로필 필드만 profiles와 맞춥니다.
       // 기존 클라우드 데이터에 남아 있던 인증키를 정리한 안전한 데이터로 즉시 덮어씀
       await saveToCloud();
       localStorage.setItem(userStorageKey(user.id),JSON.stringify(data));
@@ -217,6 +232,7 @@ const authForm=document.getElementById('authForm');
       render();
       showApp(user);
       renderMyPage();
+      await refreshProfile();
       toast('계정 데이터를 불러왔어요.');
     }catch(err){
       console.error('ROUTEN data load error:',err);
@@ -339,19 +355,8 @@ const authForm=document.getElementById('authForm');
     setBusy(true);message('');
     try{
       if(isSignUp){
-        const name=signupName.value.trim();
-        const nickname=signupNickname.value.trim();
-        const grade=signupGrade.value;
-        if(!name||name.length>40){message('이름을 1~40자로 입력해 주세요.',true);return;}
-        if(nickname.length<2||nickname.length>30){message('닉네임은 2~30자로 입력해 주세요.',true);return;}
-        if(!grade){message('학년을 선택해 주세요.',true);return;}
-        const isAvailable=await checkNicknameAvailability();
-        if(!isAvailable){message('닉네임을 확인한 뒤 다시 가입해 주세요.',true);return;}
         const {data:result,error}=await supabaseClient.auth.signUp({
-          email,password,options:{
-            emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev'),
-            data:{name,nickname,grade}
-          }
+          email,password,options:{emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev')}
         });
         if(error)throw error;
         if(result.session){
