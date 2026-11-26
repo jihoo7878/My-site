@@ -130,40 +130,51 @@ const authForm=document.getElementById('authForm');
   async function refreshProfile(){
     if(!currentUser||!supabaseClient)return;
     ensureProfileUI();
-    const {data:row,error}=await supabaseClient.from('profiles').select('id,name,nickname,nickname_lower,grade').eq('id',currentUser.id).maybeSingle();
-    if(error){
-      console.warn('STUDY FLOW profile fetch:',error);
-      loadedProfile=null;
-    }else{
-      loadedProfile=row||null;
-    }
 
-    // 기존 회원의 이름·닉네임·학년은 user_data.data.profile에 이미 저장되어 있을 수 있습니다.
-    // profiles 행이 없거나 일부 값이 비어 있으면 기존 값과 Auth metadata를 합쳐 자동 등록합니다.
-    // 프로필 정보만 profiles에 기록하며 user_data의 학습 데이터는 변경하지 않습니다.
-    if(!error&&!profileIsComplete(loadedProfile)){
-      const legacy=data?.profile||{};
-      const metadata=currentUser.user_metadata||{};
-      const candidate={
-        id:currentUser.id,
-        name:profileValue(loadedProfile?.name)||profileValue(legacy.name)||profileValue(metadata.name),
-        nickname:profileValue(loadedProfile?.nickname)||profileValue(legacy.nickname)||profileValue(metadata.nickname),
-        grade:profileValue(loadedProfile?.grade)||profileValue(legacy.grade)||profileValue(metadata.grade)
-      };
-      if(profileIsComplete(candidate)){
-        candidate.nickname_lower=candidate.nickname.toLowerCase();
-        const {error:syncError}=await supabaseClient.from('profiles').upsert(candidate,{onConflict:'id'});
-        if(syncError){
-          console.warn('STUDY FLOW existing profile auto-link:',syncError);
-          // DB 저장에 실패해도 이미 보유한 프로필 값을 다시 입력하라고 요구하지 않습니다.
-          loadedProfile=candidate;
-        }else{
-          loadedProfile=candidate;
-        }
+    // 화면에 이미 표시되는 기존 user_data 프로필과 Auth metadata를 먼저 확보합니다.
+    // profiles 조회가 RLS/컬럼 등의 문제로 실패하더라도 기존 정보가 완성되어 있으면
+    // 등록 안내를 다시 띄우지 않습니다.
+    const legacy=data?.profile||{};
+    const metadata=currentUser.user_metadata||{};
+    let fetchedProfile=null;
+    let fetchError=null;
+    try{
+      const result=await supabaseClient.from('profiles')
+        .select('id,name,nickname,nickname_lower,grade')
+        .eq('id',currentUser.id).maybeSingle();
+      fetchedProfile=result.data||null;
+      fetchError=result.error||null;
+    }catch(err){fetchError=err;}
+    if(fetchError)console.warn('STUDY FLOW profile fetch:',fetchError);
+
+    const candidate={
+      id:currentUser.id,
+      name:profileValue(fetchedProfile?.name)||profileValue(legacy.name)||profileValue(metadata.name),
+      nickname:profileValue(fetchedProfile?.nickname)||profileValue(legacy.nickname)||profileValue(metadata.nickname),
+      grade:profileValue(fetchedProfile?.grade)||profileValue(legacy.grade)||profileValue(metadata.grade)
+    };
+    if(profileIsComplete(candidate)){
+      candidate.nickname_lower=candidate.nickname.toLowerCase();
+      // UI 상태는 DB 조회 성공 여부가 아니라 실제로 보유한 프로필 정보로 판단합니다.
+      loadedProfile=candidate;
+      const prompt=document.getElementById('studyFlowProfilePrompt');
+      if(prompt)prompt.style.display='none';
+
+      // DB에 아직 행이 없거나 일부 값이 빠진 경우 자동으로 연결/보완합니다.
+      // 실패해도 기존 정보 재입력을 요구하지 않으며, 오류는 콘솔에 남깁니다.
+      if(!profileIsComplete(fetchedProfile)||
+         profileValue(fetchedProfile?.name)!==candidate.name||
+         profileValue(fetchedProfile?.nickname)!==candidate.nickname||
+         profileValue(fetchedProfile?.grade)!==candidate.grade){
+        const {error:syncError}=await supabaseClient.from('profiles')
+          .upsert(candidate,{onConflict:'id'});
+        if(syncError)console.warn('STUDY FLOW existing profile auto-link:',syncError);
       }
+    }else{
+      loadedProfile=fetchedProfile;
+      const prompt=document.getElementById('studyFlowProfilePrompt');
+      if(prompt)prompt.style.display=profileIsComplete(fetchedProfile)?'none':'flex';
     }
-    const prompt=document.getElementById('studyFlowProfilePrompt');
-    if(prompt)prompt.style.display=profileIsComplete(loadedProfile)?'none':'flex';
     if(typeof renderMyPage==='function')renderMyPage();
   }
   function openProfileEditor(){
