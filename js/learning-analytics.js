@@ -86,9 +86,35 @@ function renderMetaAverage(){
     return;
   }
   const average=Math.round(stats.average*10)/10;
+  let messageTitle,messageText,messageClass;
+  if(average>=4.2){
+    messageTitle='좋은 학습 흐름!';
+    messageText='오늘의 학습이 좋은 흐름으로 이어지고 있어요. 지금의 집중과 성취를 다음 공부에도 이어가 봐요!';
+    messageClass='excellent';
+  }else if(average>=3.5){
+    messageTitle='꾸준한 성장 중';
+    messageText='꾸준히 좋은 학습을 이어가고 있어요. 작은 성취들이 쌓여 더 큰 발전을 만들고 있어요.';
+    messageClass='good';
+  }else if(average>=2.8){
+    messageTitle='개선할 점 발견';
+    messageText='만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견했어요. 다음 공부에서 하나씩 바꿔 봐요.';
+    messageClass='steady';
+  }else if(average>=2.0){
+    messageTitle='잠시 재정비';
+    messageText='오늘 공부가 기대만큼 잘되지 않았을 수 있어요. 괜찮아요. 원인을 하나만 찾아 다음 공부에서 다시 시도해 봐요.';
+    messageClass='reset';
+  }else{
+    messageTitle='다시 시작하는 시간';
+    messageText='힘든 학습이었을 수도 있어요. 점수보다 중요한 건 다시 시작하는 거예요. 잠시 쉬고, 부담 없는 목표부터 시작해 봐요.';
+    messageClass='restart';
+  }
   target.innerHTML=`<div class="meta-average-visual">${renderMetaRatingStars(average)}</div>
     <div class="meta-average-number">${average.toFixed(1)}<span>/ 5.0</span></div>
-    <div class="meta-average-caption">${periodLabel} · 별점 등록 ${stats.count}건</div>`;
+    <div class="meta-average-caption">${periodLabel} · 별점 등록 ${stats.count}건</div>
+    <div class="meta-average-message ${messageClass}">
+      <div class="meta-average-message-title">${messageTitle}</div>
+      <div class="meta-average-message-text">${messageText}</div>
+    </div>`;
 }
 $('metaAverageRange')?.addEventListener('change',renderMetaAverage);
 
