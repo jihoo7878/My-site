@@ -1630,6 +1630,16 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   color:var(--text);
   font-weight:700;
 }
+.meta-average-feedback{
+  display:grid;
+  justify-items:start;
+  gap:12px;
+  min-width:0;
+  padding:16px 18px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(25,32,47,.72);
+}
 .meta-average-trend{
   justify-self:start;
   padding:8px 15px;
@@ -1644,9 +1654,9 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 }
 .meta-average-message{
   margin:0;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.7;
+  color:var(--text);
+  font-size:16px;
+  line-height:1.75;
   font-weight:500;
   overflow-wrap:anywhere;
 }
@@ -1673,6 +1683,8 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
   line-height:1.6;
 }
 @media(max-width:600px){
+  .meta-average-feedback{padding:13px 14px;gap:10px}
+  .meta-average-message{font-size:15px}
   .meta-average-panel{padding:14px}
   .meta-average-content{grid-template-columns:1fr;gap:13px}
   .meta-average-main{align-items:center}
