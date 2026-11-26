@@ -102,8 +102,10 @@ function renderMetaAverage(){
       <div class="meta-average-score">${rounded.toFixed(1)}<span>/ 5.0</span></div>
     </div>
     <div class="meta-average-details">
-      <span class="meta-average-trend">${trend}</span>
-      <p class="meta-average-message">${message}</p>
+      <div class="meta-average-feedback">
+        <span class="meta-average-trend">${trend}</span>
+        <p class="meta-average-message">${message}</p>
+      </div>
     </div>`;
 }
 
