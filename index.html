@@ -104,10 +104,6 @@
         </section>
         <section class="timer-panel pomodoro-panel" id="pomodoroPanel" hidden>
           <div class="card-head"><h3>원형 뽀모도로</h3><span class="tag" id="pomodoroModeTag">집중</span></div>
-          <div class="timer-subject-row pomodoro-subject-row">
-            <select class="field" id="pomodoroSubject" aria-label="뽀모도로 학습 과목" style="flex:1"></select>
-            <button class="mini" type="button" id="managePomodoroSubjects">과목 관리</button>
-          </div>
           <div class="pomodoro-duration-settings">
             <label>집중 <span><input class="field pomodoro-minute-input" type="number" id="pomodoroFocusMinutes" min="1" max="180" value="25"> 분</span></label>
             <label>휴식 <span><input class="field pomodoro-minute-input" type="number" id="pomodoroBreakMinutes" min="1" max="60" value="5"> 분</span></label>
@@ -282,6 +278,16 @@
   <section class="card meta-reflection-card">
     <div class="card-head"><h3>학습 메타인지</h3><span class="tag">학습 성찰</span></div>
     <p class="muted" style="font-size:11px;margin:0">선택한 분석 기간의 별점과 공부 피드백을 모아 확인합니다.</p>
+    <div class="meta-average-panel" id="metaAveragePanel">
+      <div class="meta-average-head">
+        <span class="meta-average-title">평균 학습 별점</span>
+        <select id="metaAverageRange" class="field meta-average-range" aria-label="평균 별점 기간">
+          <option value="yesterday" selected>어제</option>
+          <option value="week">최근 일주일</option>
+        </select>
+      </div>
+      <div id="metaAverageContent" class="meta-average-content" aria-live="polite"></div>
+    </div>
     <div id="metaReflectionList" class="meta-reflection-list"></div>
   </section>
   <p class="analytics-footnote">※ 공부 시간은 학습 기록에 저장된 시간을 기준으로 계산합니다. 기록이 없는 날짜와 과목은 그래프에 표시되지 않을 수 있습니다.</p>
