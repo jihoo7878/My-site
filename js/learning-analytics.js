@@ -63,9 +63,10 @@ function renderMetaRatingStars(value){
 }
 
 function getMetaAverageStats(allLogs, period){
-  // 어제는 전일 1일, 최근 일주일은 어제를 끝점으로 한 7일(오늘의 미완성 기록 제외)
-  const end=analyticsDateOffset(todayISO(),-1);
-  const start=period==='week'?analyticsDateOffset(end,-6):end;
+  // 어제는 전일 1일. 최근 일주일은 오늘을 포함한 최근 7일.
+  const today=todayISO();
+  const end=period==='week'?today:analyticsDateOffset(today,-1);
+  const start=period==='week'?analyticsDateOffset(today,-6):end;
   const rated=(allLogs||[]).filter(log=>{
     if(!log.metaReviewed || log.metaRating===null || log.metaRating===undefined)return false;
     const rating=Number(log.metaRating);
