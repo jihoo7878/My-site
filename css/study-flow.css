@@ -1619,7 +1619,7 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 }
 .meta-average-details{
   display:grid;
-  gap:10px;
+  gap:12px;
   min-width:0;
 }
 .meta-average-count{
@@ -1645,8 +1645,9 @@ button.mini:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:no
 .meta-average-message{
   margin:0;
   color:var(--muted);
-  font-size:11px;
-  line-height:1.65;
+  font-size:14px;
+  line-height:1.7;
+  font-weight:500;
   overflow-wrap:anywhere;
 }
 .meta-average-empty{
