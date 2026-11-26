@@ -200,12 +200,28 @@ function renderMetaAverage(){
 function renderMetaReflections(logs){
   const target=$('metaReflectionList');
   const entries=logs.filter(log=>log.metaReviewed||log.metaPending||Number(log.metaRating)>0||String(log.metaReflection||'').trim())
-    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    .map((log,index)=>({log,index}))
+    .sort((a,b)=>{
+      const dateOrder=String(b.log.date||'').localeCompare(String(a.log.date||''));
+      if(dateOrder)return dateOrder;
+      const getEndMinute=log=>{
+        const sessions=Array.isArray(log.sessions)?log.sessions:[];
+        const sessionEnd=sessions.reduce((latest,session)=>Math.max(latest,Number(session.endMinute)||-1),-1);
+        return sessionEnd>=0?sessionEnd:Number(log.endMinute??log.startMinute??-1);
+      };
+      const timeOrder=getEndMinute(b.log)-getEndMinute(a.log);
+      return timeOrder||a.index-b.index;
+    })
+    .map(entry=>entry.log);
   if(!entries.length){target.innerHTML='<div class="chart-empty">아직 학습 성찰이 없습니다. 타이머 완료 또는 공부 기록 추가 후 성찰을 남겨보세요.</div>';return;}
   target.innerHTML=entries.map(log=>{
-    const score=log.metaReviewed?(log.metaRating===null||log.metaRating===undefined?'별점 미입력':`${Number(log.metaRating).toFixed(1).replace(/\.0$/,'')} / 5점`):'성찰 미작성';
+    const hasRating=log.metaReviewed&&log.metaRating!==null&&log.metaRating!==undefined&&Number.isFinite(Number(log.metaRating));
+    const rating=hasRating?Math.max(0,Math.min(5,Number(log.metaRating))):null;
+    const score=hasRating
+      ?`<span class="meta-reflection-stars" role="img" aria-label="별점 ${rating}점 / 5점">${Array.from({length:5},(_,i)=>`<span class="meta-reflection-star" style="--star-fill:${Math.max(0,Math.min(100,(rating-i)*100))}%">★</span>`).join('')}</span>`
+      :log.metaReviewed?'별점 미입력':'성찰 미작성';
     const feedback=String(log.metaReflection||'').trim();
-    return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${escapeHTML(score)}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}${!log.metaReviewed?`<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">성찰 작성</button>`:''}</article>`;
+    return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${score}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}${!log.metaReviewed?`<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">성찰 작성</button>`:''}</article>`;
   }).join('');
 }
 
