@@ -84,16 +84,16 @@ function renderMetaAverage(){
 
   const average=rated.reduce((sum,log)=>sum+Number(log.metaRating),0)/rated.length;
   const rounded=Math.round(average*10)/10;
-  const trend=rounded>=4.2?'매우 만족':
-    rounded>=3.5?'만족':
-    rounded>=2.8?'보통':
-    rounded>=2.0?'아쉬움':'재정비';
+  const trend=rounded>=4.2?'좋은 학습 흐름!':
+    rounded>=3.5?'꾸준한 성장 중':
+    rounded>=2.8?'개선할 점 발견':
+    rounded>=2.0?'잠시 재정비':'다시 시작하는 시간';
   const message=rounded>=4.2
     ?'오늘의 학습이 좋은 흐름으로 이어지고 있어요. 지금의 집중과 성취를 다음 공부에도 이어가 봐요!'
     :rounded>=3.5
     ?'꾸준히 좋은 학습을 이어가고 있어요. 작은 성취들이 쌓여 더 큰 발전을 만들고 있어요.'
     :rounded>=2.8
-    ?'만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견했어요. 다음 공부에서 하나씩 바꿔 봐요.'
+    ?'만족스럽지 않은 순간도 있었지만, 그만큼 개선할 부분을 발견할 수 있어요. 럭키비키. 다음 공부에서 하나씩 바꿔 봐요.'
     :rounded>=2.0
     ?'오늘 공부가 기대만큼 잘되지 않았을 수 있어요. 괜찮아요. 원인을 하나만 찾아 다음 공부에서 다시 시도해 봐요.'
     :'힘든 학습이었을 수도 있어요. 점수보다 중요한 건 다시 시작하는 거예요. 잠시 쉬고, 부담 없는 목표부터 시작해 봐요.';
