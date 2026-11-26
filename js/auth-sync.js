@@ -433,13 +433,9 @@ const authForm=document.getElementById('authForm');
     setBusy(true);message('');
     try{
       if(isSignUp){
-        const {data:available,error:checkError}=await supabaseClient.rpc('is_nickname_available',{candidate_nickname:nickname});
-        if(checkError){
-          console.warn('STUDY FLOW signup nickname precheck:',checkError);
-        }else if(available!==true){
-          message('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.',true);
-          return;
-        }
+        // 가입 직후 auth.users 트리거가 profiles를 생성하며,
+        // nickname_lower 고유 인덱스가 중복을 원자적으로 차단합니다.
+        // 공개 RPC 없이 DB에서 검증하므로 사전 조회로 닉네임을 열거할 수 없습니다.
         const {data:result,error}=await supabaseClient.auth.signUp({
           email,password,options:{
             emailRedirectTo:SUPABASE_URL.replace('https://ravpqvaosmulgddearso.supabase.co','https://my-site-2vt.pages.dev'),
@@ -462,7 +458,12 @@ const authForm=document.getElementById('authForm');
       }
     }catch(err){
       console.error('ROUTEN auth error:',err);
-      message(err.message||'인증 중 문제가 발생했어요.',true);
+      const signupDatabaseError=isSignUp&&(err.status>=500||err.code==='unexpected_failure'||
+        /database error saving new user/i.test(err.message||''));
+      const errorMessage=signupDatabaseError
+        ?'가입에 실패했어요. 닉네임이 이미 사용 중이거나 가입 정보를 저장하지 못했을 수 있어요. 입력을 확인하고 다시 시도해 주세요.'
+        :(err.message||'인증 중 문제가 발생했어요.');
+      message(errorMessage,true);
     }finally{setBusy(false);}
   });
 
