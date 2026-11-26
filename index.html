@@ -104,6 +104,9 @@
         </section>
         <section class="timer-panel pomodoro-panel" id="pomodoroPanel" hidden>
           <div class="card-head"><h3>원형 뽀모도로</h3><span class="tag" id="pomodoroModeTag">집중</span></div>
+          <div class="timer-subject-row pomodoro-subject-row">
+            <select class="field" id="pomodoroSubject" aria-label="뽀모도로 학습 과목" style="flex:1"></select>
+          </div>
           <div class="pomodoro-duration-settings">
             <label>집중 <span><input class="field pomodoro-minute-input" type="number" id="pomodoroFocusMinutes" min="1" max="180" value="25"> 분</span></label>
             <label>휴식 <span><input class="field pomodoro-minute-input" type="number" id="pomodoroBreakMinutes" min="1" max="60" value="5"> 분</span></label>
