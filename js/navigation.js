@@ -54,3 +54,28 @@
   },{capture:true,passive:true});
   document.addEventListener('pointercancel',()=>{mouseActive=false;mouseAllowed=false;},{capture:true,passive:true});
 })();
+
+// 홈 화면 동기부여 문구를 일정 간격으로 순환
+(()=>{
+  const title=document.getElementById('pageTitle');
+  if(!title)return;
+  const quotes=[
+    '지금의 한 시간이 미래의 나를 바꾼다.',
+    '시작하는 순간, 이미 어제보다 나아졌다.',
+    'No pain, no gain.',
+    '미래의 나에게 부끄럽지 않은 오늘을 살자.',
+    '카르마는 시차는 있어도 오차는 없습니다.',
+    '인풋이 많아야지 아웃풋이 생겨요.',
+    '힘들더라도 그만큼 발전하고있는거야'
+  ];
+  let index=0;
+  title.textContent=quotes[index];
+  window.setInterval(()=>{
+    title.classList.add('motivation-quote-switching');
+    window.setTimeout(()=>{
+      index=(index+1)%quotes.length;
+      title.textContent=quotes[index];
+      title.classList.remove('motivation-quote-switching');
+    },220);
+  },5000);
+})();
