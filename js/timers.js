@@ -43,8 +43,9 @@ function savePomodoroFocusLog(startMs,endMs,showReflection=true,showNotice=true)
   const startDate=new Date(startMs),endDate=new Date(endMs);
   const startMinute=startDate.getHours()*60+startDate.getMinutes();
   const endMinute=endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0);
+  const studyDate=studyRecordDate(endDate);
   const logId=uid();
-  data.logs.push({id:logId,date:todayISO(),subject:pomodoro.subject||$('pomodoroSubject')?.value||$('timerSubject').value||'국어',title:'뽀모도로 집중 학습',minutes,metaPending:true,sessions:[{date:todayISO(),startMinute,endMinute}]});
+  data.logs.push({id:logId,date:studyDate,subject:pomodoro.subject||$('pomodoroSubject')?.value||$('timerSubject').value||'국어',title:'뽀모도로 집중 학습',minutes,metaPending:true,sessions:[{date:studyDate,startMinute,endMinute}]});
   save();
   if(showNotice)toast(`${minutes}분 집중 학습을 기록했어요.`);
   if(showReflection)showMetaReflection(logId);
