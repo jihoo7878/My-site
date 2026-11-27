@@ -222,7 +222,7 @@ function renderMetaReflections(logs){
       ?`<span class="meta-reflection-stars" role="img" aria-label="별점 ${rating}점 / 5점">${Array.from({length:5},(_,i)=>`<span class="meta-reflection-star" style="--star-fill:${Math.max(0,Math.min(100,(rating-i)*100))}%">★</span>`).join('')}</span>`
       :log.metaReviewed?'별점 미입력':'성찰 미작성';
     const feedback=String(log.metaReflection||'').trim();
-    const editLabel=log.metaReviewed?'성찰 수정':'성찰 작성';
+    const editLabel=log.metaReviewed?'수정':'성찰 작성';
     return `<article class="meta-reflection-item"><div class="meta-reflection-top"><div><div class="meta-reflection-name">${escapeHTML(log.subject||'기타')} · ${escapeHTML(log.title||'학습 기록')}</div><div class="meta-reflection-meta">${escapeHTML(log.date||'')} · ${Number(log.minutes)||0}분</div></div><div class="meta-reflection-score">${score}</div></div>${feedback?`<p class="meta-reflection-text">${escapeHTML(feedback)}</p>`:'<p class="meta-reflection-text muted">아직 평가와 피드백을 작성하지 않았어요.</p>'}<button class="btn" type="button" data-meta-reflection-edit="${escapeHTML(log.id)}" style="margin-top:10px">${editLabel}</button></article>`;
   }).join('');
 }
