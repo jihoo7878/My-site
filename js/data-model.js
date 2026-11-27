@@ -26,6 +26,14 @@ const dateOffset=(date,n)=>{
 
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
+// 타이머 학습 기록은 자정부터 03:00까지 끝나면 전날 학습으로 묶는다.
+const studyRecordDate=(date=new Date())=>{
+  const d=new Date(date);
+  if(!Number.isFinite(d.getTime()))return todayISO();
+  if(d.getHours()*60+d.getMinutes()<=180)d.setDate(d.getDate()-1);
+  return iso(d);
+};
+
 const mondayOf=date=>{
   const d=new Date(date+'T12:00:00');
   d.setDate(d.getDate()-((d.getDay()+6)%7));
