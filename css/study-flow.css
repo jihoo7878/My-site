@@ -737,10 +737,10 @@ header{margin-bottom:22px}
 .meta-reflection-item [data-meta-reflection-edit]{
   align-self:flex-end;
   margin:8px 0 0!important;
-  padding:5px 9px;
-  border-radius:8px;
-  font-size:10px;
-  line-height:1.2;
+  padding:8px 12px;
+  border-radius:9px;
+  font-size:12px;
+  line-height:1.25;
 }
 .meta-reflection-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .meta-reflection-name{font-weight:700;font-size:13px}
