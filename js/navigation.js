@@ -68,14 +68,18 @@
     '인풋이 많아야지 아웃풋이 생겨요.',
     '힘들더라도 그만큼 발전하고있는거야'
   ];
-  let index=0;
-  title.textContent=quotes[index];
+  let currentIndex=Math.floor(Math.random()*quotes.length);
+  title.textContent=quotes[currentIndex];
   window.setInterval(()=>{
     title.classList.add('motivation-quote-switching');
     window.setTimeout(()=>{
-      index=(index+1)%quotes.length;
-      title.textContent=quotes[index];
+      let nextIndex=currentIndex;
+      while(nextIndex===currentIndex){
+        nextIndex=Math.floor(Math.random()*quotes.length);
+      }
+      currentIndex=nextIndex;
+      title.textContent=quotes[currentIndex];
       title.classList.remove('motivation-quote-switching');
     },220);
-  },5000);
+  },10000);
 })();
