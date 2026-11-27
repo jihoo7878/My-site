@@ -733,6 +733,15 @@ header{margin-bottom:22px}
 .meta-reflection-card{margin-top:14px;padding:18px}
 .meta-reflection-list{display:grid;gap:10px;margin-top:12px}
 .meta-reflection-item{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2)}
+.meta-reflection-item{display:flex;flex-direction:column}
+.meta-reflection-item [data-meta-reflection-edit]{
+  align-self:flex-end;
+  margin:8px 0 0!important;
+  padding:5px 9px;
+  border-radius:8px;
+  font-size:10px;
+  line-height:1.2;
+}
 .meta-reflection-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .meta-reflection-name{font-weight:700;font-size:13px}
 .meta-reflection-meta{color:var(--muted);font-size:11px;margin-top:4px}
