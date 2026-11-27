@@ -1377,16 +1377,18 @@ $('timerFinish').onclick=()=>{
   let completedLogId=null;
   if(m>0){
     completedLogId=uid();
+    const lastSession=timer.sessions[timer.sessions.length-1];
+    const studyDate=studyRecordDate(new Date(lastSession?.end||Date.now()));
     data.logs.push({
       id:completedLogId,
-      date:todayISO(),
+      date:studyDate,
       subject:timer.subject,
       title:'타이머 학습',
       minutes:m,
       metaPending:true,
       sessions:timer.sessions.map(seg=>{
         const startDate=new Date(seg.start),endDate=new Date(seg.end);
-        return {date:todayISO(),startMinute:startDate.getHours()*60+startDate.getMinutes(),endMinute:endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0)};
+        return {date:studyRecordDate(endDate),startMinute:startDate.getHours()*60+startDate.getMinutes(),endMinute:endDate.getHours()*60+endDate.getMinutes()+(endDate.getSeconds()>0?1:0)};
       }).filter(seg=>seg.endMinute>seg.startMinute)
     });
 
